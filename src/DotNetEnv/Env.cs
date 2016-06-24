@@ -8,6 +8,7 @@ namespace DotNetEnv
         {
             string path = "./.env";
             Vars envFile = Parser.Parse(File.ReadAllLines(path));
+            LoadVars.SetEnvironmentVariables(envFile);
         }
     }
 }
