@@ -1,7 +1,10 @@
 {
   "version": "1.0.0-*",
   "buildOptions": {
-    "emitEntryPoint": false
+    "emitEntryPoint": false,
+    "copyToOutput": [
+        "./.env"
+    ]
   },
   "dependencies": {
     "Microsoft.NETCore.App": {
@@ -15,6 +18,7 @@
         "version": "1.0.0-*"
     }
   },
+  "testRunner": "xunit",
   "frameworks": {
     "netcoreapp1.0": {
       "imports": [
