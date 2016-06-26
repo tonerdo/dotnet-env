@@ -2400,9 +2400,9 @@
       },
       "DotNetEnv/1.0.0": {
         "type": "project",
-        "framework": ".NETCoreApp,Version=v1.0",
+        "framework": ".NETStandard,Version=v1.5",
         "dependencies": {
-          "Microsoft.NETCore.App": "1.0.0-rc2-3002702"
+          "NETStandard.Library": "1.5.0-rc2-24027"
         }
       }
     }
