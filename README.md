@@ -1,4 +1,4 @@
-# dotnet-env
+# dotnet-env [![NuGet version](https://badge.fury.io/nu/DotNetEnv.svg)](https://www.nuget.org/packages/DotNetEnv)
 
 A library to load .env file into Environment variable
 
