@@ -7,6 +7,15 @@ namespace DotNetEnv
             return line.TrimStart(' ').StartsWith("#");
         }
 
+        private static string RemoveInlineComment(string line)
+        {
+            int pos = line.IndexOf('#');
+            if (pos == -1)
+                return line;
+
+            return line.Substring(0, pos);
+        }
+
         public static Vars Parse(string[] lines, bool ignoreWhiteSpace = false)
         {
             Vars vars = new Vars();
@@ -18,6 +27,8 @@ namespace DotNetEnv
                 // skip comments
                 if (IsComment(line))
                     continue;
+
+                line = RemoveInlineComment(line);
 
                 string[] keyValuePair = line.Split('=');
 
