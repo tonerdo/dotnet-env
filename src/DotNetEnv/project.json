@@ -1,12 +1,26 @@
 {
-  "version": "1.0.0-*",
-  "buildOptions": {
-    "emitEntryPoint": false
-  },
-  "dependencies": {
-    "NETStandard.Library": "1.6.0"
-  },
-  "frameworks": {
-    "netstandard1.3": { }
-  }
+    "version": "1.0.0",
+    "title": "DotNetEnv",
+    "description": "A library to load .env file into Environment variable",
+    "authors": [
+        "Toni Solarin-Sodara"
+    ],
+    "licenseUrl": "https://github.com/tsolarin/dotnet-env/blob/master/LICENSE",
+    "projectUrl": "https://github.com/tsolarin/dotnet-env",
+    "packOptions": {
+        "tags": [
+            "dotnet",
+            "env",
+            "dotfiles"
+        ]
+    },
+    "buildOptions": {
+        "emitEntryPoint": false
+    },
+    "dependencies": {
+        "NETStandard.Library": "1.6.0"
+    },
+    "frameworks": {
+        "netstandard1.3": {}
+    }
 }
