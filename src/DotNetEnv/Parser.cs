@@ -16,6 +16,15 @@ namespace DotNetEnv
             return line.Substring(0, pos);
         }
 
+        private static string RemoveExportKeyword(string line)
+        {
+            line = line.TrimStart(' ');
+            if (!line.StartsWith("export "))
+                return line;
+
+            return line.Substring(7);
+        }
+
         public static Vars Parse(string[] lines, bool ignoreWhiteSpace = false)
         {
             Vars vars = new Vars();
@@ -29,6 +38,7 @@ namespace DotNetEnv
                     continue;
 
                 line = RemoveInlineComment(line);
+                line = RemoveExportKeyword(line);
 
                 string[] keyValuePair = line.Split('=');
 
