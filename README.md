@@ -5,7 +5,7 @@ A library to load .env file into Environment variable
 ## How to use
 Add as a dependency to your project.json
 ```json
-"tools": {
+"dependencies": {
     "DotNetEnv": "1.0.0"
 }
 ```
