@@ -3,6 +3,7 @@
   <PropertyGroup>
     <Description>A library to load .env file into Environment variable</Description>
     <AssemblyTitle>DotNetEnv</AssemblyTitle>
+    <VersionPrefix>1.0.1</VersionPrefix>
     <Authors>Toni Solarin-Sodara</Authors>
     <TargetFrameworks>netstandard1.3;net45</TargetFrameworks>
     <AssemblyName>DotNetEnv</AssemblyName>
