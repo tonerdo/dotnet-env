@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>A library to load .env file into Environment variable</Description>
+    <AssemblyTitle>DotNetEnv</AssemblyTitle>
+    <Authors>Toni Solarin-Sodara</Authors>
+    <TargetFrameworks>netstandard1.3;net45;net35;net20</TargetFrameworks>
+    <AssemblyName>DotNetEnv</AssemblyName>
+    <OutputType>Library</OutputType>
+    <PackageId>DotNetEnv</PackageId>
+    <PackageTags>dotnet;env;dotfiles</PackageTags>
+    <PackageProjectUrl>https://github.com/tsolarin/dotnet-env</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/tsolarin/dotnet-env/blob/master/LICENSE</PackageLicenseUrl>
+    <NetStandardImplicitPackageVersion Condition=" '$(TargetFramework)' == 'netstandard1.3' ">1.6.0</NetStandardImplicitPackageVersion>
+  </PropertyGroup>
+
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net45' ">
+    <Reference Include="System" />
+    <Reference Include="Microsoft.CSharp" />
+  </ItemGroup>
+
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net35' ">
+    <Reference Include="System" />
+  </ItemGroup>
+
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net20' ">
+    <Reference Include="System" />
+  </ItemGroup>
+
+</Project>

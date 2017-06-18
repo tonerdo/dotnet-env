@@ -1,20 +1,23 @@
 # dotnet-env [![NuGet version](https://badge.fury.io/nu/DotNetEnv.svg)](https://www.nuget.org/packages/DotNetEnv)
 
-A library to load .env file into Environment variable
-
-## How to use
-Add as a dependency to your project.json
-```json
-"dependencies": {
-    "DotNetEnv": "1.0.0"
-}
-```
-Restore dependencies to install
-```bash
-dotnet restore
-```
+A library to load .env file into Environment variable. Supports .NET Core and .NET Framework
 
 ## Usage
+
+### Add DotNetEnv as a dependency
+
+#### .NET Core CLI
+
+```bash
+dotnet add package DotNetEnv
+```
+#### Package Manager Console
+
+```powershell
+Install-Package DotNetEnv
+```
+
+### Load env file
 
 Will automatically look for a `.env` file in the current directory
 ```csharp
@@ -34,10 +37,6 @@ System.Environment.GetEnvironmentVariable("IP")
 ## Issue Reporting
 
 If you have found a bug or if you have a feature request, please report them at this repository issues section.
-
-## Author
-
-[Toni Solarin-Sodara](https://github.com/tsolarin)
 
 ## License
 
