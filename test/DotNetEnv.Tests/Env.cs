@@ -11,6 +11,7 @@ namespace DotNetEnv.Tests
             DotNetEnv.Env.Load();
             Assert.Equal(Environment.GetEnvironmentVariable("NAME"), "Toni");
             Assert.Equal(Environment.GetEnvironmentVariable("URL"), "https://github.com/tsolarin");
+            Assert.Equal(Environment.GetEnvironmentVariable("CONNECTION"), "user=test;password=secret");
         }
 
         [Fact]
@@ -20,6 +21,6 @@ namespace DotNetEnv.Tests
             Assert.Equal(Environment.GetEnvironmentVariable("IP"), "127.0.0.1");
             Assert.Equal(Environment.GetEnvironmentVariable("PORT"), "8080");
             Assert.Equal(Environment.GetEnvironmentVariable("DOMAIN"), "example.com");
-        }
+        }                    
     }
 }

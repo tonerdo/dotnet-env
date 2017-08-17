@@ -40,7 +40,7 @@ namespace DotNetEnv
                 line = RemoveInlineComment(line);
                 line = RemoveExportKeyword(line);
 
-                string[] keyValuePair = line.Split('=');
+                string[] keyValuePair = line.Split(new char[] { '=' }, 2);
 
                 // skip malformed lines
                 if (keyValuePair.Length != 2)
