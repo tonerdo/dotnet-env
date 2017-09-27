@@ -4,12 +4,16 @@ namespace DotNetEnv
 {
     public class Env
     {
-        public static void Load(string path)
+        public static void Load(string path, bool treatSharpAsComments = true)
         {
-            Vars envFile = Parser.Parse(File.ReadAllLines(path));
+            Vars envFile = Parser.Parse(
+                lines: File.ReadAllLines(path),
+                ignoreWhiteSpace: false,
+                treatSharpAsComments: treatSharpAsComments);
+
             LoadVars.SetEnvironmentVariables(envFile);
         }
 
-        public static void Load() => Load("./.env");
+        public static void Load(bool treatSharpAsComments = true) => Load("./.env", treatSharpAsComments);
     }
 }
