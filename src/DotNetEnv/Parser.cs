@@ -25,7 +25,7 @@ namespace DotNetEnv
             return line.Substring(7);
         }
 
-        public static Vars Parse(string[] lines, bool ignoreWhiteSpace = false)
+        public static Vars Parse(string[] lines, bool ignoreWhiteSpace = false, bool treatSharpAsComments = true)
         {
             Vars vars = new Vars();
 
@@ -37,14 +37,14 @@ namespace DotNetEnv
                 if (IsComment(line))
                     continue;
 
-                line = RemoveInlineComment(line);
+                if (treatSharpAsComments)
+                {
+                    line = RemoveInlineComment(line);
+                }
+
                 line = RemoveExportKeyword(line);
 
-                string[] keyValuePair = line.Split('=');
-
-                // skip malformed lines
-                if (keyValuePair.Length != 2)
-                    continue;
+                string[] keyValuePair = line.Split(new char[] { '=' }, 2);
 
                 if (!ignoreWhiteSpace)
                 {
