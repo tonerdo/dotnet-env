@@ -1,16 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
-    <Description>A library to load .env file into Environment variable</Description>
+    <Title>DotNetEnv</Title>
+    <Description>A .NET library to load environment variables from .env</Description>
     <AssemblyTitle>DotNetEnv</AssemblyTitle>
-    <VersionPrefix>1.0.1</VersionPrefix>
-    <Authors>Toni Solarin-Sodara</Authors>
+    <PackageVersion>1.1.0</PackageVersion>
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>DotNetEnv</AssemblyName>
     <OutputType>Library</OutputType>
     <PackageId>DotNetEnv</PackageId>
     <PackageTags>dotnet;env;dotfiles</PackageTags>
-    <PackageProjectUrl>https://github.com/tsolarin/dotnet-env</PackageProjectUrl>
-    <PackageLicenseUrl>https://github.com/tsolarin/dotnet-env/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/tonerdo/dotnet-env</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/tonerdo/dotnet-env/blob/master/LICENSE</PackageLicenseUrl>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/tonerdo/dotnet-env</RepositoryUrl>
   </PropertyGroup>
 </Project>
