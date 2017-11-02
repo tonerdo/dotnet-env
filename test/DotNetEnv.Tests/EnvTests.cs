@@ -10,7 +10,7 @@ namespace DotNetEnv.Tests
         {
             DotNetEnv.Env.Load();
             Assert.Equal(Environment.GetEnvironmentVariable("NAME"), "Toni");
-            Assert.Equal(Environment.GetEnvironmentVariable("URL"), "https://github.com/tsolarin");
+            Assert.Equal(Environment.GetEnvironmentVariable("URL"), "https://github.com/tonerdo");
             Assert.Equal(Environment.GetEnvironmentVariable("CONNECTION"), "user=test;password=secret");
         }
 
