@@ -3,7 +3,7 @@ using Xunit;
 
 namespace DotNetEnv.Tests
 {
-    public class Env
+    public class EnvTests
     {
         [Fact]
         public void LoadTest()
@@ -21,6 +21,6 @@ namespace DotNetEnv.Tests
             Assert.Equal(Environment.GetEnvironmentVariable("IP"), "127.0.0.1");
             Assert.Equal(Environment.GetEnvironmentVariable("PORT"), "8080");
             Assert.Equal(Environment.GetEnvironmentVariable("DOMAIN"), "example.com");
-        }                    
+        }
     }
 }
