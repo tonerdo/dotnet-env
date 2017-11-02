@@ -10,6 +10,7 @@ namespace DotNetEnv
             LoadVars.SetEnvironmentVariables(envFile);
         }
 
-        public static void Load() => Load("./.env");
+        public static void Load()
+            => Load(Path.Combine(Directory.GetCurrentDirectory(), ".env"));
     }
 }
