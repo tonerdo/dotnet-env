@@ -1,23 +1,27 @@
+[![Windows build status](https://ci.appveyor.com/api/projects/status/github/tonerdo/dotnet-env?branch=master&svg=true)](https://ci.appveyor.com/project/tonerdo/dotnet-env)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![NuGet version](https://badge.fury.io/nu/DotNetEnv.svg)](https://www.nuget.org/packages/DotNetEnv)
 # dotnet-env
 
-A library to load .env file into Environment variable. Supports .NET Core and .NET Framework
+A .NET library to load environment variables from .env files. Supports .NET Core and .NET Framework
 
-## Usage
+## Installation
 
-### Add DotNetEnv as a dependency
+Available on [NuGet](https://www.nuget.org/packages/DotNetEnv/)
 
-#### .NET Core CLI
+Visual Studio:
+
+```powershell
+PM> Install-Package DotNetEnv
+```
+
+.NET Core CLI:
 
 ```bash
 dotnet add package DotNetEnv
 ```
-#### Package Manager Console
 
-```powershell
-Install-Package DotNetEnv
-```
+## Usage
 
 ### Load env file
 

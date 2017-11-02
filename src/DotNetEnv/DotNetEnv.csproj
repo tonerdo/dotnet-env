@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <Title>DotNetEnv</Title>
-    <Description>A .NET library to load environment variables from .env</Description>
+    <Description>A .NET library to load environment variables from .env files</Description>
     <AssemblyTitle>DotNetEnv</AssemblyTitle>
     <PackageVersion>1.1.0</PackageVersion>
     <TargetFramework>netstandard2.0</TargetFramework>
