@@ -2,3 +2,4 @@
 IP=127.0.0.1
 PORT=8080
 export DOMAIN=example.com
+WHITELEAD=  leading white space followed by comment  # comment

@@ -25,7 +25,7 @@ namespace DotNetEnv
             return line.Substring(7);
         }
 
-        public static Vars Parse(string[] lines, bool ignoreWhiteSpace = false)
+        public static Vars Parse(string[] lines, bool keepWhiteSpace = false)
         {
             Vars vars = new Vars();
 
@@ -46,7 +46,7 @@ namespace DotNetEnv
                 if (keyValuePair.Length != 2)
                     continue;
 
-                if (!ignoreWhiteSpace)
+                if (!keepWhiteSpace)
                 {
                     keyValuePair[0] = keyValuePair[0].Trim();
                     keyValuePair[1] = keyValuePair[1].Trim();
