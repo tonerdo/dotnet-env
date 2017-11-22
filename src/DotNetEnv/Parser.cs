@@ -1,31 +1,29 @@
+using System.Text.RegularExpressions;
+
 namespace DotNetEnv
 {
     internal class Parser
     {
+        private static Regex ExportRegex = new Regex("^\\s*export\\s+");
+
         private static bool IsComment(string line)
         {
-            return line.TrimStart(' ').StartsWith("#");
+            return line.Trim().StartsWith("#");
         }
 
         private static string RemoveInlineComment(string line)
         {
             int pos = line.IndexOf('#');
-            if (pos == -1)
-                return line;
-
-            return line.Substring(0, pos);
+            return pos >= 0 ? line.Substring(0, pos) : line;
         }
 
         private static string RemoveExportKeyword(string line)
         {
-            line = line.TrimStart(' ');
-            if (!line.StartsWith("export "))
-                return line;
-
-            return line.Substring(7);
+            Match match = ExportRegex.Match(line);
+            return match.Success ? line.Substring(match.Length) : line;
         }
 
-        public static Vars Parse(string[] lines, bool ignoreWhiteSpace = false)
+        public static Vars Parse(string[] lines, bool trimWhitespace = true, bool isEmbeddedHashComment = true)
         {
             Vars vars = new Vars();
 
@@ -37,7 +35,11 @@ namespace DotNetEnv
                 if (IsComment(line))
                     continue;
 
-                line = RemoveInlineComment(line);
+                if (isEmbeddedHashComment)
+                {
+                    line = RemoveInlineComment(line);
+                }
+
                 line = RemoveExportKeyword(line);
 
                 string[] keyValuePair = line.Split(new char[] { '=' }, 2);
@@ -46,7 +48,7 @@ namespace DotNetEnv
                 if (keyValuePair.Length != 2)
                     continue;
 
-                if (!ignoreWhiteSpace)
+                if (trimWhitespace)
                 {
                     keyValuePair[0] = keyValuePair[0].Trim();
                     keyValuePair[1] = keyValuePair[1].Trim();

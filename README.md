@@ -40,6 +40,55 @@ The variables in the `.env` can then be accessed through the `System.Environment
 System.Environment.GetEnvironmentVariable("IP")
 ```
 
+
+### Additional arguments
+
+You can also control whitespace trimming and allowing hashes in values
+```csharp
+DotNetEnv.Env.Load(false, false);
+```
+
+Both parameters default to true, which means:
+1. `trimWhitespace`, first arg: true in order to trim
+ leading and trailing whitespace from keys and values such that
+
+```env
+  KEY  =  value
+```
+
+Would then be available as
+```csharp
+"value" == System.Environment.GetEnvironmentVariable("KEY")
+null == System.Environment.GetEnvironmentVariable("  KEY  ")
+```
+
+False would mean:
+```csharp
+"  value" == System.Environment.GetEnvironmentVariable("  KEY  ")
+null == System.Environment.GetEnvironmentVariable("KEY")
+```
+
+2. `isEmbeddedHashComment`, second arg: true in order to allow inline comments
+
+```env
+KEY=value  # comment
+```
+
+Would then be available as
+```csharp
+"value" == System.Environment.GetEnvironmentVariable("KEY")
+```
+
+False would mean:
+```csharp
+"value  # comment" == System.Environment.GetEnvironmentVariable("KEY")
+```
+
+Which is most useful when you want to do something like:
+```env
+KEY=value#moreValue#otherValue#etc
+```
+
 ## Issue Reporting
 
 If you have found a bug or if you have a feature request, please report them at this repository issues section.
