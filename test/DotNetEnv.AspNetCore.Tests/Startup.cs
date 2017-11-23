@@ -31,7 +31,7 @@ namespace DotNetEnv.AspNetCore.Tests
 
             app.Run(async (context) =>
             {
-                await context.Response.WriteAsync($"{System.Environment.GetEnvironmentVariable("NAME")}: Hello World!");
+                await context.Response.WriteAsync($"{Environment.GetEnvironmentVariable("NAME")}: Hello World!");
             });
         }
     }
