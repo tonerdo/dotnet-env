@@ -13,12 +13,17 @@ Visual Studio:
 
 ```powershell
 PM> Install-Package DotNetEnv
+PM> Install-Package DotNetEnv.AspNetCore #if you're working on an asp.net core project
 ```
 
 .NET Core CLI:
 
 ```bash
 dotnet add package DotNetEnv
+dotnet add package DotNetEnv.AspNetCore #if you're working on an asp.net core project
+```
+
+```bash
 ```
 
 ## Usage
@@ -38,6 +43,21 @@ DotNetEnv.Env.Load("./path/to/.env");
 The variables in the `.env` can then be accessed through the `System.Environment` class
 ```csharp
 System.Environment.GetEnvironmentVariable("IP")
+```
+
+## Usage (with ASP.NET Core)
+
+In your Startup.cs file, add the following imports:
+
+```cs
+using DotNetEnv;
+using DotNetEnv.AspNetCore;
+```
+
+In your `Configure` method, add the following:
+
+```cs
+app.UseDotNetEnv(); // to load the variables from the .env file
 ```
 
 ## Issue Reporting
