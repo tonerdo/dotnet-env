@@ -13,6 +13,7 @@ namespace DotNetEnv.Tests
             Assert.Equal(Environment.GetEnvironmentVariable("URL"), "https://github.com/tonerdo");
             Assert.Equal(Environment.GetEnvironmentVariable("CONNECTION"), "user=test;password=secret");
             Assert.Equal(Environment.GetEnvironmentVariable("WHITEBOTH"), "leading and trailing white space");
+            Assert.Equal(Environment.GetEnvironmentVariable("SSL_CERT"), "SPECIAL STUFF---\nLONG-BASE64\\ignore\"slash");
         }
 
         [Fact]
@@ -25,6 +26,7 @@ namespace DotNetEnv.Tests
             Assert.Equal(Environment.GetEnvironmentVariable("EMBEDEXPORT"), "some text export other text");
             Assert.Equal(Environment.GetEnvironmentVariable("COMMENTLEAD"), null);
             Assert.Equal(Environment.GetEnvironmentVariable("WHITELEAD"), "leading white space followed by comment");
+            Assert.Equal(Environment.GetEnvironmentVariable("UNICODE"), "® 🚀 日本");
         }
 
         [Fact]
@@ -38,6 +40,10 @@ namespace DotNetEnv.Tests
             Assert.Equal(Environment.GetEnvironmentVariable("PASSWORD"), "Google");
             DotNetEnv.Env.Load(true, false);
             Assert.Equal(Environment.GetEnvironmentVariable("PASSWORD"), "Google#Facebook");
+            DotNetEnv.Env.Load(true, true, true);
+            Assert.Equal(Environment.GetEnvironmentVariable("SSL_CERT"), "SPECIAL STUFF---\nLONG-BASE64\\ignore\"slash");
+            DotNetEnv.Env.Load(true, true, false);
+            Assert.Equal(Environment.GetEnvironmentVariable("SSL_CERT"), "\"SPECIAL STUFF---\\nLONG-BASE64\\ignore\"slash\"");
         }
 
         [Fact]
@@ -51,6 +57,10 @@ namespace DotNetEnv.Tests
             Assert.Equal(Environment.GetEnvironmentVariable("WHITELEAD"), "leading white space followed by comment  # comment");
             DotNetEnv.Env.Load("./.env2", false, false);
             Assert.Equal(Environment.GetEnvironmentVariable("WHITELEAD"), "  leading white space followed by comment  # comment");
+            DotNetEnv.Env.Load("./.env2", false, false, true);
+            Assert.Equal(Environment.GetEnvironmentVariable("UNICODE"), "® 🚀 日本");
+            DotNetEnv.Env.Load("./.env2", false, false, false);
+            Assert.Equal(Environment.GetEnvironmentVariable("UNICODE"), "'\\u00ae \\U0001F680 日本'");
         }
     }
 }

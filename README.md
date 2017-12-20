@@ -40,7 +40,6 @@ The variables in the `.env` can then be accessed through the `System.Environment
 System.Environment.GetEnvironmentVariable("IP")
 ```
 
-
 ### Additional arguments
 
 You can also control whitespace trimming and allowing hashes in values
@@ -87,6 +86,28 @@ False would mean:
 Which is most useful when you want to do something like:
 ```env
 KEY=value#moreValue#otherValue#etc
+```
+
+3. `unescapeQuotedValues`, third arg: true in order to unescape/parse
+ quoted (single or double) values as being strings with escaped chars
+ such as newline ("\n"), but also handles unicode chars
+ (e.g. "\u00ae" and "\U0001F680") -- note that you can always include
+ unescaped unicode chars anyway (e.g. "日本") if your .env is in UTF-8.
+ Also note that there is no need to escape quotes inside.
+
+```env
+KEY="quoted\n\tvalue"
+```
+
+Would then be available as
+```csharp
+"quoted
+    value" == System.Environment.GetEnvironmentVariable("KEY")
+```
+
+False would mean:
+```csharp
+"\"quoted\\n\\tvalue\"" == System.Environment.GetEnvironmentVariable("KEY")
 ```
 
 ## Issue Reporting
