@@ -8,7 +8,8 @@ namespace DotNetEnv
             string path,
             bool trimWhitespace = true,
             bool isEmbeddedHashComment = true,
-            bool unescapeQuotedValues = true
+            bool unescapeQuotedValues = true,
+            bool clobberExistingVars = true
         )
         {
             Vars envFile = Parser.Parse(
@@ -17,19 +18,21 @@ namespace DotNetEnv
                 isEmbeddedHashComment,
                 unescapeQuotedValues
             );
-            LoadVars.SetEnvironmentVariables(envFile);
+            LoadVars.SetEnvironmentVariables(envFile, clobberExistingVars);
         }
 
         public static void Load(
             bool trimWhitespace = true,
             bool isEmbeddedHashComment = true,
-            bool unescapeQuotedValues = true
+            bool unescapeQuotedValues = true,
+            bool clobberExistingVars = true
         )
         => Load(
             Path.Combine(Directory.GetCurrentDirectory(), ".env"),
             trimWhitespace,
             isEmbeddedHashComment,
-            unescapeQuotedValues
+            unescapeQuotedValues,
+            clobberExistingVars
         );
     }
 }

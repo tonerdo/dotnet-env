@@ -110,6 +110,18 @@ False would mean:
 "\"quoted\\n\\tvalue\"" == System.Environment.GetEnvironmentVariable("KEY")
 ```
 
+4. `clobberExistingVars`, fourth arg: false to avoid overwriting existing environment variables
+
+```env
+KEY=value
+```
+
+```csharp
+System.Environment.SetEnvironmentVariable("KEY", "really important value, don't overwrite");
+DotNetEnv.Env.Load(false, false, false, false); // fourth arg false, don't overwrite existing variables
+System.Environment.GetEnvironmentVariable("KEY"); // == "really important value, don't overwrite"
+```
+
 ## Issue Reporting
 
 If you have found a bug or if you have a feature request, please report them at this repository issues section.

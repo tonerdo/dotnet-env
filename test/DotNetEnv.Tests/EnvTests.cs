@@ -62,5 +62,18 @@ namespace DotNetEnv.Tests
             DotNetEnv.Env.Load("./.env2", false, false, false);
             Assert.Equal(Environment.GetEnvironmentVariable("UNICODE"), "'\\u00ae \\U0001F680 日本'");
         }
+
+        [Fact]
+        public void LoadNoClobberTest()
+        {
+            var expected = "totally the original value";
+            Environment.SetEnvironmentVariable("URL", expected);
+            DotNetEnv.Env.Load(false, false, false, false);
+            Assert.Equal(Environment.GetEnvironmentVariable("URL"), expected);
+
+            Environment.SetEnvironmentVariable("URL", "i'm going to be overwritten");
+            DotNetEnv.Env.Load(false, false, false, true);
+            Assert.Equal(Environment.GetEnvironmentVariable("URL"), "https://github.com/tonerdo");
+        }
     }
 }
