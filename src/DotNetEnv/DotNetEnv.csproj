@@ -4,7 +4,7 @@
     <Description>A .NET library to load environment variables from .env files</Description>
     <AssemblyTitle>DotNetEnv</AssemblyTitle>
     <PackageVersion>1.1.0</PackageVersion>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>netstandard2.0;net46</TargetFrameworks>
     <AssemblyName>DotNetEnv</AssemblyName>
     <OutputType>Library</OutputType>
     <PackageId>DotNetEnv</PackageId>
