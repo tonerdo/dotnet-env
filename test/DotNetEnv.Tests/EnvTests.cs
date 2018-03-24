@@ -10,6 +10,10 @@ namespace DotNetEnv.Tests
         {
             DotNetEnv.Env.Load();
             Assert.Equal(Environment.GetEnvironmentVariable("NAME"), "Toni");
+            // unfortunately .NET removes empty env vars -- there can NEVER be an empty string env var value
+            //  https://msdn.microsoft.com/en-us/library/z46c489x(v=vs.110).aspx#Remarks
+            Assert.Equal(Environment.GetEnvironmentVariable("EMPTY"), null);
+            Assert.Equal(Environment.GetEnvironmentVariable("QUOTE"), "'");
             Assert.Equal(Environment.GetEnvironmentVariable("URL"), "https://github.com/tonerdo");
             Assert.Equal(Environment.GetEnvironmentVariable("CONNECTION"), "user=test;password=secret");
             Assert.Equal(Environment.GetEnvironmentVariable("WHITEBOTH"), "leading and trailing white space");

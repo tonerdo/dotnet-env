@@ -79,8 +79,10 @@ namespace DotNetEnv
 
         private static bool IsQuoted(string s)
         {
-            return (s[0] == '"' && s[s.Length - 1] == '"')
-                || (s[0] == '\'' && s[s.Length - 1] == '\'');
+            return s.Length > 1 && (
+                (s[0] == '"' && s[s.Length - 1] == '"')
+                || (s[0] == '\'' && s[s.Length - 1] == '\'')
+            );
         }
 
         // copied from https://stackoverflow.com/questions/6629020/evaluate-escaped-string/25471811#25471811
