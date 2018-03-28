@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 
 namespace DotNetEnv
@@ -77,5 +79,17 @@ namespace DotNetEnv
             unescapeQuotedValues,
             clobberExistingVars
         );
+        
+        public static string GetString(string key, string fallback = default(string)) =>
+            Environment.GetEnvironmentVariable(key) ?? fallback;
+        
+        public static bool GetBool(string key, bool fallback = default(bool)) => 
+            bool.TryParse(Environment.GetEnvironmentVariable(key), out var value) ? value : fallback;
+        
+        public static int GetInt(string key, int fallback = default(int)) =>
+         int.TryParse(Environment.GetEnvironmentVariable(key), out var value) ? value : fallback;
+        
+        public static double GetDouble(string key, double fallback = default(double)) =>
+         double.TryParse(Environment.GetEnvironmentVariable(key), NumberStyles.Any, CultureInfo.InvariantCulture, out var value) ? value : fallback;
     }
 }
