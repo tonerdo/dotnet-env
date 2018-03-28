@@ -1,11 +1,14 @@
 ﻿using System;
 using System.IO;
+using System.Runtime.InteropServices;
 using Xunit;
 
 namespace DotNetEnv.Tests
 {
     public class EnvTests
     {
+        private static bool IsWindows => RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+
         [Fact]
         public void LoadTest()
         {
@@ -109,6 +112,29 @@ namespace DotNetEnv.Tests
             Environment.SetEnvironmentVariable("URL", "i'm going to be overwritten");
             DotNetEnv.Env.Load(false, false, false, true);
             Assert.Equal(Environment.GetEnvironmentVariable("URL"), "https://github.com/tonerdo");
+        }
+
+        [Fact]
+        public void LoadOsCasingTest()
+        {
+            Environment.SetEnvironmentVariable("CASING", "neither");
+            DotNetEnv.Env.Load("./.env3", clobberExistingVars: false);
+            Assert.Equal(Environment.GetEnvironmentVariable("casing"), IsWindows ? "neither" : "lower");
+            Assert.Equal(Environment.GetEnvironmentVariable("CASING"), "neither");
+
+            DotNetEnv.Env.Load("./.env3", clobberExistingVars: true);
+            Assert.Equal(Environment.GetEnvironmentVariable("casing"), "lower");
+            Assert.Equal(Environment.GetEnvironmentVariable("CASING"), IsWindows ? "lower" : "neither");
+
+            Environment.SetEnvironmentVariable("CASING", null);
+            Environment.SetEnvironmentVariable("casing", "neither");
+            DotNetEnv.Env.Load("./.env3", clobberExistingVars: false);
+            Assert.Equal(Environment.GetEnvironmentVariable("casing"), "neither");
+            Assert.Equal(Environment.GetEnvironmentVariable("CASING"), IsWindows ? "neither" : null);
+
+            DotNetEnv.Env.Load("./.env3", clobberExistingVars: true);
+            Assert.Equal(Environment.GetEnvironmentVariable("casing"), "lower");
+            Assert.Equal(Environment.GetEnvironmentVariable("CASING"), IsWindows ? "lower" : null);
         }
     }
 }
