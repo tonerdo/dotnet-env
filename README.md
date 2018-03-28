@@ -25,19 +25,46 @@ dotnet add package DotNetEnv
 
 ### Load env file
 
-Will automatically look for a `.env` file in the current directory
+`Load()` will automatically look for a `.env` file in the current directory
 ```csharp
 DotNetEnv.Env.Load();
 ```
 
-You can also specify the path to the `.env` file
+Or you can specify the path to the `.env` file
 ```csharp
 DotNetEnv.Env.Load("./path/to/.env");
 ```
 
-The variables in the `.env` can then be accessed through the `System.Environment` class
+It's also possible to load the (text) file as a `Stream`
+
 ```csharp
-System.Environment.GetEnvironmentVariable("IP")
+using (var stream = File.OpenRead("./path/to/.env"))
+{
+    DotNetEnv.Env.Load(stream);
+}
+```
+
+### Accessing environment variables
+
+The variables in the `.env` can then be accessed through the `System.Environment` class
+
+```csharp
+System.Environment.GetEnvironmentVariable("IP");
+```
+
+Or through on of the helper methods:
+
+```csharp
+DotNetEnv.Env.GetString("A_STRING");
+DotNetEnv.Env.GetBool("A_BOOL");
+DotNetEnv.Env.GetInt("AN_INT");
+DotNetEnv.Env.GetDouble("A_DOUBLE");
+```
+
+The helper methods also has a optional second argument which specifies what value to return if the variable is not found:
+
+```csharp
+DotNetEnv.Env.GetString("THIS_DOES_NOT_EXIST", "Variable not found");
 ```
 
 ### Additional arguments
