@@ -115,6 +115,21 @@ namespace DotNetEnv.Tests
         }
 
         [Fact]
+        public void LoadNoRequireEnvTest()
+        {
+            var expected = "totally the original value";
+            Environment.SetEnvironmentVariable("URL", expected);
+            // this env file Does Not Exist
+            DotNetEnv.Env.Load("./.envDNE",
+                new DotNetEnv.Env.LoadOptions(
+                    requireEnvFile: false
+                )
+            );
+            Assert.Equal(Environment.GetEnvironmentVariable("URL"), expected);
+            // it didn't throw an exception and crash for a missing file
+        }
+
+        [Fact]
         public void LoadOsCasingTest()
         {
             Environment.SetEnvironmentVariable("CASING", "neither");
