@@ -69,12 +69,19 @@ DotNetEnv.Env.GetString("THIS_DOES_NOT_EXIST", "Variable not found");
 
 ### Additional arguments
 
-You can also control whitespace trimming and allowing hashes in values
+You can also pass a LoadOptions object arg to all DotNetEnv.Env.Load variants to affect the Load/Parse behavior:
+
 ```csharp
-DotNetEnv.Env.Load(false, false);
+new DotNetEnv.Env.LoadOptions(
+    trimWhitespace: false,
+    isEmbeddedHashComment: false,
+    unescapeQuotedValues: false,
+    clobberExistingVars: false
+)
 ```
 
-Both parameters default to true, which means:
+All parameters default to true, which means:
+
 1. `trimWhitespace`, first arg: true in order to trim
  leading and trailing whitespace from keys and values such that
 
@@ -145,13 +152,25 @@ KEY=value
 
 ```csharp
 System.Environment.SetEnvironmentVariable("KEY", "really important value, don't overwrite");
-DotNetEnv.Env.Load(false, false, false, false); // fourth arg false, don't overwrite existing variables
-System.Environment.GetEnvironmentVariable("KEY"); // == "really important value, don't overwrite"
+DotNetEnv.Env.Load(
+    new DotNetEnv.Env.LoadOptions(
+        clobberExistingVars: false
+    )
+)
+"really important value, don't overwrite" == System.Environment.GetEnvironmentVariable("KEY")  // not "value" from the .env file
 ```
 
 ## Issue Reporting
 
 If you have found a bug or if you have a feature request, please report them at this repository issues section.
+
+## Contributing
+
+Run `dotnet test test/DotNetEnv.Tests` to run all tests.
+
+`src/DotNetEnvEnv/Env.cs` is the entry point for all behavior.
+
+Open a PR on Github if you have some changes, or an issue if you want to discuss some proposed changes before creating a PR for them.
 
 ## License
 
