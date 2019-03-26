@@ -20,6 +20,7 @@ namespace DotNetEnv
 
         public static void Load(string path, LoadOptions options)
         {
+            if (!options.RequireEnvFile && !File.Exists(path)) return;
             Load(File.ReadAllLines(path), options);
         }
 
@@ -133,18 +134,21 @@ namespace DotNetEnv
             public bool IsEmbeddedHashComment { get; }
             public bool UnescapeQuotedValues { get; }
             public bool ClobberExistingVars { get; }
+            public bool RequireEnvFile { get; }
 
             public LoadOptions(
                 bool trimWhitespace = true,
                 bool isEmbeddedHashComment = true,
                 bool unescapeQuotedValues = true,
-                bool clobberExistingVars = true
+                bool clobberExistingVars = true,
+                bool requireEnvFile = true
             )
             {
                 TrimWhitespace = trimWhitespace;
                 IsEmbeddedHashComment = isEmbeddedHashComment;
                 UnescapeQuotedValues = unescapeQuotedValues;
                 ClobberExistingVars = clobberExistingVars;
+                RequireEnvFile = requireEnvFile;
             }
         }
     }
