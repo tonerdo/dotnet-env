@@ -7,6 +7,9 @@ namespace DotNetEnv
 {
     public class Env
     {
+
+        public const string DEFAULT_ENVFILENAME = ".env";
+
         public static void Load(string[] lines, LoadOptions options)
         {
             Vars envFile = Parser.Parse(
@@ -40,7 +43,7 @@ namespace DotNetEnv
         }
 
         public static void Load(LoadOptions options)
-        => Load(Path.Combine(Directory.GetCurrentDirectory(), ".env"), options);
+        => Load(Path.Combine(Directory.GetCurrentDirectory(), DEFAULT_ENVFILENAME), options);
 
         public static string GetString(string key, string fallback = default(string)) =>
             Environment.GetEnvironmentVariable(key) ?? fallback;
