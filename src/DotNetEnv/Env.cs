@@ -7,7 +7,6 @@ namespace DotNetEnv
 {
     public class Env
     {
-
         public const string DEFAULT_ENVFILENAME = ".env";
 
         public static void Load(string[] lines, LoadOptions options)
