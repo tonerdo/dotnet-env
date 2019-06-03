@@ -9,24 +9,26 @@ namespace DotNetEnv
     {
         public const string DEFAULT_ENVFILENAME = ".env";
 
-        public static void Load(string[] lines, LoadOptions options)
+        public static Dictionary<string, string> Load(string[] lines, LoadOptions options)
         {
             Vars envFile = Parser.Parse(
                 lines,
                 options.TrimWhitespace,
                 options.IsEmbeddedHashComment,
-                options.UnescapeQuotedValues
+                options.UnescapeQuotedValues,
+                options.ParseVariables
             );
             LoadVars.SetEnvironmentVariables(envFile, options.ClobberExistingVars);
+            return envFile;
         }
 
-        public static void Load(string path, LoadOptions options)
+        public static Dictionary<string, string> Load(string path, LoadOptions options)
         {
-            if (!options.RequireEnvFile && !File.Exists(path)) return;
-            Load(File.ReadAllLines(path), options);
+            if (!options.RequireEnvFile && !File.Exists(path)) return new Dictionary<string, string>();
+            return Load(File.ReadAllLines(path), options);
         }
 
-        public static void Load(Stream file, LoadOptions options)
+        public static Dictionary<string, string> Load(Stream file, LoadOptions options)
         {
             var lines = new List<string>();
             var currentLine = "";
@@ -38,10 +40,10 @@ namespace DotNetEnv
                     if (currentLine != null) lines.Add(currentLine);
                 }
             }
-            Load(lines.ToArray(), options);
+            return Load(lines.ToArray(), options);
         }
 
-        public static void Load(LoadOptions options)
+        public static Dictionary<string, string> Load(LoadOptions options)
         => Load(Path.Combine(Directory.GetCurrentDirectory(), DEFAULT_ENVFILENAME), options);
 
         public static string GetString(string key, string fallback = default(string)) =>
@@ -137,13 +139,15 @@ namespace DotNetEnv
             public bool UnescapeQuotedValues { get; }
             public bool ClobberExistingVars { get; }
             public bool RequireEnvFile { get; }
+            public bool ParseVariables { get; }
 
             public LoadOptions(
                 bool trimWhitespace = true,
                 bool isEmbeddedHashComment = true,
                 bool unescapeQuotedValues = true,
                 bool clobberExistingVars = true,
-                bool requireEnvFile = true
+                bool requireEnvFile = true,
+                bool parseVariables = true
             )
             {
                 TrimWhitespace = trimWhitespace;
@@ -151,6 +155,7 @@ namespace DotNetEnv
                 UnescapeQuotedValues = unescapeQuotedValues;
                 ClobberExistingVars = clobberExistingVars;
                 RequireEnvFile = requireEnvFile;
+                ParseVariables = parseVariables;
             }
         }
     }

@@ -152,6 +152,18 @@ namespace DotNetEnv.Tests
             Assert.Equal(Environment.GetEnvironmentVariable("CASING"), IsWindows ? "lower" : null);
         }
 
+        [Fact]
+        public void ParseVariablesTest()
+        {
+            DotNetEnv.Env.Load("./.env4");
+            Assert.Equal(Environment.GetEnvironmentVariable("TEST"), "test");
+            Assert.Equal(Environment.GetEnvironmentVariable("TEST1"), "test1");
+            Assert.Equal(Environment.GetEnvironmentVariable("TEST2"), "test");
+            Assert.Equal(Environment.GetEnvironmentVariable("TEST3"), "testtest");
+            Assert.Equal(Environment.GetEnvironmentVariable("TEST4"), "testtest1");
+            Assert.Equal(Environment.GetEnvironmentVariable("TEST5"), "test:testtest1 and test1");
+        }
+
         #region "Obsolete parameters list"
 
         [Fact]
