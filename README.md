@@ -76,7 +76,8 @@ new DotNetEnv.Env.LoadOptions(
     trimWhitespace: false,
     isEmbeddedHashComment: false,
     unescapeQuotedValues: false,
-    clobberExistingVars: false
+    clobberExistingVars: false,
+	parseVariables: false
 )
 ```
 
@@ -158,6 +159,21 @@ DotNetEnv.Env.Load(
     )
 )
 "really important value, don't overwrite" == System.Environment.GetEnvironmentVariable("KEY")  // not "value" from the .env file
+```
+
+5. `parseVariables`, fifth arg: true to parse existing environment variables
+
+```env
+FIRST_KEY=value1
+SECOND_KEY=value2and$FIRST_KEY
+THIRD_KEY=$EXISTING_ENVIRONMENT_VARIABLE;andvalue3
+```
+
+Would then be available as
+```csharp
+"value1" == System.Environment.GetEnvironmentVariable("FIRST_KEY")
+"value2andvalue1" == System.Environment.GetEnvironmentVariable("SECOND_KEY")
+"value;andvalue3" == System.Environment.GetEnvironmentVariable("THIRD_KEY") //EXISTING_ENVIRONMENT_VARIABLE already set to "value"
 ```
 
 ## Issue Reporting
