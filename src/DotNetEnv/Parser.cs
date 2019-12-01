@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -7,6 +8,7 @@ namespace DotNetEnv
     internal class Parser
     {
         private static Regex ExportRegex = new Regex("^\\s*export\\s+");
+        private static Regex VariableRegex = new Regex("\\$[0-9a-zA-Z_]+");
 
         private static bool IsComment(string line)
         {
@@ -25,11 +27,42 @@ namespace DotNetEnv
             return match.Success ? line.Substring(match.Length) : line;
         }
 
+        private static string ParseVariables(Vars vars, string line)
+        {
+            var result = line;
+            while (true)
+            {
+                var match = VariableRegex.Match(result);
+                if (match.Success)
+                {
+                    var key = match.Groups[0].Value.Substring(1);
+                    var value = vars.ContainsKey(key) ? vars[key] : Environment.GetEnvironmentVariable(key);
+                    result = Replace(result, match.Index, match.Length, value);
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            return result;
+        }
+
+        private static string Replace(string s, int index, int length, string replacement)
+        {
+            var builder = new StringBuilder();
+            builder.Append(s.Substring(0, index));
+            builder.Append(replacement);
+            builder.Append(s.Substring(index + length));
+            return builder.ToString();
+        }
+
         public static Vars Parse(
             string[] lines,
             bool trimWhitespace = true,
             bool isEmbeddedHashComment = true,
-            bool unescapeQuotedValues = true
+            bool unescapeQuotedValues = true,
+            bool parseVariables = true
         )
         {
             Vars vars = new Vars();
@@ -66,6 +99,11 @@ namespace DotNetEnv
                     keyValuePair[1] = Unescape(
                         keyValuePair[1].Substring(1, keyValuePair[1].Length - 2)
                     );
+                }
+
+                if (parseVariables)
+                {
+                    keyValuePair[1] = ParseVariables(vars, keyValuePair[1]);
                 }
 
                 vars.Add(
