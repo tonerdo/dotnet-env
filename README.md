@@ -77,7 +77,7 @@ new DotNetEnv.Env.LoadOptions(
     isEmbeddedHashComment: false,
     unescapeQuotedValues: false,
     clobberExistingVars: false,
-	parseVariables: false
+    parseVariables: false
 )
 ```
 
