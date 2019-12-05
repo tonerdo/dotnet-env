@@ -120,11 +120,7 @@ namespace DotNetEnv.Tests
             var expected = "totally the original value";
             Environment.SetEnvironmentVariable("URL", expected);
             // this env file Does Not Exist
-            DotNetEnv.Env.Load("./.envDNE",
-                new DotNetEnv.Env.LoadOptions(
-                    requireEnvFile: false
-                )
-            );
+            DotNetEnv.Env.Load("./.envDNE", new DotNetEnv.Env.LoadOptions());
             Assert.Equal(Environment.GetEnvironmentVariable("URL"), expected);
             // it didn't throw an exception and crash for a missing file
         }
@@ -163,79 +159,5 @@ namespace DotNetEnv.Tests
             Assert.Equal(Environment.GetEnvironmentVariable("TEST4"), "testtest1");
             Assert.Equal(Environment.GetEnvironmentVariable("TEST5"), "test:testtest1 and test1");
         }
-
-        #region "Obsolete parameters list"
-
-        [Fact]
-        public void ObsoleteLoadArgsTest()
-        {
-            DotNetEnv.Env.Load(true);
-            Assert.Equal(Environment.GetEnvironmentVariable("WHITEBOTH"), "leading and trailing white space");
-            DotNetEnv.Env.Load(false);
-            Assert.Equal(Environment.GetEnvironmentVariable("  WHITEBOTH  "), "  leading and trailing white space   ");
-            DotNetEnv.Env.Load(true, true);
-            Assert.Equal(Environment.GetEnvironmentVariable("PASSWORD"), "Google");
-            DotNetEnv.Env.Load(true, false);
-            Assert.Equal(Environment.GetEnvironmentVariable("PASSWORD"), "Google#Facebook");
-            DotNetEnv.Env.Load(true, true, true);
-            Assert.Equal(Environment.GetEnvironmentVariable("SSL_CERT"), "SPECIAL STUFF---\nLONG-BASE64\\ignore\"slash");
-            DotNetEnv.Env.Load(true, true, false);
-            Assert.Equal(Environment.GetEnvironmentVariable("SSL_CERT"), "\"SPECIAL STUFF---\\nLONG-BASE64\\ignore\"slash\"");
-        }
-
-        [Fact]
-        public void ObsoleteLoadPathArgsTest()
-        {
-            DotNetEnv.Env.Load("./.env2", true, true);
-            Assert.Equal(Environment.GetEnvironmentVariable("WHITELEAD"), "leading white space followed by comment");
-            DotNetEnv.Env.Load("./.env2", false, true);
-            Assert.Equal(Environment.GetEnvironmentVariable("WHITELEAD"), "  leading white space followed by comment  ");
-            DotNetEnv.Env.Load("./.env2", true, false);
-            Assert.Equal(Environment.GetEnvironmentVariable("WHITELEAD"), "leading white space followed by comment  # comment");
-            DotNetEnv.Env.Load("./.env2", false, false);
-            Assert.Equal(Environment.GetEnvironmentVariable("WHITELEAD"), "  leading white space followed by comment  # comment");
-            DotNetEnv.Env.Load("./.env2", false, false, true);
-            Assert.Equal(Environment.GetEnvironmentVariable("UNICODE"), "® 🚀 日本");
-            DotNetEnv.Env.Load("./.env2", false, false, false);
-            Assert.Equal(Environment.GetEnvironmentVariable("UNICODE"), "'\\u00ae \\U0001F680 日本'");
-        }
-
-        [Fact]
-        public void ObsoleteLoadNoClobberTest()
-        {
-            var expected = "totally the original value";
-            Environment.SetEnvironmentVariable("URL", expected);
-            DotNetEnv.Env.Load(false, false, false, false);
-            Assert.Equal(Environment.GetEnvironmentVariable("URL"), expected);
-
-            Environment.SetEnvironmentVariable("URL", "i'm going to be overwritten");
-            DotNetEnv.Env.Load(false, false, false, true);
-            Assert.Equal(Environment.GetEnvironmentVariable("URL"), "https://github.com/tonerdo");
-        }
-
-        [Fact]
-        public void ObsoleteLoadOsCasingTest()
-        {
-            Environment.SetEnvironmentVariable("CASING", "neither");
-            DotNetEnv.Env.Load("./.env3", clobberExistingVars: false);
-            Assert.Equal(Environment.GetEnvironmentVariable("casing"), IsWindows ? "neither" : "lower");
-            Assert.Equal(Environment.GetEnvironmentVariable("CASING"), "neither");
-
-            DotNetEnv.Env.Load("./.env3", clobberExistingVars: true);
-            Assert.Equal(Environment.GetEnvironmentVariable("casing"), "lower");
-            Assert.Equal(Environment.GetEnvironmentVariable("CASING"), IsWindows ? "lower" : "neither");
-
-            Environment.SetEnvironmentVariable("CASING", null);
-            Environment.SetEnvironmentVariable("casing", "neither");
-            DotNetEnv.Env.Load("./.env3", clobberExistingVars: false);
-            Assert.Equal(Environment.GetEnvironmentVariable("casing"), "neither");
-            Assert.Equal(Environment.GetEnvironmentVariable("CASING"), IsWindows ? "neither" : null);
-
-            DotNetEnv.Env.Load("./.env3", clobberExistingVars: true);
-            Assert.Equal(Environment.GetEnvironmentVariable("casing"), "lower");
-            Assert.Equal(Environment.GetEnvironmentVariable("CASING"), IsWindows ? "lower" : null);
-        }
-
-        #endregion
     }
 }

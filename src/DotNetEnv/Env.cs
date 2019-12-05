@@ -9,8 +9,12 @@ namespace DotNetEnv
     {
         public const string DEFAULT_ENVFILENAME = ".env";
 
-        public static void Load(string[] lines, LoadOptions options)
+        private static LoadOptions DEFAULT_OPTIONS = new LoadOptions();
+
+        public static void Load(string[] lines, LoadOptions options = null)
         {
+            if (options == null) options = DEFAULT_OPTIONS;
+
             Vars envFile = Parser.Parse(
                 lines,
                 options.TrimWhitespace,
@@ -21,13 +25,13 @@ namespace DotNetEnv
             LoadVars.SetEnvironmentVariables(envFile, options.ClobberExistingVars);
         }
 
-        public static void Load(string path, LoadOptions options)
+        public static void Load(string path, LoadOptions options = null)
         {
-            if (!options.RequireEnvFile && !File.Exists(path)) return;
+            if (!File.Exists(path)) return;
             Load(File.ReadAllLines(path), options);
         }
 
-        public static void Load(Stream file, LoadOptions options)
+        public static void Load(Stream file, LoadOptions options = null)
         {
             var lines = new List<string>();
             var currentLine = "";
@@ -42,7 +46,7 @@ namespace DotNetEnv
             Load(lines.ToArray(), options);
         }
 
-        public static void Load(LoadOptions options) =>
+        public static void Load(LoadOptions options = null) =>
             Load(Path.Combine(Directory.GetCurrentDirectory(), DEFAULT_ENVFILENAME), options);
 
         public static string GetString(string key, string fallback = default(string)) =>
@@ -57,87 +61,12 @@ namespace DotNetEnv
         public static double GetDouble(string key, double fallback = default(double)) =>
             double.TryParse(Environment.GetEnvironmentVariable(key), NumberStyles.Any, CultureInfo.InvariantCulture, out var value) ? value : fallback;
 
-        #region "Obsolete parameters list"
-
-        [Obsolete("list of flag arguments is deprecated, use the options object")]
-        public static void Load(
-            string[] lines,
-            bool trimWhitespace = true,
-            bool isEmbeddedHashComment = true,
-            bool unescapeQuotedValues = true,
-            bool clobberExistingVars = true
-        )
-        => Load(
-            lines,
-            new LoadOptions(
-                trimWhitespace,
-                isEmbeddedHashComment,
-                unescapeQuotedValues,
-                clobberExistingVars
-            )
-        );
-        
-        [Obsolete("list of flag arguments is deprecated, use the options object")]
-        public static void Load(
-            string path,
-            bool trimWhitespace = true,
-            bool isEmbeddedHashComment = true,
-            bool unescapeQuotedValues = true,
-            bool clobberExistingVars = true
-        )
-        => Load(
-            path,
-            new LoadOptions(
-                trimWhitespace,
-                isEmbeddedHashComment,
-                unescapeQuotedValues,
-                clobberExistingVars
-            )
-        );
-
-        [Obsolete("list of flag arguments is deprecated, use the options object")]
-        public static void Load(
-            Stream file,
-            bool trimWhitespace = true,
-            bool isEmbeddedHashComment = true,
-            bool unescapeQuotedValues = true,
-            bool clobberExistingVars = true
-        )
-        => Load(
-            file,
-            new LoadOptions(
-                trimWhitespace,
-                isEmbeddedHashComment,
-                unescapeQuotedValues,
-                clobberExistingVars
-            )
-        );
-
-        [Obsolete("list of flag arguments is deprecated, use the options object")]
-        public static void Load(
-            bool trimWhitespace = true,
-            bool isEmbeddedHashComment = true,
-            bool unescapeQuotedValues = true,
-            bool clobberExistingVars = true
-        )
-        => Load(
-            new LoadOptions(
-                trimWhitespace,
-                isEmbeddedHashComment,
-                unescapeQuotedValues,
-                clobberExistingVars
-            )
-        );
-
-        #endregion
-
         public class LoadOptions
         {
             public bool TrimWhitespace { get; }
             public bool IsEmbeddedHashComment { get; }
             public bool UnescapeQuotedValues { get; }
             public bool ClobberExistingVars { get; }
-            public bool RequireEnvFile { get; }
             public bool ParseVariables { get; }
 
             public LoadOptions(
@@ -145,7 +74,6 @@ namespace DotNetEnv
                 bool isEmbeddedHashComment = true,
                 bool unescapeQuotedValues = true,
                 bool clobberExistingVars = true,
-                bool requireEnvFile = true,
                 bool parseVariables = true
             )
             {
@@ -153,7 +81,6 @@ namespace DotNetEnv
                 IsEmbeddedHashComment = isEmbeddedHashComment;
                 UnescapeQuotedValues = unescapeQuotedValues;
                 ClobberExistingVars = clobberExistingVars;
-                RequireEnvFile = requireEnvFile;
                 ParseVariables = parseVariables;
             }
         }
