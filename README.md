@@ -176,6 +176,21 @@ Would then be available as
 "value;andvalue3" == System.Environment.GetEnvironmentVariable("THIRD_KEY") //EXISTING_ENVIRONMENT_VARIABLE already set to "value"
 ```
 
+## A Note about Production and the Purpose of this library
+
+You should not be using a .env file in production.  The purpose of this library is to enable easy local development.
+
+Your dev team should have a .env with localdev testing credentials/etc stored in some secure storage -- 1pass/lastpass or s3 bucket or something like that.
+
+Then every developer gets a copy of that file as part of onboarding that they save into their project dir that uses DotNetEnv to get env vars for configuration.
+
+When the application is deployed into production, actual env vars should be used, not a static .env file!
+
+This does mean that env vars, and thus this library, are only useful for load time configuration -- not anything that changes during the lifetime of an application's run.
+(You should load env var values during startup or on first access and not look them up more than once during the application's lifetime.)
+
+Admittedly, this is best practices advice, and if you want to use .env files in production, that's up to you.  But at least I have told you so. :)
+
 ## Issue Reporting
 
 If you have found a bug or if you have a feature request, please report them at this repository issues section.
