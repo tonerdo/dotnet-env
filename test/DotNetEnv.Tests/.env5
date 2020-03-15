@@ -1,0 +1,14 @@
+﻿#Test Env File for Comment variations
+
+QTEST1=1234#this is a comment
+
+#Double Quoted Variables
+QTEST="1234#this is not a comment"
+QTEST2="This is a test" #please ignore
+QTEST3="1234 #not_comment" #please ignore
+
+#Single Quoted Variables
+QTEST4='9876#this is not a comment'
+QTEST5='This is a another test' #please ignore
+QTEST6='9876 #not_comment' #please ignore
+

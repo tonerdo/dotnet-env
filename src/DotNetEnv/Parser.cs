@@ -15,10 +15,26 @@ namespace DotNetEnv
             return line.Trim().StartsWith("#");
         }
 
+        private static string GetQuotedValue(string input, string delimeter)
+        {
+            if (input.Contains(delimeter))
+            {
+                int quoteStart = input.IndexOf(delimeter);
+                int quoteEnd = input.LastIndexOf(delimeter)+1;
+                return input.Substring(quoteStart, quoteEnd);
+            }
+            return input;
+        }
         private static string RemoveInlineComment(string line)
         {
-            int pos = line.IndexOf('#');
-            return pos >= 0 ? line.Substring(0, pos) : line;
+            string value = GetQuotedValue(line, "\"");
+            value = GetQuotedValue(value, "\'");
+
+            if (IsQuoted(value))
+                return value;
+      
+            int pos = value.IndexOf('#');
+            return pos >= 0 ? value.Substring(0, pos) : line;
         }
 
         private static string RemoveExportKeyword(string line)
@@ -75,11 +91,6 @@ namespace DotNetEnv
                 if (IsComment(line))
                     continue;
 
-                if (isEmbeddedHashComment)
-                {
-                    line = RemoveInlineComment(line);
-                }
-
                 line = RemoveExportKeyword(line);
 
                 string[] keyValuePair = line.Split(new char[] { '=' }, 2);
@@ -87,6 +98,11 @@ namespace DotNetEnv
                 // skip malformed lines
                 if (keyValuePair.Length != 2)
                     continue;
+
+                if (isEmbeddedHashComment)
+                {
+                    keyValuePair[1] = RemoveInlineComment(keyValuePair[1]);
+                }
 
                 if (trimWhitespace)
                 {

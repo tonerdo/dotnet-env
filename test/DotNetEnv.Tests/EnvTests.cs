@@ -159,5 +159,53 @@ namespace DotNetEnv.Tests
             Assert.Equal(Environment.GetEnvironmentVariable("TEST4"), "testtest1");
             Assert.Equal(Environment.GetEnvironmentVariable("TEST5"), "test:testtest1 and test1");
         }
+
+        [Fact]
+        public void HashIgnoredWhenValueDoubleQuoted()
+        {
+            DotNetEnv.Env.Load("./.env5");
+        }
+
+        [Fact]
+        public void InlineCommentsRemovedWhenValueNotDoubleQuoted()
+        {
+            DotNetEnv.Env.Load("./.env5");
+            Assert.Equal("1234", Environment.GetEnvironmentVariable("QTEST1"));
+        }
+
+        [Fact]
+        public void CommentAfterDoubleQuotedStringIsIgnored()
+        {
+            DotNetEnv.Env.Load("./.env5");
+            Assert.Equal("This is a test", Environment.GetEnvironmentVariable("QTEST2"));
+        }
+
+        [Fact]
+        public void HashIgnoredWhenValueDoubleQuotedCommentOutsideIgnored()
+        {
+            DotNetEnv.Env.Load("./.env5");
+            Assert.Equal("1234 #not_comment", Environment.GetEnvironmentVariable("QTEST3"));
+        }
+
+        [Fact]
+        public void HashIgnoredWhenValueSingleQuoted()
+        {
+            DotNetEnv.Env.Load("./.env5");
+            Assert.Equal("9876#this is not a comment", Environment.GetEnvironmentVariable("QTEST4"));
+        }
+
+        [Fact]
+        public void CommentAfterSingleQuotedStringIsIgnored()
+        {
+            DotNetEnv.Env.Load("./.env5");
+            Assert.Equal("This is a another test", Environment.GetEnvironmentVariable("QTEST5"));
+        }
+
+        [Fact]
+        public void HashIgnoredWhenValueSingleQuotedCommentOutsideIgnored()
+        {
+            DotNetEnv.Env.Load("./.env5");
+            Assert.Equal("9876 #not_comment", Environment.GetEnvironmentVariable("QTEST6"));
+        }
     }
 }
