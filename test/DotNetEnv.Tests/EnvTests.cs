@@ -36,7 +36,7 @@ namespace DotNetEnv.Tests
             Assert.Equal("leading white space followed by comment", Environment.GetEnvironmentVariable("WHITELEAD"));
             Assert.Equal("® 🚀 日本", Environment.GetEnvironmentVariable("UNICODE"));
         }
-        
+
         [Fact]
         public void LoadStreamTest()
         {
@@ -51,7 +51,7 @@ namespace DotNetEnv.Tests
             Assert.Equal("leading and trailing white space", Environment.GetEnvironmentVariable("WHITEBOTH"));
             Assert.Equal("SPECIAL STUFF---\nLONG-BASE64\\ignore\"slash", Environment.GetEnvironmentVariable("SSL_CERT"));
         }
-        
+
         [Fact]
         public void LoadLinesTest()
         {
@@ -158,6 +158,61 @@ namespace DotNetEnv.Tests
             Assert.Equal("testtest", Environment.GetEnvironmentVariable("TEST3"));
             Assert.Equal("testtest1", Environment.GetEnvironmentVariable("TEST4"));
             Assert.Equal("test:testtest1 and test1", Environment.GetEnvironmentVariable("TEST5"));
+        }
+
+        [Fact]
+        public void QuotedHashTest()
+        {
+            DotNetEnv.Env.Load("./.env5");
+            Assert.Equal("1234", Environment.GetEnvironmentVariable("QTEST0"));
+            Assert.Equal("1234#this is not a comment", Environment.GetEnvironmentVariable("QTEST1"));
+            Assert.Equal("This is a test", Environment.GetEnvironmentVariable("QTEST2"));
+            Assert.Equal("1234 #not_comment", Environment.GetEnvironmentVariable("QTEST3"));
+            Assert.Equal("9876#this is not a comment", Environment.GetEnvironmentVariable("QTEST4"));
+            Assert.Equal("This is a another test", Environment.GetEnvironmentVariable("QTEST5"));
+            Assert.Equal("9876 #not_comment", Environment.GetEnvironmentVariable("QTEST6"));
+            Assert.Equal("This isn't working", Environment.GetEnvironmentVariable("QTEST7"));
+            Assert.Equal("Hi \"Bob\"!", Environment.GetEnvironmentVariable("QTEST8"));
+            Assert.Equal("Hi \"Bob\"!", Environment.GetEnvironmentVariable("QTEST9"));
+            Assert.Equal("This isn't working", Environment.GetEnvironmentVariable("QTEST10"));
+            Assert.Equal("This isn't \"working\" #amiright?", Environment.GetEnvironmentVariable("QTEST11"));
+            Assert.Equal("This isn't \"working\" #amiright?", Environment.GetEnvironmentVariable("QTEST12"));
+        }
+
+        [Fact]
+        public void ExportMultilineTest()
+        {
+            DotNetEnv.Env.Load("./.env6");
+            Assert.Equal("some value", Environment.GetEnvironmentVariable("BASHVAR"));
+            Assert.Equal("other value", Environment.GetEnvironmentVariable("exportOTHERVAR"));
+            Assert.Equal("env var", Environment.GetEnvironmentVariable("EXPORT ENVVAR1"));
+            Assert.Equal(@"
+HEADER
+---
+BODY
+---
+FOOTER
+", Environment.GetEnvironmentVariable("MULTILINE"));
+            Assert.Equal("works", Environment.GetEnvironmentVariable("LEADEXPORT"));
+            Assert.Equal(@"
+RSA HEADER
+---
+base64
+base64
+base64
+---
+", Environment.GetEnvironmentVariable("PRIVATE_KEY"));
+        }
+
+        [Fact]
+        public void OtherTest()
+        {
+            DotNetEnv.Env.Load("./.env7");
+            // Assert.Equal("xxx", Environment.GetEnvironmentVariable("TEST1"));
+            // Assert.Equal("xxx", Environment.GetEnvironmentVariable("TEST1"));
+            // Assert.Equal("xxx", Environment.GetEnvironmentVariable("TEST1"));
+            // Assert.Equal("xxx", Environment.GetEnvironmentVariable("TEST1"));
+            // Assert.Equal("xxx", Environment.GetEnvironmentVariable("TEST1"));
         }
     }
 }

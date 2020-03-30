@@ -1,0 +1,19 @@
+export BASHVAR=some value
+exportOTHERVAR=other value
+EXPORT ENVVAR1=env var
+export MULTILINE="
+HEADER
+---
+BODY
+---
+FOOTER
+"
+  export LEADEXPORT=works
+PRIVATE_KEY="
+RSA HEADER
+---
+base64
+base64
+base64
+---
+"
