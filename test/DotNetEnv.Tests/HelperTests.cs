@@ -15,9 +15,9 @@ namespace DotNetEnv.Tests
             
             Environment.SetEnvironmentVariable(key, value);
             
-            Assert.Equal(Env.GetString(key), value);
-            Assert.Equal(Env.GetString(VariableNotPresentKey), default(string));
-            Assert.Equal(Env.GetString(VariableNotPresentKey, "none"), "none");
+            Assert.Equal(value, Env.GetString(key));
+            Assert.Equal(default(string), Env.GetString(VariableNotPresentKey));
+            Assert.Equal("none", Env.GetString(VariableNotPresentKey, "none"));
         }
         
         [Fact]
@@ -31,10 +31,10 @@ namespace DotNetEnv.Tests
             Environment.SetEnvironmentVariable(key1, value1);
             Environment.SetEnvironmentVariable(key2, value2);
             
-            Assert.Equal(Env.GetBool(key1), true);
-            Assert.Equal(Env.GetBool(key2), false);
-            Assert.Equal(Env.GetBool(VariableNotPresentKey), false);
-            Assert.Equal(Env.GetBool(VariableNotPresentKey, true), true);
+            Assert.True(Env.GetBool(key1));
+            Assert.False(Env.GetBool(key2));
+            Assert.False(Env.GetBool(VariableNotPresentKey));
+            Assert.True(Env.GetBool(VariableNotPresentKey, true));
         }
         
         [Fact]
@@ -45,9 +45,9 @@ namespace DotNetEnv.Tests
             
             Environment.SetEnvironmentVariable(key1, value1);
             
-            Assert.Equal(Env.GetInt(key1), 1);
-            Assert.Equal(Env.GetInt(VariableNotPresentKey), 0);
-            Assert.Equal(Env.GetInt(VariableNotPresentKey, -1), -1);
+            Assert.Equal(1, Env.GetInt(key1));
+            Assert.Equal(0, Env.GetInt(VariableNotPresentKey));
+            Assert.Equal(-1, Env.GetInt(VariableNotPresentKey, -1));
         }
         
         [Fact]
@@ -61,10 +61,10 @@ namespace DotNetEnv.Tests
             Environment.SetEnvironmentVariable(key1, value1);
             Environment.SetEnvironmentVariable(key2, value2);
             
-            Assert.Equal(Env.GetDouble(key1), 1.2);
-            Assert.Equal(Env.GetDouble(key2), 12D);
-            Assert.Equal(Env.GetDouble(VariableNotPresentKey), 0);
-            Assert.Equal(Env.GetDouble(VariableNotPresentKey, -1.2), -1.2);
+            Assert.Equal(1.2, Env.GetDouble(key1));
+            Assert.Equal(12D, Env.GetDouble(key2));
+            Assert.Equal(0, Env.GetDouble(VariableNotPresentKey));
+            Assert.Equal(-1.2, Env.GetDouble(VariableNotPresentKey, -1.2));
         }
     }
 }
