@@ -36,7 +36,7 @@ namespace DotNetEnv.Tests
             Assert.Equal("leading white space followed by comment", Environment.GetEnvironmentVariable("WHITELEAD"));
             Assert.Equal("® 🚀 日本", Environment.GetEnvironmentVariable("UNICODE"));
         }
-        
+
         [Fact]
         public void LoadStreamTest()
         {
@@ -51,7 +51,7 @@ namespace DotNetEnv.Tests
             Assert.Equal("leading and trailing white space", Environment.GetEnvironmentVariable("WHITEBOTH"));
             Assert.Equal("SPECIAL STUFF---\nLONG-BASE64\\ignore\"slash", Environment.GetEnvironmentVariable("SSL_CERT"));
         }
-        
+
         [Fact]
         public void LoadLinesTest()
         {
@@ -158,6 +158,92 @@ namespace DotNetEnv.Tests
             Assert.Equal("testtest", Environment.GetEnvironmentVariable("TEST3"));
             Assert.Equal("testtest1", Environment.GetEnvironmentVariable("TEST4"));
             Assert.Equal("test:testtest1 and test1", Environment.GetEnvironmentVariable("TEST5"));
+        }
+
+        [Fact]
+        public void ParseTest()
+        {
+            var dict = DotNetEnv.Env.Parse();
+            Assert.Equal("Toni", dict["NAME"]);
+            Assert.Equal("", dict["EMPTY"]);
+            Assert.Equal("'", dict["QUOTE"]);
+            Assert.Equal("https://github.com/tonerdo", dict["URL"]);
+            Assert.Equal("user=test;password=secret", dict["CONNECTION"]);
+            Assert.Equal("leading and trailing white space", dict["WHITEBOTH"]);
+            Assert.Equal("SPECIAL STUFF---\nLONG-BASE64\\ignore\"slash", dict["SSL_CERT"]);
+        }
+
+        [Fact]
+        public void ParsePathTest()
+        {
+            var dict = DotNetEnv.Env.Parse("./.env2");
+            Assert.Equal("127.0.0.1", dict["IP"]);
+            Assert.Equal("8080", dict["PORT"]);
+            Assert.Equal("example.com", dict["DOMAIN"]);
+            Assert.Equal("some text export other text", dict["EMBEDEXPORT"]);
+            Assert.False(dict.ContainsKey("COMMENTLEAD"));
+            Assert.Equal("leading white space followed by comment", dict["WHITELEAD"]);
+            Assert.Equal("® 🚀 日本", dict["UNICODE"]);
+        }
+
+        [Fact]
+        public void ParseStreamTest()
+        {
+            var dict = DotNetEnv.Env.Parse(File.OpenRead("./.env"));
+            Assert.Equal("Toni", dict["NAME"]);
+            Assert.Equal("", dict["EMPTY"]);
+            Assert.Equal("'", dict["QUOTE"]);
+            Assert.Equal("https://github.com/tonerdo", dict["URL"]);
+            Assert.Equal("user=test;password=secret", dict["CONNECTION"]);
+            Assert.Equal("leading and trailing white space", dict["WHITEBOTH"]);
+            Assert.Equal("SPECIAL STUFF---\nLONG-BASE64\\ignore\"slash", dict["SSL_CERT"]);
+        }
+
+        [Fact]
+        public void ParseLinesTest()
+        {
+            var dict = DotNetEnv.Env.Parse(File.ReadAllLines("./.env"));
+            Assert.Equal("Toni", dict["NAME"]);
+            Assert.Equal("", dict["EMPTY"]);
+            Assert.Equal("'", dict["QUOTE"]);
+            Assert.Equal("https://github.com/tonerdo", dict["URL"]);
+            Assert.Equal("user=test;password=secret", dict["CONNECTION"]);
+            Assert.Equal("leading and trailing white space", dict["WHITEBOTH"]);
+            Assert.Equal("SPECIAL STUFF---\nLONG-BASE64\\ignore\"slash", dict["SSL_CERT"]);
+        }
+
+        [Fact]
+        public void ParseArgsTest()
+        {
+            var dict = DotNetEnv.Env.Parse(new DotNetEnv.Env.ParseOptions(true));
+            Assert.Equal("leading and trailing white space", dict["WHITEBOTH"]);
+            dict = DotNetEnv.Env.Parse(new DotNetEnv.Env.ParseOptions(false));
+            Assert.Equal("  leading and trailing white space   ", Environment.GetEnvironmentVariable("  WHITEBOTH  "));
+            dict = DotNetEnv.Env.Parse(new DotNetEnv.Env.ParseOptions(true, true));
+            Assert.Equal("Google", dict["PASSWORD"]);
+            dict = DotNetEnv.Env.Parse(new DotNetEnv.Env.ParseOptions(true, false));
+            Assert.Equal("Google#Facebook", dict["PASSWORD"]);
+            dict = DotNetEnv.Env.Parse(new DotNetEnv.Env.ParseOptions(true, true, true));
+            Assert.Equal("SPECIAL STUFF---\nLONG-BASE64\\ignore\"slash", dict["SSL_CERT"]);
+            dict = DotNetEnv.Env.Parse(new DotNetEnv.Env.ParseOptions(true, true, false));
+            Assert.Equal("\"SPECIAL STUFF---\\nLONG-BASE64\\ignore\"slash\"", dict["SSL_CERT"]);
+        }
+
+        [Fact]
+        public void ParsePathArgsTest()
+        {
+            var dict = DotNetEnv.Env.Parse("./.env2", new DotNetEnv.Env.ParseOptions(true, true));
+            Assert.Equal("leading white space followed by comment", dict["WHITELEAD"]);
+            dict = DotNetEnv.Env.Parse("./.env2", new DotNetEnv.Env.ParseOptions(false, true));
+            Assert.Equal("  leading white space followed by comment  ", dict["WHITELEAD"]);
+            dict = DotNetEnv.Env.Parse("./.env2", new DotNetEnv.Env.ParseOptions(true, false));
+            Assert.Equal("leading white space followed by comment  # comment", dict["WHITELEAD"]);
+            dict = DotNetEnv.Env.Parse("./.env2", new DotNetEnv.Env.ParseOptions(false, false));
+            Assert.Equal("  leading white space followed by comment  # comment", dict["WHITELEAD"]);
+            dict = DotNetEnv.Env.Parse("./.env2", new DotNetEnv.Env.ParseOptions(false, false, true));
+            Assert.Equal("® 🚀 日本", dict["UNICODE"]);
+            dict = DotNetEnv.Env.Parse("./.env2", new DotNetEnv.Env.ParseOptions(false, false, false));
+            Assert.Equal("'\\u00ae \\U0001F680 日本'", dict["UNICODE"]);
         }
     }
 }

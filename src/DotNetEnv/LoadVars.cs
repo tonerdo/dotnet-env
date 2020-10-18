@@ -1,10 +1,11 @@
 using System;
+using System.Collections.Generic;
 
 namespace DotNetEnv
 {
     internal class LoadVars
     {
-        public static void SetEnvironmentVariables(Vars vars, bool clobberExistingVars = true)
+        public static void SetEnvironmentVariables(Dictionary<string, string> vars, bool clobberExistingVars = true)
         {
             foreach (var keyValuePair in vars)
             {
