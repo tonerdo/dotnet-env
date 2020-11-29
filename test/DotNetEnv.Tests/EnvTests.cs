@@ -159,25 +159,6 @@ namespace DotNetEnv.Tests
             Assert.Equal(";nope", System.Environment.GetEnvironmentVariable("FOURTH_KEY"));
         }
 
-        [Fact (Skip = "ParseVariables is not yet supported until actual need is confirmed")]
-        public void ParseVariablesTest()
-        {
-            System.Environment.SetEnvironmentVariable("EXISTING_ENVIRONMENT_VARIABLE", "value");
-            System.Environment.SetEnvironmentVariable("DNE_VAR", null);
-            DotNetEnv.Env.Load("./.env_embedded", new DotNetEnv.Env.LoadOptions(parseVariables: false));
-            Assert.Equal("test", Environment.GetEnvironmentVariable("TEST"));
-            Assert.Equal("test1", Environment.GetEnvironmentVariable("TEST1"));
-            Assert.Equal("$TEST", Environment.GetEnvironmentVariable("TEST2"));
-            Assert.Equal("$TEST$TEST2", Environment.GetEnvironmentVariable("TEST3"));
-            Assert.Equal("$TEST$TEST4$TEST1", Environment.GetEnvironmentVariable("TEST4"));
-            Assert.Equal("$TEST:$TEST4 $$ and $TEST1", Environment.GetEnvironmentVariable("TEST5"));
-
-            Assert.Equal("value1", System.Environment.GetEnvironmentVariable("FIRST_KEY"));
-            Assert.Equal("value2and$FIRST_KEY", System.Environment.GetEnvironmentVariable("SECOND_KEY"));
-            Assert.Equal("$EXISTING_ENVIRONMENT_VARIABLE;andvalue3", System.Environment.GetEnvironmentVariable("THIRD_KEY"));
-            Assert.Equal("$DNE_VAR;nope", System.Environment.GetEnvironmentVariable("FOURTH_KEY"));
-        }
-
         [Fact]
         public void QuotedHashTest()
         {

@@ -65,8 +65,7 @@ You can also pass a `LoadOptions` object arg to all `DotNetEnv.Env.Load` variant
 ```csharp
 new DotNetEnv.Env.LoadOptions(
     setEnvVars: true,
-    clobberExistingVars: true,
-    parseVariables: true
+    clobberExistingVars: true
 )
 ```
 
@@ -109,37 +108,6 @@ DotNetEnv.Env.Load(
 )
 // not "value" from the .env file
 "really important value, don't overwrite" == System.Environment.GetEnvironmentVariable("KEY")
-```
-
-3. `parseVariables`, third arg: `true` to parse existing environment variables
- ***WARNING!!!!!!*** Currently setting this to false changes nothing!
- In theory, setting this to false would prevent parsing of references in values.
- However, it is under discussion if this is even a desired feature,
- and this option is likely to be removed, leaving it effectively always on.
-
-```env
-FIRST_KEY=value1
-SECOND_KEY=value2and$FIRST_KEY
-THIRD_KEY=$EXISTING_ENVIRONMENT_VARIABLE;andvalue3
-FOURTH_KEY=$DNE_VAR;nope
-```
-
-Would then be available as
-```csharp
-"value1" == System.Environment.GetEnvironmentVariable("FIRST_KEY")
-"value2andvalue1" == System.Environment.GetEnvironmentVariable("SECOND_KEY")
-// EXISTING_ENVIRONMENT_VARIABLE already set to "value"
-"value;andvalue3" == System.Environment.GetEnvironmentVariable("THIRD_KEY")
-// DNE_VAR does not exist (has no value)
-";nope" == System.Environment.GetEnvironmentVariable("FOURTH_KEY")
-```
-
-`false` would mean:
-```csharp
-"value1" == System.Environment.GetEnvironmentVariable("FIRST_KEY")
-"value2and$FIRST_KEY" == System.Environment.GetEnvironmentVariable("SECOND_KEY")
-"$EXISTING_ENVIRONMENT_VARIABLE;andvalue3" == System.Environment.GetEnvironmentVariable("THIRD_KEY")
-"$DNE_VAR;nope" == System.Environment.GetEnvironmentVariable("FOURTH_KEY")
 ```
 
 ## .env file structure
