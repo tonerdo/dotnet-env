@@ -9,6 +9,12 @@ namespace DotNetEnv
         string GetValue ();
     }
 
+    public interface IValueFactory
+    {
+        IValue GetInterpolated (string id);
+        IValue GetActual (IEnumerable<string> strs);
+    }
+
     public class ValueInterpolated : IValue
     {
         private readonly string _id;
@@ -33,6 +39,11 @@ namespace DotNetEnv
             _value = string.Join(string.Empty, strs);
         }
 
+        public ValueActual (string str)
+        {
+            _value = str;
+        }
+
         public string GetValue ()
         {
             return _value;
@@ -49,10 +60,31 @@ namespace DotNetEnv
             // because it is the state of the world at the moment that this value is calculated
             Value = string.Join(string.Empty, values.Select(val => val.GetValue()));
         }
+    }
 
-        public override string ToString()
+    public class InterpolatedValueFactory : IValueFactory
+    {
+        public IValue GetInterpolated (string str)
         {
-            return Value;
+            return new ValueInterpolated(str);
+        }
+
+        public IValue GetActual (IEnumerable<string> strs)
+        {
+            return new ValueActual(strs);
+        }
+    }
+
+    public class ActualValueFactory : IValueFactory
+    {
+        public IValue GetInterpolated (string str)
+        {
+            return new ValueActual(str);
+        }
+
+        public IValue GetActual (IEnumerable<string> strs)
+        {
+            return new ValueActual(strs);
         }
     }
 }

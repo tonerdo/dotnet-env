@@ -13,6 +13,8 @@ namespace DotNetEnv.Tests
         // C# wow that you can't handle 32 bit unicode as chars. wow. strings for 4 byte chars.
         private static readonly string RocketChar = char.ConvertFromUtf32(0x1F680); // 🚀
 
+        private const string EXCEPT_CHARS = "'\"$";
+
         private const string EV_TEST = "ENVVAR_TEST";
         private const string EV_DNE = "EV_DNE";
         private const string EV_TEST_1 = "EV_TEST_1";
@@ -118,6 +120,8 @@ namespace DotNetEnv.Tests
         public void ParseEscapedChar ()
         {
             Assert.Equal("\b", Parsers.EscapedChar.Parse("\\b"));
+            Assert.Equal("'", Parsers.EscapedChar.Parse("\\'"));
+            Assert.Equal("\"", Parsers.EscapedChar.Parse("\\\""));
             Assert.Throws<ParseException>(() => Parsers.EscapedChar.Parse("\n"));
         }
 
@@ -139,35 +143,44 @@ namespace DotNetEnv.Tests
         [Fact]
         public void ParseNotControlNorWhitespace ()
         {
-            Assert.Equal("a", Parsers.NotControlNorWhitespace.Parse("a"));
-            Assert.Equal("%", Parsers.NotControlNorWhitespace.Parse("%"));
-            Assert.Throws<ParseException>(() => Parsers.NotControlNorWhitespace.Parse(" "));
-            Assert.Throws<ParseException>(() => Parsers.NotControlNorWhitespace.Parse("\n"));
+            Assert.Equal("a", Parsers.NotControlNorWhitespace(EXCEPT_CHARS).Parse("a"));
+            Assert.Equal("%", Parsers.NotControlNorWhitespace(EXCEPT_CHARS).Parse("%"));
+            Assert.Throws<ParseException>(() => Parsers.NotControlNorWhitespace(EXCEPT_CHARS).Parse(" "));
+            Assert.Throws<ParseException>(() => Parsers.NotControlNorWhitespace(EXCEPT_CHARS).Parse("\n"));
+            Assert.Throws<ParseException>(() => Parsers.NotControlNorWhitespace(EXCEPT_CHARS).Parse("'"));
+            Assert.Throws<ParseException>(() => Parsers.NotControlNorWhitespace(EXCEPT_CHARS).Parse("\""));
+            Assert.Throws<ParseException>(() => Parsers.NotControlNorWhitespace(EXCEPT_CHARS).Parse("$"));
         }
 
         [Fact]
-        public void ParsePrintableChar ()
+        public void ParseSpecialChar ()
         {
-            Assert.Equal("Z", Parsers.PrintableChar.Parse(@"\x5A"));
-            Assert.Equal("®", Parsers.PrintableChar.Parse(@"\xc2\xae"));
-            Assert.Equal("☠", Parsers.PrintableChar.Parse(@"\xE2\x98\xA0"));
-            Assert.Equal(RocketChar, Parsers.PrintableChar.Parse(@"\xF0\x9F\x9A\x80"));
-            Assert.Equal("日本", Parsers.PrintableChar.Parse(@"\xe6\x97\xa5") + Parsers.PrintableChar.Parse(@"\xe6\x9c\xac"));
+            Assert.Equal("Z", Parsers.SpecialChar.Parse(@"\x5A"));
+            Assert.Equal("®", Parsers.SpecialChar.Parse(@"\xc2\xae"));
+            Assert.Equal("☠", Parsers.SpecialChar.Parse(@"\xE2\x98\xA0"));
+            Assert.Equal(RocketChar, Parsers.SpecialChar.Parse(@"\xF0\x9F\x9A\x80"));
+            Assert.Equal("日本", Parsers.SpecialChar.Parse(@"\xe6\x97\xa5") + Parsers.SpecialChar.Parse(@"\xe6\x9c\xac"));
 
-            Assert.Equal("®", Parsers.PrintableChar.Parse(@"\u00ae"));
-            Assert.Equal("®", Parsers.PrintableChar.Parse(@"\uae"));
+            Assert.Equal("®", Parsers.SpecialChar.Parse(@"\u00ae"));
+            Assert.Equal("®", Parsers.SpecialChar.Parse(@"\uae"));
 
-            Assert.Equal(RocketChar, Parsers.PrintableChar.Parse(@"\U0001F680"));
-            Assert.Equal(RocketChar, Parsers.PrintableChar.Parse(@"\U1F680"));
+            Assert.Equal(RocketChar, Parsers.SpecialChar.Parse(@"\U0001F680"));
+            Assert.Equal(RocketChar, Parsers.SpecialChar.Parse(@"\U1F680"));
 
-            Assert.Equal("\b", Parsers.PrintableChar.Parse("\\b"));
-            Assert.Equal("\\", Parsers.PrintableChar.Parse("\\m"));  // note that it ignores the second char here
+            Assert.Equal("\b", Parsers.SpecialChar.Parse("\\b"));
+            Assert.Equal("\\m", Parsers.SpecialChar.Parse("\\m"));
+            Assert.Equal("'", Parsers.SpecialChar.Parse("\\'"));
+            Assert.Equal("\"", Parsers.SpecialChar.Parse("\\\""));
 
-            Assert.Equal("a", Parsers.PrintableChar.Parse("a"));
-            Assert.Equal("%", Parsers.PrintableChar.Parse("%"));
+            var parser = Parsers.SpecialChar
+                .Or(Parsers.NotControlNorWhitespace("\"$"))
+                .Or(Parse.WhiteSpace.AtLeastOnce().Text());
+            Assert.Equal("\"", parser.Parse("\\\""));
 
-            Assert.Throws<ParseException>(() => Parsers.PrintableChar.Parse(" "));
-            Assert.Throws<ParseException>(() => Parsers.PrintableChar.Parse("\n"));
+            Assert.Throws<ParseException>(() => Parsers.SpecialChar.Parse("a"));
+            Assert.Throws<ParseException>(() => Parsers.SpecialChar.Parse("%"));
+            Assert.Throws<ParseException>(() => Parsers.SpecialChar.Parse(" "));
+            Assert.Throws<ParseException>(() => Parsers.SpecialChar.Parse("\n"));
         }
 
         [Fact]
@@ -212,6 +225,8 @@ namespace DotNetEnv.Tests
             Assert.Equal("0", Parsers.UnquotedValue.Parse("0\n1").Value);
             Assert.Equal("", Parsers.UnquotedValue.Parse("'").Value);
 
+            Assert.Equal("a?b", Parsers.UnquotedValue.Parse("a\\?b").Value);
+
             // Assert.Throws<ParseException>(() => Parsers.UnquotedValue.Parse("a b c"));
             // Assert.Throws<ParseException>(() => Parsers.UnquotedValue.Parse("0\n1"));
             // Assert.Throws<ParseException>(() => Parsers.UnquotedValue.Parse("'"));
@@ -222,13 +237,16 @@ namespace DotNetEnv.Tests
         [Fact]
         public void ParseQuotedValueContents ()
         {
-            Assert.Equal("abc", Parsers.QuotedValueContents.Parse("abc").Value);
-            Assert.Equal("a b c", Parsers.QuotedValueContents.Parse("a b c").Value);
-            Assert.Equal("0\n1", Parsers.QuotedValueContents.Parse("0\n1").Value);
-            Assert.Equal("日 本", Parsers.QuotedValueContents.Parse(@"\xe6\x97\xa5 \xe6\x9c\xac").Value);
-            Assert.Equal("☠ ®", Parsers.QuotedValueContents.Parse(@"\xE2\x98\xA0 \uae").Value);
+            Assert.Equal("abc", Parsers.QuotedValueContents(EXCEPT_CHARS).Parse("abc").Value);
+            Assert.Equal("a b c", Parsers.QuotedValueContents(EXCEPT_CHARS).Parse("a b c").Value);
+            Assert.Equal("0\n1", Parsers.QuotedValueContents(EXCEPT_CHARS).Parse("0\n1").Value);
+            Assert.Equal("日 本", Parsers.QuotedValueContents(EXCEPT_CHARS).Parse(@"\xe6\x97\xa5 \xe6\x9c\xac").Value);
+            Assert.Equal("☠ ®", Parsers.QuotedValueContents(EXCEPT_CHARS).Parse(@"\xE2\x98\xA0 \uae").Value);
 
-            Assert.Equal("日 ENV value 本", Parsers.QuotedValueContents.Parse("\\xe6\\x97\\xa5 $ENVVAR_TEST 本").Value);
+            Assert.Equal("日 ENV value 本", Parsers.QuotedValueContents(EXCEPT_CHARS).Parse("\\xe6\\x97\\xa5 $ENVVAR_TEST 本").Value);
+
+            Assert.Equal("a\"b c", Parsers.QuotedValueContents("'$").Parse("a\"b c").Value);
+            Assert.Equal("a'b c", Parsers.QuotedValueContents("\"$").Parse("a'b c").Value);
         }
 
         [Fact]
@@ -237,6 +255,8 @@ namespace DotNetEnv.Tests
             Assert.Equal("abc", Parsers.SingleQuotedValue.Parse("'abc'").Value);
             Assert.Equal("a b c", Parsers.SingleQuotedValue.Parse("$'a b c'").Value);
             Assert.Equal("0\n1", Parsers.SingleQuotedValue.Parse("'0\n1'").Value);
+            Assert.Equal("a'bc", Parsers.SingleQuotedValue.Parse("'a\\'bc'").Value);
+            Assert.Equal("a\"bc", Parsers.SingleQuotedValue.Parse("'a\"bc'").Value);
 
             Assert.Equal("日 ENV value 本", Parsers.SingleQuotedValue.Parse("'\\xe6\\x97\\xa5 $ENVVAR_TEST 本'").Value);
         }
@@ -247,6 +267,8 @@ namespace DotNetEnv.Tests
             Assert.Equal("abc", Parsers.DoubleQuotedValue.Parse("\"abc\"").Value);
             Assert.Equal("a b c", Parsers.DoubleQuotedValue.Parse("\"a b c\"").Value);
             Assert.Equal("0\n1", Parsers.DoubleQuotedValue.Parse("\"0\n1\"").Value);
+            Assert.Equal("a'bc", Parsers.DoubleQuotedValue.Parse("\"a'bc\"").Value);
+            Assert.Equal("a\"bc", Parsers.DoubleQuotedValue.Parse("\"a\\\"bc\"").Value);
 
             Assert.Equal("日 ENV value 本", Parsers.DoubleQuotedValue.Parse("\"\\xe6\\x97\\xa5 $ENVVAR_TEST 本\"").Value);
         }
@@ -315,16 +337,22 @@ namespace DotNetEnv.Tests
             testParse("EV_DNE", "abc", "EV_DNE='abc'");
             testParse("EV_DNE", "a b c", "EV_DNE=$'a b c' # comment");
             testParse("EV_DNE", "0\n1", "EV_DNE='0\n1'");
-            testParse("EV_DNE", "日 本", @"EV_DNE='\xe6\x97\xa5 \xe6\x9c\xac'#c");
+            testParse("EV_DNE", "日 本", @"set -x EV_DNE='\xe6\x97\xa5 \xe6\x9c\xac'#c");
             testParse("EV_DNE", "☠ ®", @"EV_DNE='\xE2\x98\xA0 \uae'#c");
 
             testParse("EV_DNE", "abc", "EV_DNE=\"abc\"");
-            testParse("EV_DNE", "a b c", "EV_DNE=\"a b c\" # comment");
+            testParse("EV_DNE", "a b c", "set EV_DNE=\"a b c\" # comment");
             testParse("EV_DNE", "0\n1", "EV_DNE=\"0\n1\"");
-            testParse("EV_DNE", "日 本", "EV_DNE=\"\\xe6\\x97\\xa5 \\xe6\\x9c\\xac\"#c");
+            testParse("EV_DNE", "日 本", "export EV_DNE=\"\\xe6\\x97\\xa5 \\xe6\\x9c\\xac\"#c");
             testParse("EV_DNE", "☠ ®", "EV_DNE=\"\\xE2\\x98\\xA0 \\uae\"");
 
             testParse("EV_DNE", "日 ENV value 本", "export EV_DNE=\"\\xe6\\x97\\xa5 $ENVVAR_TEST 本\"#ccccc");
+
+            testParse("exportEV_DNE", "abc", "exportEV_DNE=\"abc\"");
+
+            Assert.Throws<ParseException>(() => Parsers.Assignment.Parse("EV_DNE='a b c'EV_TEST_1=more"));
+            Assert.Throws<ParseException>(() => Parsers.Assignment.Parse("EV_DNE='a b c' EV_TEST_1=more"));
+            Assert.Throws<ParseException>(() => Parsers.Assignment.Parse("KEY=VAL UE"));
         }
 
         [Fact]
@@ -399,7 +427,7 @@ SET EV_TEST_2='\xE2\x98\xA0
             expecteds = new[] {
                 new KeyValuePair<string, string>("EV_DNE", "x y z"),
                 new KeyValuePair<string, string>("EV_TEST_1", "日 ENV value 本"),
-                new KeyValuePair<string, string>("EV_TEST_2", "☠\r\n®"),
+                new KeyValuePair<string, string>("EV_TEST_2", "☠\n®"),
             };
             testParse(expecteds, contents);
         }

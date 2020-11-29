@@ -35,15 +35,6 @@ Or you can specify the path to the `.env` file
 DotNetEnv.Env.Load("./path/to/.env");
 ```
 
-It's also possible to load the (text) file as a `Stream`
-
-```csharp
-using (var stream = File.OpenRead("./path/to/.env"))
-{
-    DotNetEnv.Env.Load(stream);
-}
-```
-
 ### Accessing environment variables
 
 The variables in the `.env` can then be accessed through the `System.Environment` class
@@ -73,9 +64,7 @@ You can also pass a `LoadOptions` object arg to all `DotNetEnv.Env.Load` variant
 
 ```csharp
 new DotNetEnv.Env.LoadOptions(
-    trimWhitespace: true,
-    isEmbeddedHashComment: true,
-    unescapeQuotedValues: true,
+    setEnvVars: true,
     clobberExistingVars: true,
     parseVariables: true
 )
@@ -83,69 +72,29 @@ new DotNetEnv.Env.LoadOptions(
 
 All parameters default to true, which means:
 
-1. `trimWhitespace`, first arg: `true` in order to trim
- leading and trailing whitespace from keys and values such that
+1. `setEnvVars`, first arg: `true` in order to actually update env vars.
+ Setting it `false` allows consumers of this library to process the .env file
+ but use it for things other than updating env vars, as a generic configuration file.
+ The Load methods all return an `IEnumerable<KeyValuePair<string,string>> for this.
 
 ```env
-  KEY  =  value
+KEY=value
 ```
 
-Would then be available as
 ```csharp
-"value" == System.Environment.GetEnvironmentVariable("KEY")
-null == System.Environment.GetEnvironmentVariable("  KEY  ")
-```
-
-`false` would mean:
-```csharp
-"  value" == System.Environment.GetEnvironmentVariable("  KEY  ")
+var kvps = DotNetEnv.Env.Load(
+    new DotNetEnv.Env.LoadOptions(
+        setEnvVars: false
+    )
+)
+// not "value" from the .env file
 null == System.Environment.GetEnvironmentVariable("KEY")
+"KEY" == kvps.First().Key
+"value" == kvps.First().Value
 ```
 
-2. `isEmbeddedHashComment`, second arg: `true` in order to allow inline comments
-
-```env
-KEY=value  # comment
-```
-
-Would then be available as
-```csharp
-"value" == System.Environment.GetEnvironmentVariable("KEY")
-```
-
-`false` would mean:
-```csharp
-"value  # comment" == System.Environment.GetEnvironmentVariable("KEY")
-```
-
-Which is most useful when you want to do something like:
-```env
-KEY=value#moreValue#otherValue#etc
-```
-
-3. `unescapeQuotedValues`, third arg: `true` in order to unescape/parse
- quoted (single or double) values as being strings with escaped chars
- such as newline ("\n"), but also handles unicode chars
- (e.g. "\u00ae" and "\U0001F680") -- note that you can always include
- unescaped unicode chars anyway (e.g. "日本") if your .env is in UTF-8.
- Also note that there is no need to escape quotes inside.
-
-```env
-KEY="quoted\n\tvalue"
-```
-
-Would then be available as
-```csharp
-"quoted
-    value" == System.Environment.GetEnvironmentVariable("KEY")
-```
-
-`false` would mean:
-```csharp
-"\"quoted\\n\\tvalue\"" == System.Environment.GetEnvironmentVariable("KEY")
-```
-
-4. `clobberExistingVars`, fourth arg: `false` to avoid overwriting existing environment variables
+2. `clobberExistingVars`, second arg: `true` to always set env vars,
+ `false` would leave existing env vars alone.
 
 ```env
 KEY=value
@@ -158,10 +107,15 @@ DotNetEnv.Env.Load(
         clobberExistingVars: false
     )
 )
-"really important value, don't overwrite" == System.Environment.GetEnvironmentVariable("KEY")  // not "value" from the .env file
+// not "value" from the .env file
+"really important value, don't overwrite" == System.Environment.GetEnvironmentVariable("KEY")
 ```
 
-5. `parseVariables`, fifth arg: `true` to parse existing environment variables
+3. `parseVariables`, third arg: `true` to parse existing environment variables
+ ***WARNING!!!!!!*** Currently setting this to false changes nothing!
+ In theory, setting this to false would prevent parsing of references in values.
+ However, it is under discussion if this is even a desired feature,
+ and this option is likely to be removed, leaving it effectively always on.
 
 ```env
 FIRST_KEY=value1
@@ -174,8 +128,10 @@ Would then be available as
 ```csharp
 "value1" == System.Environment.GetEnvironmentVariable("FIRST_KEY")
 "value2andvalue1" == System.Environment.GetEnvironmentVariable("SECOND_KEY")
-"value;andvalue3" == System.Environment.GetEnvironmentVariable("THIRD_KEY") //EXISTING_ENVIRONMENT_VARIABLE already set to "value"
-";nope" == System.Environment.GetEnvironmentVariable("FOURTH_KEY") //DNE_VAR does not exist (has no value)
+// EXISTING_ENVIRONMENT_VARIABLE already set to "value"
+"value;andvalue3" == System.Environment.GetEnvironmentVariable("THIRD_KEY")
+// DNE_VAR does not exist (has no value)
+";nope" == System.Environment.GetEnvironmentVariable("FOURTH_KEY")
 ```
 
 `false` would mean:
@@ -186,7 +142,82 @@ Would then be available as
 "$DNE_VAR;nope" == System.Environment.GetEnvironmentVariable("FOURTH_KEY")
 ```
 
-## A Note about Production and the Purpose of this library
+## .env file structure
+
+All lines must be valid assignments or empty lines (with optional comments).
+
+A minimal valid assignment looks like:
+```
+KEY=value
+```
+
+There can optionally be one of a few export or equivalent keywords at the beginning
+ and there can be a comment at the end, values can be quoted to include whitespace,
+ and interpolated references can be included (unquoted values as well as quoted,
+ with optional braces in both cases -- but often more useful in unquoted), like:
+```
+export KEY="extra $ENVVAR value" # comment
+set KEY2=extra${ENVVAR}value # comment
+```
+
+The options for the export keyword are:
+
+    export  # bash
+    set     # windows cmd
+    SET     # windows cmd
+    set -x  # fish
+
+This allows the `.env` file itself to be `source`-d like `. .env`
+ to load the env vars into a terminal session directly.
+
+The options for quoting values are:
+
+    "" double
+    '' single
+    $'' dollar single
+
+As these are the options bash recognizes. However, while bash does have
+ special meaning for each of these, in this library, they are all the same,
+ other than that you do not need to escape single quote chars inside
+ a double quoted value, nor double quotes inside single quotes.
+
+As a special note: if a value is unquoted, it can still include a `#` char,
+ which might look like it is starting a comment, like:
+```
+KEY=value#notcomment #actualcomment
+```
+
+This is how bash works as well:
+```
+export TEST=value#notcomment #actualcomment
+env | grep TEST
+# TEST=value#notcomment
+```
+
+You can also declare unicode chars in all the ways that bash supports as well
+ -- noting that bash normally only parses these inside `$''`
+ whereas these work in all quoting styles here:
+
+    UTF8 btes: \xF0\x9F\x9A\x80 # rocket 🚀
+    UTF16 bytes: \uae # registered ®
+    UTF32 bytes: \U1F680 # rocket 🚀
+
+Capitalization on the hex chars is irrelevant, and leading zeroes are optional.
+
+And standard escaped chars like `\t`, `\\``, `\n`, etc are also recognized
+ -- though quoted strings can also be multi line, e.g.:
+
+```
+KEY="value
+and more"
+```
+
+Loaded gives:
+```
+"value\nand more" == System.Environment.GetEnvironmentVariable("KEY")
+```
+
+## A Note about Production and the Purpose of This Library
 
 You should not be using a .env file in production.  The purpose of this library is to enable easy local development.
 
@@ -209,7 +240,15 @@ If you have found a bug or if you have a feature request, please report them at 
 
 Run `dotnet test test/DotNetEnv.Tests` to run all tests.
 
+Or some more specific test examples:
+
+    dotnet test --filter "FullyQualifiedName~DotNetEnv.Tests.EnvTests.BadSyntaxTest"
+    dotnet test --filter "FullyQualifiedName~DotNetEnv.Tests.ParserTests.ParseAssignment"
+
 `src/DotNetEnvEnv/Env.cs` is the entry point for all behavior.
+
+`src/DotNetEnvEnv/Parsers.cs` defines all the [Sprache](https://github.com/sprache/Sprache) parsers.
+
 
 Open a PR on Github if you have some changes, or an issue if you want to discuss some proposed changes before creating a PR for them.
 

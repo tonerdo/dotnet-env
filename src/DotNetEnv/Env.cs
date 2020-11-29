@@ -13,26 +13,45 @@ namespace DotNetEnv
 
         private static LoadOptions DEFAULT_OPTIONS = new LoadOptions();
 
-        public static IEnumerable<KeyValuePair<string, string>> LoadLines(string[] lines, LoadOptions options = null)
+        public static Dictionary<string, string> ToDictionary(IEnumerable<KeyValuePair<string, string>> kvps)
         {
-            return Load(String.Join("\n", lines), options);
+            // Distinct does not work on this kind of data -- keys are same but not values, whole point
+//            return kvps.Distinct().ToDictionary(kv => kv.Key, kv => kv.Value);
+            return kvps.GroupBy(kv => kv.Key).ToDictionary(g => g.Key, g => g.Last().Value);
         }
 
-        public static IEnumerable<KeyValuePair<string, string>> LoadFile(string path, LoadOptions options = null)
+        public static IEnumerable<KeyValuePair<string, string>> Load(string[] lines, LoadOptions options = null)
+        {
+            return LoadContents(String.Join("\n", lines), options);
+        }
+
+        public static IEnumerable<KeyValuePair<string, string>> Load(string path, LoadOptions options = null)
         {
             // in production, there should be no .env file, so this should be the common code path
             if (!File.Exists(path))
             {
                 return Enumerable.Empty<KeyValuePair<string, string>>();
             }
-            return Load(File.ReadAllText(path), options);
+            return LoadContents(File.ReadAllText(path), options);
         }
 
-        public static IEnumerable<KeyValuePair<string, string>> Load(string contents, LoadOptions options = null)
+        public static IEnumerable<KeyValuePair<string, string>> LoadContents(string contents, LoadOptions options = null)
         {
             if (options == null) options = DEFAULT_OPTIONS;
 
-            if (options.ParseEnvVars)
+            // TODO: actually inject this into a new Parser instance, instead of all static
+            // ... but to do this, I need to use a different syntax than the LINQ for Sprache
+            // so it's a big undertaking and I'm waiting on more details to
+            // https://github.com/tonerdo/dotnet-env/issues/40
+            // SO: THIS OBJECT IS NOT USED, ON PURPOSE, FOR NOW
+            var valueFactory = options.ParseVariables
+                ? (IValueFactory) new InterpolatedValueFactory()
+                : (IValueFactory) new ActualValueFactory();
+
+            // the above refactoring for injecting into a Parser instance
+            // would also potentially include passing the "transform" functions below into the ctor
+            // with a factory to do this work of checking options and building the right thing, or something
+            if (options.SetEnvVars)
             {
                 if (options.ClobberExistingVars)
                 {
@@ -66,15 +85,18 @@ namespace DotNetEnv
 
         public class LoadOptions
         {
-            public bool ParseEnvVars { get; }
+            public bool SetEnvVars { get; }
             public bool ClobberExistingVars { get; }
+            public bool ParseVariables { get; }
 
             public LoadOptions(
-                bool parseEnvVars = true,
-                bool clobberExistingVars = true
+                bool setEnvVars = true,
+                bool clobberExistingVars = true,
+                bool parseVariables = true
             ) {
-                ParseEnvVars = parseEnvVars;
+                SetEnvVars = setEnvVars;
                 ClobberExistingVars = clobberExistingVars;
+                ParseVariables = parseVariables;
             }
         }
     }
