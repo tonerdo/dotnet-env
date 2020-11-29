@@ -73,11 +73,11 @@ You can also pass a `LoadOptions` object arg to all `DotNetEnv.Env.Load` variant
 
 ```csharp
 new DotNetEnv.Env.LoadOptions(
-    trimWhitespace: false,
-    isEmbeddedHashComment: false,
-    unescapeQuotedValues: false,
-    clobberExistingVars: false,
-    parseVariables: false
+    trimWhitespace: true,
+    isEmbeddedHashComment: true,
+    unescapeQuotedValues: true,
+    clobberExistingVars: true,
+    parseVariables: true
 )
 ```
 
@@ -167,6 +167,7 @@ DotNetEnv.Env.Load(
 FIRST_KEY=value1
 SECOND_KEY=value2and$FIRST_KEY
 THIRD_KEY=$EXISTING_ENVIRONMENT_VARIABLE;andvalue3
+FOURTH_KEY=$DNE_VAR;nope
 ```
 
 Would then be available as
@@ -174,6 +175,15 @@ Would then be available as
 "value1" == System.Environment.GetEnvironmentVariable("FIRST_KEY")
 "value2andvalue1" == System.Environment.GetEnvironmentVariable("SECOND_KEY")
 "value;andvalue3" == System.Environment.GetEnvironmentVariable("THIRD_KEY") //EXISTING_ENVIRONMENT_VARIABLE already set to "value"
+";nope" == System.Environment.GetEnvironmentVariable("FOURTH_KEY") //DNE_VAR does not exist (has no value)
+```
+
+`false` would mean:
+```csharp
+"value1" == System.Environment.GetEnvironmentVariable("FIRST_KEY")
+"value2and$FIRST_KEY" == System.Environment.GetEnvironmentVariable("SECOND_KEY")
+"$EXISTING_ENVIRONMENT_VARIABLE;andvalue3" == System.Environment.GetEnvironmentVariable("THIRD_KEY")
+"$DNE_VAR;nope" == System.Environment.GetEnvironmentVariable("FOURTH_KEY")
 ```
 
 ## A Note about Production and the Purpose of this library

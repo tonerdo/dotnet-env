@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Text;
 
 namespace DotNetEnv
 {
@@ -11,42 +13,43 @@ namespace DotNetEnv
 
         private static LoadOptions DEFAULT_OPTIONS = new LoadOptions();
 
-        public static void Load(string[] lines, LoadOptions options = null)
+        public static IEnumerable<KeyValuePair<string, string>> LoadLines(string[] lines, LoadOptions options = null)
+        {
+            return Load(String.Join("\n", lines), options);
+        }
+
+        public static IEnumerable<KeyValuePair<string, string>> LoadFile(string path, LoadOptions options = null)
+        {
+            // in production, there should be no .env file, so this should be the common code path
+            if (!File.Exists(path))
+            {
+                return Enumerable.Empty<KeyValuePair<string, string>>();
+            }
+            return Load(File.ReadAllText(path), options);
+        }
+
+        public static IEnumerable<KeyValuePair<string, string>> Load(string contents, LoadOptions options = null)
         {
             if (options == null) options = DEFAULT_OPTIONS;
 
-            Vars envFile = Parser.Parse(
-                lines,
-                options.TrimWhitespace,
-                options.IsEmbeddedHashComment,
-                options.UnescapeQuotedValues,
-                options.ParseVariables
-            );
-            LoadVars.SetEnvironmentVariables(envFile, options.ClobberExistingVars);
-        }
-
-        public static void Load(string path, LoadOptions options = null)
-        {
-            if (!File.Exists(path)) return;
-            Load(File.ReadAllLines(path), options);
-        }
-
-        public static void Load(Stream file, LoadOptions options = null)
-        {
-            var lines = new List<string>();
-            var currentLine = "";
-            using (var reader = new StreamReader(file))
+            if (options.ParseEnvVars)
             {
-                while (currentLine != null)
+                if (options.ClobberExistingVars)
                 {
-                    currentLine = reader.ReadLine();
-                    if (currentLine != null) lines.Add(currentLine);
+                    return Parsers.ParseDotenvFile(contents, Parsers.SetEnvVar);
+                }
+                else
+                {
+                    return Parsers.ParseDotenvFile(contents, Parsers.NoClobberSetEnvVar);
                 }
             }
-            Load(lines.ToArray(), options);
+            else
+            {
+                return Parsers.ParseDotenvFile(contents, Parsers.DoNotSetEnvVar);
+            }
         }
 
-        public static void Load(LoadOptions options = null) =>
+        public static IEnumerable<KeyValuePair<string, string>> Load(LoadOptions options = null) =>
             Load(Path.Combine(Directory.GetCurrentDirectory(), DEFAULT_ENVFILENAME), options);
 
         public static string GetString(string key, string fallback = default(string)) =>
@@ -63,25 +66,15 @@ namespace DotNetEnv
 
         public class LoadOptions
         {
-            public bool TrimWhitespace { get; }
-            public bool IsEmbeddedHashComment { get; }
-            public bool UnescapeQuotedValues { get; }
+            public bool ParseEnvVars { get; }
             public bool ClobberExistingVars { get; }
-            public bool ParseVariables { get; }
 
             public LoadOptions(
-                bool trimWhitespace = true,
-                bool isEmbeddedHashComment = true,
-                bool unescapeQuotedValues = true,
-                bool clobberExistingVars = true,
-                bool parseVariables = true
-            )
-            {
-                TrimWhitespace = trimWhitespace;
-                IsEmbeddedHashComment = isEmbeddedHashComment;
-                UnescapeQuotedValues = unescapeQuotedValues;
+                bool parseEnvVars = true,
+                bool clobberExistingVars = true
+            ) {
+                ParseEnvVars = parseEnvVars;
                 ClobberExistingVars = clobberExistingVars;
-                ParseVariables = parseVariables;
             }
         }
     }
