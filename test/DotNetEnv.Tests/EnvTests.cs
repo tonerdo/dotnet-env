@@ -55,6 +55,21 @@ namespace DotNetEnv.Tests
         }
 
         [Fact]
+        public void LoadStreamTest()
+        {
+            DotNetEnv.Env.Load(File.OpenRead("./.env"));
+            Assert.Equal("Toni", Environment.GetEnvironmentVariable("NAME"));
+            // unfortunately .NET removes empty env vars -- there can NEVER be an empty string env var value
+            //  https://msdn.microsoft.com/en-us/library/z46c489x(v=vs.110).aspx#Remarks
+            Assert.Null(Environment.GetEnvironmentVariable("EMPTY"));
+            Assert.Equal("'", Environment.GetEnvironmentVariable("QUOTE"));
+            Assert.Equal("https://github.com/tonerdo", Environment.GetEnvironmentVariable("URL"));
+            Assert.Equal("user=test;password=secret", Environment.GetEnvironmentVariable("CONNECTION"));
+            Assert.Equal("  leading and trailing white space   ", Environment.GetEnvironmentVariable("WHITEBOTH"));
+            Assert.Equal("SPECIAL STUFF---\nLONG-BASE64\\ignore\"slash", Environment.GetEnvironmentVariable("SSL_CERT"));
+        }
+
+        [Fact]
         public void LoadLinesTest()
         {
             DotNetEnv.Env.Load(File.ReadAllLines("./.env"));

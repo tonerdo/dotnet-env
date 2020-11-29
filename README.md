@@ -35,6 +35,15 @@ Or you can specify the path to the `.env` file
 DotNetEnv.Env.Load("./path/to/.env");
 ```
 
+It's also possible to load the (text) file as a `Stream`
+
+```csharp
+using (var stream = File.OpenRead("./path/to/.env"))
+{
+    DotNetEnv.Env.Load(stream);
+}
+```
+
 ### Accessing environment variables
 
 The variables in the `.env` can then be accessed through the `System.Environment` class

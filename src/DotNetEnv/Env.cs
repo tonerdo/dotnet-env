@@ -13,15 +13,15 @@ namespace DotNetEnv
 
         private static LoadOptions DEFAULT_OPTIONS = new LoadOptions();
 
-        public static Dictionary<string, string> ToDictionary(IEnumerable<KeyValuePair<string, string>> kvps)
-            => kvps.GroupBy(kv => kv.Key).ToDictionary(g => g.Key, g => g.Last().Value);
+        public static Dictionary<string, string> ToDictionary (IEnumerable<KeyValuePair<string, string>> kvps) =>
+            kvps.GroupBy(kv => kv.Key).ToDictionary(g => g.Key, g => g.Last().Value);
 
-        public static IEnumerable<KeyValuePair<string, string>> Load(string[] lines, LoadOptions options = null)
+        public static IEnumerable<KeyValuePair<string, string>> Load (string[] lines, LoadOptions options = null)
         {
             return LoadContents(String.Join("\n", lines), options);
         }
 
-        public static IEnumerable<KeyValuePair<string, string>> Load(string path, LoadOptions options = null)
+        public static IEnumerable<KeyValuePair<string, string>> Load (string path, LoadOptions options = null)
         {
             // in production, there should be no .env file, so this should be the common code path
             if (!File.Exists(path))
@@ -31,7 +31,15 @@ namespace DotNetEnv
             return LoadContents(File.ReadAllText(path), options);
         }
 
-        public static IEnumerable<KeyValuePair<string, string>> LoadContents(string contents, LoadOptions options = null)
+        public static IEnumerable<KeyValuePair<string, string>> Load (Stream file, LoadOptions options = null)
+        {
+            using (var reader = new StreamReader(file))
+            {
+                return LoadContents(reader.ReadToEnd(), options);
+            }
+        }
+
+        public static IEnumerable<KeyValuePair<string, string>> LoadContents (string contents, LoadOptions options = null)
         {
             if (options == null) options = DEFAULT_OPTIONS;
 
@@ -52,19 +60,19 @@ namespace DotNetEnv
             }
         }
 
-        public static IEnumerable<KeyValuePair<string, string>> Load(LoadOptions options = null) =>
+        public static IEnumerable<KeyValuePair<string, string>> Load (LoadOptions options = null) =>
             Load(Path.Combine(Directory.GetCurrentDirectory(), DEFAULT_ENVFILENAME), options);
 
-        public static string GetString(string key, string fallback = default(string)) =>
+        public static string GetString (string key, string fallback = default(string)) =>
             Environment.GetEnvironmentVariable(key) ?? fallback;
 
-        public static bool GetBool(string key, bool fallback = default(bool)) =>
+        public static bool GetBool (string key, bool fallback = default(bool)) =>
             bool.TryParse(Environment.GetEnvironmentVariable(key), out var value) ? value : fallback;
 
-        public static int GetInt(string key, int fallback = default(int)) =>
+        public static int GetInt (string key, int fallback = default(int)) =>
             int.TryParse(Environment.GetEnvironmentVariable(key), out var value) ? value : fallback;
 
-        public static double GetDouble(string key, double fallback = default(double)) =>
+        public static double GetDouble (string key, double fallback = default(double)) =>
             double.TryParse(Environment.GetEnvironmentVariable(key), NumberStyles.Any, CultureInfo.InvariantCulture, out var value) ? value : fallback;
 
         public class LoadOptions
