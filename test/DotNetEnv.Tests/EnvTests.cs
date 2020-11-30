@@ -27,6 +27,17 @@ namespace DotNetEnv.Tests
         }
 
         [Fact]
+        public void LoadDotenvHigherSkip()
+        {
+            Environment.SetEnvironmentVariable("TEST", null);
+            Environment.SetEnvironmentVariable("NAME", null);
+            // ./DotNetEnv.Tests/bin/Debug/netcoreapp3.1/DotNetEnv.Tests.dll -- get to the ./
+            DotNetEnv.Env.Load("../../../../");
+            Assert.Equal("here", Environment.GetEnvironmentVariable("TEST"));
+            Assert.Null(Environment.GetEnvironmentVariable("NAME"));
+        }
+
+        [Fact]
         public void LoadPathTest()
         {
             DotNetEnv.Env.Load("./.env2");
@@ -90,13 +101,13 @@ namespace DotNetEnv.Tests
             var expected = "totally the original value";
             Environment.SetEnvironmentVariable("NAME", null);
             Environment.SetEnvironmentVariable("URL", expected);
-            DotNetEnv.Env.Load(new DotNetEnv.Env.LoadOptions(clobberExistingVars: false));
+            DotNetEnv.Env.Load(options: new DotNetEnv.LoadOptions(clobberExistingVars: false));
             Assert.Equal(expected, Environment.GetEnvironmentVariable("URL"));
             Assert.Equal("Toni", Environment.GetEnvironmentVariable("NAME"));
 
             Environment.SetEnvironmentVariable("NAME", null);
             Environment.SetEnvironmentVariable("URL", "i'm going to be overwritten");
-            DotNetEnv.Env.Load(new DotNetEnv.Env.LoadOptions(clobberExistingVars: true));
+            DotNetEnv.Env.Load(options: new DotNetEnv.LoadOptions(clobberExistingVars: true));
             Assert.Equal("https://github.com/tonerdo", Environment.GetEnvironmentVariable("URL"));
             Assert.Equal("Toni", Environment.GetEnvironmentVariable("NAME"));
         }
@@ -107,14 +118,14 @@ namespace DotNetEnv.Tests
             var expected = "totally the original value";
             Environment.SetEnvironmentVariable("NAME", null);
             Environment.SetEnvironmentVariable("URL", expected);
-            DotNetEnv.Env.Load(new DotNetEnv.Env.LoadOptions(setEnvVars: false));
+            DotNetEnv.Env.Load(options: new DotNetEnv.LoadOptions(setEnvVars: false));
             Assert.Equal(expected, Environment.GetEnvironmentVariable("URL"));
             // this env var remaining null is the difference between NoSetEnvVars and NoClobber
             Assert.Null(Environment.GetEnvironmentVariable("NAME"));
 
             Environment.SetEnvironmentVariable("NAME", null);
             Environment.SetEnvironmentVariable("URL", "i'm going to be overwritten");
-            DotNetEnv.Env.Load(new DotNetEnv.Env.LoadOptions(setEnvVars: true));
+            DotNetEnv.Env.Load(options: new DotNetEnv.LoadOptions(setEnvVars: true));
             Assert.Equal("https://github.com/tonerdo", Environment.GetEnvironmentVariable("URL"));
             Assert.Equal("Toni", Environment.GetEnvironmentVariable("NAME"));
         }
@@ -125,7 +136,7 @@ namespace DotNetEnv.Tests
             var expected = "totally the original value";
             Environment.SetEnvironmentVariable("URL", expected);
             // this env file Does Not Exist
-            DotNetEnv.Env.Load("./.env_DNE", new DotNetEnv.Env.LoadOptions());
+            DotNetEnv.Env.Load("./.env_DNE");
             Assert.Equal(expected, Environment.GetEnvironmentVariable("URL"));
             // it didn't throw an exception and crash for a missing file
         }
@@ -134,21 +145,21 @@ namespace DotNetEnv.Tests
         public void LoadOsCasingTest()
         {
             Environment.SetEnvironmentVariable("CASING", "neither");
-            DotNetEnv.Env.Load("./.env_casing", new DotNetEnv.Env.LoadOptions(clobberExistingVars: false));
+            DotNetEnv.Env.Load("./.env_casing", new DotNetEnv.LoadOptions(clobberExistingVars: false));
             Assert.Equal(IsWindows ? "neither" : "lower", Environment.GetEnvironmentVariable("casing"));
             Assert.Equal("neither", Environment.GetEnvironmentVariable("CASING"));
 
-            DotNetEnv.Env.Load("./.env_casing", new DotNetEnv.Env.LoadOptions(clobberExistingVars: true));
+            DotNetEnv.Env.Load("./.env_casing", new DotNetEnv.LoadOptions(clobberExistingVars: true));
             Assert.Equal("lower", Environment.GetEnvironmentVariable("casing"));
             Assert.Equal(IsWindows ? "lower" : "neither", Environment.GetEnvironmentVariable("CASING"));
 
             Environment.SetEnvironmentVariable("CASING", null);
             Environment.SetEnvironmentVariable("casing", "neither");
-            DotNetEnv.Env.Load("./.env_casing", new DotNetEnv.Env.LoadOptions(clobberExistingVars: false));
+            DotNetEnv.Env.Load("./.env_casing", new DotNetEnv.LoadOptions(clobberExistingVars: false));
             Assert.Equal("neither", Environment.GetEnvironmentVariable("casing"));
             Assert.Equal(IsWindows ? "neither" : null, Environment.GetEnvironmentVariable("CASING"));
 
-            DotNetEnv.Env.Load("./.env_casing", new DotNetEnv.Env.LoadOptions(clobberExistingVars: true));
+            DotNetEnv.Env.Load("./.env_casing", new DotNetEnv.LoadOptions(clobberExistingVars: true));
             Assert.Equal("lower", Environment.GetEnvironmentVariable("casing"));
             Assert.Equal(IsWindows ? "lower" : null, Environment.GetEnvironmentVariable("CASING"));
         }
@@ -317,49 +328,49 @@ base64
             ParseException ex;
 
             ex = Assert.Throws<ParseException>(
-                () => DotNetEnv.Env.Load(new [] {
+                () => DotNetEnv.Env.Load(new[] {
                     "KEY=VAL UE",
                 })
             );
             Assert.Equal("Parsing failure: unexpected 'U'; expected LineTerminator (Line 1, Column 9); recently consumed: KEY=VAL ", ex.Message);
 
             ex = Assert.Throws<ParseException>(
-                () => DotNetEnv.Env.Load(new [] {
+                () => DotNetEnv.Env.Load(new[] {
                     "NOVALUE",
                 })
             );
             Assert.Equal("Parsing failure: Unexpected end of input reached; expected = (Line 1, Column 8); recently consumed: NOVALUE", ex.Message);
 
             ex = Assert.Throws<ParseException>(
-                () => DotNetEnv.Env.Load(new [] {
+                () => DotNetEnv.Env.Load(new[] {
                     "MULTI WORD KEY",
                 })
             );
             Assert.Equal("Parsing failure: unexpected 'W'; expected = (Line 1, Column 7); recently consumed: MULTI ", ex.Message);
 
             ex = Assert.Throws<ParseException>(
-                () => DotNetEnv.Env.Load(new [] {
+                () => DotNetEnv.Env.Load(new[] {
                     "UNMATCHEDQUOTE='",
                 })
             );
             Assert.Equal("Parsing failure: unexpected '''; expected LineTerminator (Line 1, Column 16); recently consumed: CHEDQUOTE=", ex.Message);
 
             ex = Assert.Throws<ParseException>(
-                () => DotNetEnv.Env.Load(new [] {
+                () => DotNetEnv.Env.Load(new[] {
                     "BADQUOTE='\\''",
                 })
             );
             Assert.Equal("Parsing failure: unexpected '''; expected LineTerminator (Line 1, Column 13); recently consumed: DQUOTE='\\'", ex.Message);
 
             ex = Assert.Throws<ParseException>(
-                () => DotNetEnv.Env.Load(new [] {
+                () => DotNetEnv.Env.Load(new[] {
                     "UNMATCHEDQUOTE=\"",
                 })
             );
             Assert.Equal("Parsing failure: unexpected '\"'; expected LineTerminator (Line 1, Column 16); recently consumed: CHEDQUOTE=", ex.Message);
 
             ex = Assert.Throws<ParseException>(
-                () => DotNetEnv.Env.Load(new [] {
+                () => DotNetEnv.Env.Load(new[] {
                     "SSL_CERT=\"SPECIAL STUFF---\nLONG-BASE64\\ignore\"slash\"",
                 })
             );
@@ -368,7 +379,7 @@ base64
             // this test confirms that the entire file must be valid, not just at least one assignment at the start
             // otherwise it silently discards any remainder after the first failure, so long as at least one success...
             ex = Assert.Throws<ParseException>(
-                () => DotNetEnv.Env.Load(new [] {
+                () => DotNetEnv.Env.Load(new[] {
                     "OK=GOOD",
                     "SSL_CERT=\"SPECIAL STUFF---\nLONG-BASE64\\ignore\"slash\"",
                 })
@@ -379,10 +390,10 @@ base64
         [Fact]
         public void BasicsTest()
         {
-            DotNetEnv.Env.Load(new [] { "ENV_TEST_KEY=VALUE" });
+            DotNetEnv.Env.Load(new[] { "ENV_TEST_KEY=VALUE" });
             Assert.Equal("VALUE", Environment.GetEnvironmentVariable("ENV_TEST_KEY"));
 
-            DotNetEnv.Env.Load(new [] { "ENV_TEST_K1=V1", "ENV_TEST_K2=V2" });
+            DotNetEnv.Env.Load(new[] { "ENV_TEST_K1=V1", "ENV_TEST_K2=V2" });
             Assert.Equal("V1", Environment.GetEnvironmentVariable("ENV_TEST_K1"));
             Assert.Equal("V2", Environment.GetEnvironmentVariable("ENV_TEST_K2"));
         }

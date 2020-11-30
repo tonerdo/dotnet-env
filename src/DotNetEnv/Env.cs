@@ -11,17 +11,42 @@ namespace DotNetEnv
     {
         public const string DEFAULT_ENVFILENAME = ".env";
 
-        private static LoadOptions DEFAULT_OPTIONS = new LoadOptions();
-
         public static IEnumerable<KeyValuePair<string, string>> Load (string[] lines, LoadOptions options = null)
         {
             return LoadContents(String.Join("\n", lines), options);
         }
 
-        public static IEnumerable<KeyValuePair<string, string>> Load (string path, LoadOptions options = null)
+        public static IEnumerable<KeyValuePair<string, string>> Load (string path = null, LoadOptions options = null)
         {
+            if (options == null) options = LoadOptions.DEFAULT;
+
+            var file = Path.GetFileName(path);
+            if (file == null || file == string.Empty) file = DEFAULT_ENVFILENAME;
+            var dir = Path.GetDirectoryName(path);
+            if (dir == null || dir == string.Empty) dir = Directory.GetCurrentDirectory();
+            path = Path.Combine(dir, file);
+
+            if (options.OnlyExactPath)
+            {
+                if (!File.Exists(path)) path = null;
+            }
+            else
+            {
+                while (!File.Exists(path))
+                {
+                    var parent = Directory.GetParent(dir);
+                    if (parent == null)
+                    {
+                        path = null;
+                        break;
+                    }
+                    dir = parent.FullName;
+                    path = Path.Combine(dir, file);
+                }
+            }
+
             // in production, there should be no .env file, so this should be the common code path
-            if (!File.Exists(path))
+            if (path == null)
             {
                 return Enumerable.Empty<KeyValuePair<string, string>>();
             }
@@ -38,7 +63,7 @@ namespace DotNetEnv
 
         public static IEnumerable<KeyValuePair<string, string>> LoadContents (string contents, LoadOptions options = null)
         {
-            if (options == null) options = DEFAULT_OPTIONS;
+            if (options == null) options = LoadOptions.DEFAULT;
 
             if (options.SetEnvVars)
             {
@@ -57,9 +82,6 @@ namespace DotNetEnv
             }
         }
 
-        public static IEnumerable<KeyValuePair<string, string>> Load (LoadOptions options = null) =>
-            Load(Path.Combine(Directory.GetCurrentDirectory(), DEFAULT_ENVFILENAME), options);
-
         public static string GetString (string key, string fallback = default(string)) =>
             Environment.GetEnvironmentVariable(key) ?? fallback;
 
@@ -72,19 +94,9 @@ namespace DotNetEnv
         public static double GetDouble (string key, double fallback = default(double)) =>
             double.TryParse(Environment.GetEnvironmentVariable(key), NumberStyles.Any, CultureInfo.InvariantCulture, out var value) ? value : fallback;
 
-        public class LoadOptions
-        {
-            public bool SetEnvVars { get; }
-            public bool ClobberExistingVars { get; }
-
-            public LoadOptions(
-                bool setEnvVars = true,
-                bool clobberExistingVars = true
-            ) {
-                SetEnvVars = setEnvVars;
-                ClobberExistingVars = clobberExistingVars;
-            }
-        }
+        public static LoadOptions NoEnvVars () => LoadOptions.NoEnvVars();
+        public static LoadOptions NoClobber () => LoadOptions.NoClobber();
+        public static LoadOptions TraversePath () => LoadOptions.TraversePath();
     }
 
     public static class Extensions
