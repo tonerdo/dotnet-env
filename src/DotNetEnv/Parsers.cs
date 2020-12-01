@@ -169,32 +169,49 @@ namespace DotNetEnv
                 .Or(OctalChar)
                 .Or(EscapedChar);
 
+        // unquoted values can have interpolated variables, but no whitespace,
+        // and no escaped chars, nor byte code chars
         internal static readonly Parser<ValueCalculator> UnquotedValue =
-            InterpolatedValue.Or(SpecialChar
-                .Or(NotControlNorWhitespace("'\"\\$"))
+            InterpolatedValue.Or(
+                NotControlNorWhitespace("'\"$")
                 .AtLeastOnce()
                 .Select(strs => new ValueActual(strs))
             ).Many().Select(vs => new ValueCalculator(vs));
 
-        // only difference between quoted vs unquoted is addition of whitespace on printablechars
-        internal static Parser<ValueCalculator> QuotedValueContents (string exceptChars) =>
+        // double quoted values can have everything: interpolated variables,
+        // plus whitespace, escaped chars, and byte code chars
+        internal static Parser<ValueCalculator> DoubleQuotedValueContents =
             InterpolatedValue.Or(SpecialChar
-                .Or(NotControlNorWhitespace(exceptChars))
+                .Or(NotControlNorWhitespace("\"\\$"))
                 .Or(Parse.WhiteSpace.AtLeastOnce().Text())
                 .AtLeastOnce()
                 .Select(strs => new ValueActual(strs))
             ).Many().Select(vs => new ValueCalculator(vs));
 
+        // single quoted values can have whitespace,
+        // but no interpolation, no escaped chars, no byte code chars
+        // notably no single quotes inside either -- no escaping!
+        // single quotes are for when you want truly raw values
+        internal static Parser<ValueCalculator> SingleQuotedValueContents =
+            NotControlNorWhitespace("'")
+                .Or(Parse.WhiteSpace.AtLeastOnce().Text())
+                .AtLeastOnce()
+                .Select(strs => new ValueActual(strs))
+                .Many()
+                .Select(vs => new ValueCalculator(vs));
+
+        // compare against bash quoting rules:
+        // https://stackoverflow.com/questions/6697753/difference-between-single-and-double-quotes-in-bash/42082956#42082956
+
         internal static readonly Parser<ValueCalculator> SingleQuotedValue =
-            from _d in Parse.Char('$').Optional()
             from _o in Parse.Char('\'')
-            from value in QuotedValueContents("'\\$")
+            from value in SingleQuotedValueContents
             from _c in Parse.Char('\'')
             select value;
 
         internal static readonly Parser<ValueCalculator> DoubleQuotedValue =
             from _o in Parse.Char('"')
-            from value in QuotedValueContents("\"\\$")
+            from value in DoubleQuotedValueContents
             from _c in Parse.Char('"')
             select value;
 
@@ -220,12 +237,14 @@ namespace DotNetEnv
             select export;
 
         internal static readonly Parser<KeyValuePair<string, string>> Assignment =
-            from _ws1 in InlineWhitespace
+            from _ws_head in InlineWhitespace
             from export in ExportExpression.Optional()
             from name in Identifier
+            from _ws_pre in InlineWhitespace
             from _eq in Parse.Char('=')
+            from _ws_post in InlineWhitespace
             from value in Value
-            from _ws2 in InlineWhitespace
+            from _ws_tail in InlineWhitespace
             from _c in Comment.Optional()
             from _lt in Parse.LineTerminator
             select new KeyValuePair<string, string>(name, value.Value);

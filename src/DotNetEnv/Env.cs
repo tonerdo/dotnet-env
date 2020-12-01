@@ -13,9 +13,6 @@ namespace DotNetEnv
 
         private static LoadOptions DEFAULT_OPTIONS = new LoadOptions();
 
-        public static Dictionary<string, string> ToDictionary (IEnumerable<KeyValuePair<string, string>> kvps) =>
-            kvps.GroupBy(kv => kv.Key).ToDictionary(g => g.Key, g => g.Last().Value);
-
         public static IEnumerable<KeyValuePair<string, string>> Load (string[] lines, LoadOptions options = null)
         {
             return LoadContents(String.Join("\n", lines), options);
@@ -88,5 +85,11 @@ namespace DotNetEnv
                 ClobberExistingVars = clobberExistingVars;
             }
         }
+    }
+
+    public static class Extensions
+    {
+        public static Dictionary<string, string> ToDictionary (this IEnumerable<KeyValuePair<string, string>> kvps) =>
+            kvps.GroupBy(kv => kv.Key).ToDictionary(g => g.Key, g => g.Last().Value);
     }
 }

@@ -17,16 +17,19 @@
     <None Include="./.env_casing">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="./.env_embedded">
+    <None Include="./.env_embedded">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="./.env_quoted_hash">
+    <None Include="./.env_quoted_hash">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="./.env_export_multiline">
+    <None Include="./.env_export_multiline">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="./.env_other">
+    <None Include="./.env_other">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="./.env_examples">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

@@ -130,7 +130,7 @@ KEY=value
 
 There can optionally be one of a few export or equivalent keywords at the beginning
  and there can be a comment at the end, values can be quoted to include whitespace,
- and interpolated references can be included (unquoted values as well as quoted,
+ and interpolated references can be included (unquoted values as well as double quoted,
  with optional braces in both cases -- but often more useful in unquoted), like:
 ```
 export KEY="extra $ENVVAR value" # comment
@@ -149,9 +149,9 @@ This allows the `.env` file itself to be `source`-d like `. .env`
 
 The options for quoting values are:
 
-    "" double
-    '' single
-    $'' dollar single
+1. `""` double: can have everything: interpolated variables, plus whitespace, escaped chars, and byte code chars
+1. `''` single: can have whitespace, but no interpolation, no escaped chars, no byte code chars -- notably not even escaped single quotes inside -- single quoted values are for when you want truly raw values
+1. unquoted: can have interpolated variables, but no whitespace, and no escaped chars, nor byte code chars.
 
 As these are the options bash recognizes. However, while bash does have
  special meaning for each of these, in this library, they are all the same,
@@ -171,13 +171,11 @@ env | grep TEST
 # TEST=value#notcomment
 ```
 
-You can also declare unicode chars in all the ways that bash supports as well
- -- noting that bash normally only parses these inside `$''`
- whereas these work in all quoting styles here:
+You can also declare unicode chars as byte codes in double quoted values:
 
-    UTF8 btes: \xF0\x9F\x9A\x80 # rocket 🚀
-    UTF16 bytes: \uae # registered ®
-    UTF32 bytes: \U1F680 # rocket 🚀
+    UTF8 btes: "\xF0\x9F\x9A\x80" # rocket 🚀
+    UTF16 bytes: "\uae" # registered ®
+    UTF32 bytes: "\U1F680" # rocket 🚀
 
 Capitalization on the hex chars is irrelevant, and leading zeroes are optional.
 
@@ -187,12 +185,37 @@ And standard escaped chars like `\t`, `\\``, `\n`, etc are also recognized
 ```
 KEY="value
 and more"
+OTHER='#not_comment
+line2'
 ```
 
 Loaded gives:
 ```
 "value\nand more" == System.Environment.GetEnvironmentVariable("KEY")
+"#not_comment\nline2" == System.Environment.GetEnvironmentVariable("OTHER")
 ```
+
+You can also include whitespace before and after the equals sign in assignments,
+ between the name/identifier, and the value, quoted or unquoted.
+ Note that the pre/trailing and post/leading whitespace will be ignored.
+ If you want leading whitepace on your values, quote them with whitespace.
+```
+WHITE_BOTH = value
+WHITE_QUOTED=" value "
+```
+
+Loaded gives:
+```
+"value" == System.Environment.GetEnvironmentVariable("WHITE_BOTH")
+" value " == System.Environment.GetEnvironmentVariable("WHITE_QUOTED")
+```
+
+Note that bash env vars do not allow white space pre or post equals,
+ so this is a convenience feature that will break sourcing .env files.
+ But then, not all of this is 100% compatible anyway, and that's ok.
+
+Note that other .env parsing libraries also might have slightly different rules
+ -- no consistent rules have arisen industry wide yet.
 
 ## A Note about Production and the Purpose of This Library
 

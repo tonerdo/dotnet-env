@@ -164,7 +164,10 @@ namespace DotNetEnv.Tests
             Assert.Equal("test", Environment.GetEnvironmentVariable("TEST2"));
             Assert.Equal("testtest", Environment.GetEnvironmentVariable("TEST3"));
             Assert.Equal("testtest1", Environment.GetEnvironmentVariable("TEST4"));
-            Assert.Equal("test:testtest1 $$ and test1", Environment.GetEnvironmentVariable("TEST5"));
+
+            Assert.Equal("test:testtest1 $$ '\" ® and test1", Environment.GetEnvironmentVariable("TEST5_DOUBLE"));
+            Assert.Equal("$TEST:$TEST4 \\$\\$ \" \\uae and $TEST1", Environment.GetEnvironmentVariable("TEST5_SINGLE"));
+            Assert.Equal("test:testtest1\\uaeandtest1", Environment.GetEnvironmentVariable("TEST5_UNQUOTED"));
 
             Assert.Equal("value1", System.Environment.GetEnvironmentVariable("FIRST_KEY"));
             Assert.Equal("value2andvalue1", System.Environment.GetEnvironmentVariable("SECOND_KEY"));
@@ -188,9 +191,9 @@ namespace DotNetEnv.Tests
             Assert.Equal("This isn't working", Environment.GetEnvironmentVariable("QTEST7"));
             Assert.Equal("Hi \"Bob\"!", Environment.GetEnvironmentVariable("QTEST8"));
             Assert.Equal("Hi \"Bob\"!", Environment.GetEnvironmentVariable("QTEST9"));
-            Assert.Equal("This isn't working", Environment.GetEnvironmentVariable("QTEST10"));
+            Assert.Equal("This isnt working", Environment.GetEnvironmentVariable("QTEST10"));
             Assert.Equal("This isn't \"working\" #amiright?", Environment.GetEnvironmentVariable("QTEST11"));
-            Assert.Equal("This isn't \"working\" #amiright?", Environment.GetEnvironmentVariable("QTEST12"));
+            Assert.Equal("This isnt \"working\" #amiright?", Environment.GetEnvironmentVariable("QTEST12"));
         }
 
         [Fact]
@@ -221,11 +224,36 @@ base64
         }
 
         [Fact]
+        public void ExamplesTest()
+        {
+            Environment.SetEnvironmentVariable("ENVVAR", "already here");
+            DotNetEnv.Env.Load("./.env_examples");
+            Assert.Equal("extra already here value", Environment.GetEnvironmentVariable("KEY_DOUBLE"));
+            Assert.Equal("extraalready herevalue", Environment.GetEnvironmentVariable("KEY_UNQUOTED"));
+            Assert.Equal("value#notcomment", Environment.GetEnvironmentVariable("KEY_UNQUOTED_HASH"));
+            Assert.Equal("value\nand more", Environment.GetEnvironmentVariable("KEY_MULTILINE"));
+            Assert.Equal("#not_comment\nline2", Environment.GetEnvironmentVariable("OTHER_MULTILINE"));
+
+            Assert.Equal("value", Environment.GetEnvironmentVariable("WHITE_PRE"));
+            Assert.Equal("value", Environment.GetEnvironmentVariable("WHITE_POST"));
+            Assert.Equal("value", Environment.GetEnvironmentVariable("WHITE_BOTH"));
+            Assert.Equal(" value ", Environment.GetEnvironmentVariable("WHITE_QUOTED"));
+        }
+
+        [Fact]
         public void OtherTest()
         {
+            Environment.SetEnvironmentVariable("VAR1", "_var1_");
+            Environment.SetEnvironmentVariable("VAR1test", "_var1TEST_");
+            Environment.SetEnvironmentVariable("VAR2", "_var2_");
+            Environment.SetEnvironmentVariable("VAR2test", "_var2TEST_");
+            Environment.SetEnvironmentVariable("VAR3", "_var3_");
+            Environment.SetEnvironmentVariable("NVAR1", "_nvar1_");
+            Environment.SetEnvironmentVariable("NVAR2", "_nvar2_");
+
             var kvps = DotNetEnv.Env.Load("./.env_other").ToArray();
-            Assert.Equal(2, kvps.Length);
-            var dict = DotNetEnv.Env.ToDictionary(kvps);
+            Assert.Equal(35, kvps.Length);
+            var dict = kvps.ToDictionary();
 
             // note that env vars get only the final assignment, but all are returned
             Assert.Equal("dupe2", Environment.GetEnvironmentVariable("DUPLICATE"));
@@ -234,6 +262,53 @@ base64
             Assert.Equal("DUPLICATE", kvps[1].Key);
             Assert.Equal("dupe1", kvps[0].Value);
             Assert.Equal("dupe2", kvps[1].Value);
+
+            Assert.Equal("bar", Environment.GetEnvironmentVariable("TEST_KEYWORD_1"));
+            Assert.Equal("12345", Environment.GetEnvironmentVariable("TEST_KEYWORD_2"));
+            Assert.Equal("TRUE", Environment.GetEnvironmentVariable("TEST_KEYWORD_3"));
+            Assert.Equal("Hello", Environment.GetEnvironmentVariable("TEST_VARIABLE"));
+
+            Assert.Equal("_var1_ test test_var2TEST_ test", Environment.GetEnvironmentVariable("TEST_INTERPOLATION_VARIABLE"));
+            Assert.Equal("test test{_nvar1_}test{_nvar2_}test test", Environment.GetEnvironmentVariable("TEST_INTERPOLATION_SYNTAX_ONE"));
+            Assert.Equal("test test_nvar1_test_nvar2_test test", Environment.GetEnvironmentVariable("TEST_INTERPOLATION_SYNTAX_TWO"));
+            Assert.Equal("test_var1TEST_ test {VAR2}test test_var3_test", Environment.GetEnvironmentVariable("TEST_INTERPOLATION_SYNTAX_ALL"));
+
+            Assert.Equal("bar", Environment.GetEnvironmentVariable("TEST_UNQUOTED"));
+            Assert.Null(Environment.GetEnvironmentVariable("TEST_UNQUOTED_NO_VALUE"));
+
+            Assert.Null(Environment.GetEnvironmentVariable("TEST_WHITE_SPACE"));
+            Assert.Equal("Hello", Environment.GetEnvironmentVariable("TEST_WHITE_SPACE_STRING"));
+            Assert.Equal("bar", Environment.GetEnvironmentVariable("TEST_WHITE_SPACE_UNQUOTED"));
+            Assert.Equal("false", Environment.GetEnvironmentVariable("TEST_WHITE_SPACE_UNQUOTED_BOOL"));
+            Assert.Equal("20", Environment.GetEnvironmentVariable("TEST_WHITE_SPACE_UNQUOTED_NUM"));
+
+            Assert.Equal("true", Environment.GetEnvironmentVariable("TEST_TRUE"));
+            Assert.Equal("false", Environment.GetEnvironmentVariable("TEST_FALSE"));
+            Assert.Equal("null", Environment.GetEnvironmentVariable("TEST_NULL"));
+            Assert.Equal("TRUE", Environment.GetEnvironmentVariable("TEST_TRUE_CAPITAL"));
+            Assert.Equal("FALSE", Environment.GetEnvironmentVariable("TEST_FALSE_CAPITAL"));
+            Assert.Equal("NULL", Environment.GetEnvironmentVariable("TEST_NULL_CAPITAL"));
+
+            Assert.Equal("54", Environment.GetEnvironmentVariable("TEST_NUM_DECIMAL"));
+            Assert.Equal("5.3", Environment.GetEnvironmentVariable("TEST_NUM_FLOAT"));
+            Assert.Equal("1e10", Environment.GetEnvironmentVariable("TEST_NUM"));
+            Assert.Equal("-42", Environment.GetEnvironmentVariable("TEST_NUM_NEGATIVE"));
+            Assert.Equal("057", Environment.GetEnvironmentVariable("TEST_NUM_OCTAL"));
+            Assert.Equal("0x1A", Environment.GetEnvironmentVariable("TEST_NUM_HEX"));
+
+            Assert.NotEqual("foobar", Environment.GetEnvironmentVariable("TEST_ONE"));
+            Assert.Null(Environment.GetEnvironmentVariable("TEST_ONE"));
+            Assert.NotEqual("foobar", Environment.GetEnvironmentVariable("TEST_TWO"));
+            Assert.Null(Environment.GetEnvironmentVariable("TEST_TWO"));
+            Assert.NotEqual("foobar", Environment.GetEnvironmentVariable("TEST_THREE"));
+            Assert.Null(Environment.GetEnvironmentVariable("TEST_THREE"));
+            Assert.Equal("test test test", Environment.GetEnvironmentVariable("TEST_FOUR"));
+            Assert.Equal("comment symbol # inside string", Environment.GetEnvironmentVariable("TEST_FIVE"));
+            Assert.Equal("comment symbol # and quotes \" \' inside quotes", Environment.GetEnvironmentVariable("TEST_SIX"));
+
+            Assert.Equal("escaped characters \n \t \r \" \' $ or maybe a backslash \\...", Environment.GetEnvironmentVariable("TEST_ESCAPE"));
+            Assert.Equal("Lorem {_var1_} _var2_ _var3_ ipsum dolor sit amet\n\r\t\\", Environment.GetEnvironmentVariable("TEST_DOUBLE"));
+            Assert.Equal("Lorem {$VAR1} ${VAR2} $VAR3 ipsum dolor sit amet\\n\\r\\t\\\\", Environment.GetEnvironmentVariable("TEST_SINGLE"));
         }
 
         [Fact]
@@ -260,7 +335,7 @@ base64
                     "MULTI WORD KEY",
                 })
             );
-            Assert.Equal("Parsing failure: unexpected ' '; expected = (Line 1, Column 6); recently consumed: MULTI", ex.Message);
+            Assert.Equal("Parsing failure: unexpected 'W'; expected = (Line 1, Column 7); recently consumed: MULTI ", ex.Message);
 
             ex = Assert.Throws<ParseException>(
                 () => DotNetEnv.Env.Load(new [] {
@@ -268,6 +343,13 @@ base64
                 })
             );
             Assert.Equal("Parsing failure: unexpected '''; expected LineTerminator (Line 1, Column 16); recently consumed: CHEDQUOTE=", ex.Message);
+
+            ex = Assert.Throws<ParseException>(
+                () => DotNetEnv.Env.Load(new [] {
+                    "BADQUOTE='\\''",
+                })
+            );
+            Assert.Equal("Parsing failure: unexpected '''; expected LineTerminator (Line 1, Column 13); recently consumed: DQUOTE='\\'", ex.Message);
 
             ex = Assert.Throws<ParseException>(
                 () => DotNetEnv.Env.Load(new [] {

@@ -4,5 +4,5 @@ PORT=8080
 export DOMAIN=example.com
 EMBEDEXPORT="some text export other text"
   #COMMENTLEAD=not used
-WHITELEAD="  leading white space followed by comment"  # comment
-UNICODE='\u00ae \U0001F680 日本'
+WHITELEAD='  leading white space followed by comment'  # comment
+UNICODE="\u00ae \U0001F680 日本"
