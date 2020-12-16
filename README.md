@@ -25,23 +25,32 @@ dotnet add package DotNetEnv
 
 ### Load env file
 
-`Load()` will automatically look for a `.env` file in the current directory
+`Load()` will automatically look for a `.env` file in the current directory by default,
+  or any higher parent/ancestor directory if given the option flag via TraversePath()
 ```csharp
 DotNetEnv.Env.Load();
+DotNetEnv.Env.TraversePath().Load();
 ```
 
-Or you can specify the path to the `.env` file
+Or you can specify the path directly to the `.env` file,
+ amd as above, with `TraversePath()`, it will start looking there
+ and then look in higher dirs from there if not found.
 ```csharp
 DotNetEnv.Env.Load("./path/to/.env");
 ```
 
-It's also possible to load the (text) file as a `Stream`
+It's also possible to load the (text) file as a `Stream` or `string[]`
 
 ```csharp
 using (var stream = File.OpenRead("./path/to/.env"))
 {
     DotNetEnv.Env.Load(stream);
 }
+
+DotNetEnv.Env.Load(new[] {
+    "OK=GOOD",
+    "TEST=\"more stuff\"",
+});
 ```
 
 ### Accessing environment variables
@@ -72,10 +81,17 @@ DotNetEnv.Env.GetString("THIS_DOES_NOT_EXIST", "Variable not found");
 You can also pass a `LoadOptions` object arg to all `DotNetEnv.Env.Load` variants to affect the Load/Parse behavior:
 
 ```csharp
-new DotNetEnv.Env.LoadOptions(
+new DotNetEnv.LoadOptions(
     setEnvVars: true,
-    clobberExistingVars: true
+    clobberExistingVars: true,
+    onlyExactPath: true
 )
+```
+
+However the recommended approach is with a fluent syntax for turning flags off such as:
+
+```csharp
+DotNetEnv.Env.NoEnvVars().NoClobber().TraversePath().Load();
 ```
 
 All parameters default to true, which means:
@@ -83,7 +99,8 @@ All parameters default to true, which means:
 1. `setEnvVars`, first arg: `true` in order to actually update env vars.
  Setting it `false` allows consumers of this library to process the .env file
  but use it for things other than updating env vars, as a generic configuration file.
- The Load methods all return an `IEnumerable<KeyValuePair<string,string>> for this.
+ The Load methods all return an `IEnumerable<KeyValuePair<string,string>> for this, but
+ there is an extension method ToDictionary to get a dict with the last value for each key.
 
 ```env
 KEY=value
@@ -91,10 +108,14 @@ KEY=value
 
 ```csharp
 var kvps = DotNetEnv.Env.Load(
-    new DotNetEnv.Env.LoadOptions(
+    options: new DotNetEnv.Env.LoadOptions(
         setEnvVars: false
     )
 )
+
+// or the recommended, cleaner (fluent) approach:
+var dict = DotNetEnv.Env.NoEnvVars().Load().ToDictionary();
+
 // not "value" from the .env file
 null == System.Environment.GetEnvironmentVariable("KEY")
 "KEY" == kvps.First().Key
@@ -111,12 +132,29 @@ KEY=value
 ```csharp
 System.Environment.SetEnvironmentVariable("KEY", "really important value, don't overwrite");
 DotNetEnv.Env.Load(
-    new DotNetEnv.Env.LoadOptions(
+    options: new DotNetEnv.Env.LoadOptions(
         clobberExistingVars: false
     )
 )
+
+// or the recommended, cleaner (fluent) approach:
+DotNetEnv.Env.NoClobber().Load();
+
 // not "value" from the .env file
 "really important value, don't overwrite" == System.Environment.GetEnvironmentVariable("KEY")
+```
+
+3. `exactPathOnly`, third arg: `true` to require .env to be
+ in the current directory if not specified, or to match the exact path passed in,
+ `false` would traverse the parent directories above the current or given path
+ to find the nearest `.env` file or whatever name was passed in.
+ This option only applies to Env.Load that takes a string path.
+
+See `DotNetEnvTraverse.Tests` for examples.
+
+```csharp
+// the recommended, cleaner (fluent) approach:
+DotNetEnv.Env.TraversePath().Load();
 ```
 
 ## .env file structure
@@ -238,7 +276,7 @@ If you have found a bug or if you have a feature request, please report them at 
 
 ## Contributing
 
-Run `dotnet test test/DotNetEnv.Tests` to run all tests.
+Run `dotnet test` to run all tests.
 
 Or some more specific test examples:
 
@@ -249,6 +287,7 @@ Or some more specific test examples:
 
 `src/DotNetEnvEnv/Parsers.cs` defines all the [Sprache](https://github.com/sprache/Sprache) parsers.
 
+The `DotNetEnvTraverse.Tests` project tests loading `.env` files in parent (or higher) directories from the executable.
 
 Open a PR on Github if you have some changes, or an issue if you want to discuss some proposed changes before creating a PR for them.
 
