@@ -3,8 +3,8 @@
     <Title>DotNetEnv</Title>
     <Description>A .NET library to load environment variables from .env files</Description>
     <AssemblyTitle>DotNetEnv</AssemblyTitle>
-    <AssemblyVersion>1.4.0</AssemblyVersion>
-    <PackageVersion>1.4.0</PackageVersion>
+    <AssemblyVersion>2.0.0</AssemblyVersion>
+    <PackageVersion>2.0.0</PackageVersion>
     <TargetFramework>netstandard1.3</TargetFramework>
     <AssemblyName>DotNetEnv</AssemblyName>
     <OutputType>Library</OutputType>
@@ -17,6 +17,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="../../LICENSE" Pack="true" PackagePath=""/>
+    <None Include="../../LICENSE" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Sprache" Version="2.3.1" />
   </ItemGroup>
 </Project>
