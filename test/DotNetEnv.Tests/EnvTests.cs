@@ -81,18 +81,16 @@ namespace DotNetEnv.Tests
         }
 
         [Fact]
-        public void LoadLinesTest()
+        public void LoadMultiTest()
         {
-            DotNetEnv.Env.Load(File.ReadAllLines("./.env"));
+            DotNetEnv.Env.LoadMulti(new[] { "./.env", "./.env2" });
+            Assert.Equal("Other", Environment.GetEnvironmentVariable("NAME"));
+            Environment.SetEnvironmentVariable("NAME", null);
+            DotNetEnv.Env.NoClobber().LoadMulti(new[] { "./.env", "./.env2" });
             Assert.Equal("Toni", Environment.GetEnvironmentVariable("NAME"));
-            // unfortunately .NET removes empty env vars -- there can NEVER be an empty string env var value
-            //  https://msdn.microsoft.com/en-us/library/z46c489x(v=vs.110).aspx#Remarks
-            Assert.Null(Environment.GetEnvironmentVariable("EMPTY"));
-            Assert.Equal("'", Environment.GetEnvironmentVariable("QUOTE"));
-            Assert.Equal("https://github.com/tonerdo", Environment.GetEnvironmentVariable("URL"));
-            Assert.Equal("user=test;password=secret", Environment.GetEnvironmentVariable("CONNECTION"));
-            Assert.Equal("  leading and trailing white space   ", Environment.GetEnvironmentVariable("WHITEBOTH"));
-            Assert.Equal("SPECIAL STUFF---\nLONG-BASE64\\ignore\"slash", Environment.GetEnvironmentVariable("SSL_CERT"));
+            Environment.SetEnvironmentVariable("NAME", "Person");
+            DotNetEnv.Env.NoClobber().LoadMulti(new[] { "./.env", "./.env2" });
+            Assert.Equal("Person", Environment.GetEnvironmentVariable("NAME"));
         }
 
         [Fact]
@@ -328,61 +326,44 @@ base64
             ParseException ex;
 
             ex = Assert.Throws<ParseException>(
-                () => DotNetEnv.Env.Load(new[] {
-                    "KEY=VAL UE",
-                })
+                () => DotNetEnv.Env.LoadContents("KEY=VAL UE")
             );
             Assert.Equal("Parsing failure: unexpected 'U'; expected LineTerminator (Line 1, Column 9); recently consumed: KEY=VAL ", ex.Message);
 
             ex = Assert.Throws<ParseException>(
-                () => DotNetEnv.Env.Load(new[] {
-                    "NOVALUE",
-                })
+                () => DotNetEnv.Env.LoadContents("NOVALUE")
             );
             Assert.Equal("Parsing failure: Unexpected end of input reached; expected = (Line 1, Column 8); recently consumed: NOVALUE", ex.Message);
 
             ex = Assert.Throws<ParseException>(
-                () => DotNetEnv.Env.Load(new[] {
-                    "MULTI WORD KEY",
-                })
+                () => DotNetEnv.Env.LoadContents("MULTI WORD KEY")
             );
             Assert.Equal("Parsing failure: unexpected 'W'; expected = (Line 1, Column 7); recently consumed: MULTI ", ex.Message);
 
             ex = Assert.Throws<ParseException>(
-                () => DotNetEnv.Env.Load(new[] {
-                    "UNMATCHEDQUOTE='",
-                })
+                () => DotNetEnv.Env.LoadContents("UNMATCHEDQUOTE='")
             );
             Assert.Equal("Parsing failure: unexpected '''; expected LineTerminator (Line 1, Column 16); recently consumed: CHEDQUOTE=", ex.Message);
 
             ex = Assert.Throws<ParseException>(
-                () => DotNetEnv.Env.Load(new[] {
-                    "BADQUOTE='\\''",
-                })
+                () => DotNetEnv.Env.LoadContents("BADQUOTE='\\''")
             );
             Assert.Equal("Parsing failure: unexpected '''; expected LineTerminator (Line 1, Column 13); recently consumed: DQUOTE='\\'", ex.Message);
 
             ex = Assert.Throws<ParseException>(
-                () => DotNetEnv.Env.Load(new[] {
-                    "UNMATCHEDQUOTE=\"",
-                })
+                () => DotNetEnv.Env.LoadContents("UNMATCHEDQUOTE=\"")
             );
             Assert.Equal("Parsing failure: unexpected '\"'; expected LineTerminator (Line 1, Column 16); recently consumed: CHEDQUOTE=", ex.Message);
 
             ex = Assert.Throws<ParseException>(
-                () => DotNetEnv.Env.Load(new[] {
-                    "SSL_CERT=\"SPECIAL STUFF---\nLONG-BASE64\\ignore\"slash\"",
-                })
+                () => DotNetEnv.Env.LoadContents("SSL_CERT=\"SPECIAL STUFF---\nLONG-BASE64\\ignore\"slash\"")
             );
             Assert.Equal("Parsing failure: unexpected 's'; expected LineTerminator (Line 2, Column 20); recently consumed: 64\\ignore\"", ex.Message);
 
             // this test confirms that the entire file must be valid, not just at least one assignment at the start
             // otherwise it silently discards any remainder after the first failure, so long as at least one success...
             ex = Assert.Throws<ParseException>(
-                () => DotNetEnv.Env.Load(new[] {
-                    "OK=GOOD",
-                    "SSL_CERT=\"SPECIAL STUFF---\nLONG-BASE64\\ignore\"slash\"",
-                })
+                () => DotNetEnv.Env.LoadContents("OK=GOOD\nSSL_CERT=\"SPECIAL STUFF---\nLONG-BASE64\\ignore\"slash\"")
             );
             Assert.Equal("Parsing failure: unexpected 'S'; expected end of input (Line 2, Column 1); recently consumed: OK=GOOD\n", ex.Message);
         }
@@ -390,10 +371,10 @@ base64
         [Fact]
         public void BasicsTest()
         {
-            DotNetEnv.Env.Load(new[] { "ENV_TEST_KEY=VALUE" });
+            DotNetEnv.Env.LoadContents("ENV_TEST_KEY=VALUE");
             Assert.Equal("VALUE", Environment.GetEnvironmentVariable("ENV_TEST_KEY"));
 
-            DotNetEnv.Env.Load(new[] { "ENV_TEST_K1=V1", "ENV_TEST_K2=V2" });
+            DotNetEnv.Env.LoadContents("ENV_TEST_K1=V1\nENV_TEST_K2=V2");
             Assert.Equal("V1", Environment.GetEnvironmentVariable("ENV_TEST_K1"));
             Assert.Equal("V2", Environment.GetEnvironmentVariable("ENV_TEST_K2"));
         }
