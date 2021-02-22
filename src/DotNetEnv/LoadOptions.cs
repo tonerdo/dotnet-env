@@ -50,5 +50,6 @@ namespace DotNetEnv
         public LoadOptions TraversePath () => new LoadOptions(this, onlyExactPath: false);
 
         public IEnumerable<KeyValuePair<string, string>> Load (string path = null) => Env.Load(path, this);
+        public IEnumerable<KeyValuePair<string, string>> LoadMulti (string[] paths) => Env.LoadMulti(paths, this);
     }
 }

@@ -39,7 +39,7 @@ Or you can specify the path directly to the `.env` file,
 DotNetEnv.Env.Load("./path/to/.env");
 ```
 
-It's also possible to load the (text) file as a `Stream` or `string[]`
+It's also possible to load the (text) file as a `Stream` or `string` or multiple files in sequence
 
 ```csharp
 using (var stream = File.OpenRead("./path/to/.env"))
@@ -47,9 +47,13 @@ using (var stream = File.OpenRead("./path/to/.env"))
     DotNetEnv.Env.Load(stream);
 }
 
-DotNetEnv.Env.Load(new[] {
-    "OK=GOOD",
-    "TEST=\"more stuff\"",
+DotNetEnv.Env.LoadContents("OK=GOOD\nTEST=\"more stuff\"");
+
+// will use values in later files over values in earlier files
+// NOTE: NoClobber will reverse this, it will use the first value encountered!
+DotNetEnv.Env.LoadMulti(new[] {
+    ".env",
+    ".env2",
 });
 ```
 

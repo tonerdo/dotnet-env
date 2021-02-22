@@ -11,9 +11,12 @@ namespace DotNetEnv
     {
         public const string DEFAULT_ENVFILENAME = ".env";
 
-        public static IEnumerable<KeyValuePair<string, string>> Load (string[] lines, LoadOptions options = null)
+        public static IEnumerable<KeyValuePair<string, string>> LoadMulti (string[] paths, LoadOptions options = null)
         {
-            return LoadContents(String.Join("\n", lines), options);
+            return paths.Aggregate(
+                Enumerable.Empty<KeyValuePair<string, string>>(),
+                (kvps, path) => kvps.Concat(Load(path, options))
+            );
         }
 
         public static IEnumerable<KeyValuePair<string, string>> Load (string path = null, LoadOptions options = null)
