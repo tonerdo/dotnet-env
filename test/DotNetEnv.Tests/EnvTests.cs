@@ -247,6 +247,10 @@ base64
             Assert.Equal("value", Environment.GetEnvironmentVariable("WHITE_POST"));
             Assert.Equal("value", Environment.GetEnvironmentVariable("WHITE_BOTH"));
             Assert.Equal(" value ", Environment.GetEnvironmentVariable("WHITE_QUOTED"));
+
+            Assert.Equal("Initial Catalog=dbname", Environment.GetEnvironmentVariable("ConnectionString1"));
+            Assert.Equal("Initial Catalog=dbname", Environment.GetEnvironmentVariable("ConnectionString2"));
+            Assert.Equal("value#notcomment more	words here", Environment.GetEnvironmentVariable("KEY_UNQUOTED_HASH_MULTI"));
         }
 
         [Fact]
@@ -326,11 +330,6 @@ base64
             ParseException ex;
 
             ex = Assert.Throws<ParseException>(
-                () => DotNetEnv.Env.LoadContents("KEY=VAL UE")
-            );
-            Assert.Equal("Parsing failure: unexpected 'U'; expected LineTerminator (Line 1, Column 9); recently consumed: KEY=VAL ", ex.Message);
-
-            ex = Assert.Throws<ParseException>(
                 () => DotNetEnv.Env.LoadContents("NOVALUE")
             );
             Assert.Equal("Parsing failure: Unexpected end of input reached; expected = (Line 1, Column 8); recently consumed: NOVALUE", ex.Message);
@@ -373,6 +372,8 @@ base64
         {
             DotNetEnv.Env.LoadContents("ENV_TEST_KEY=VALUE");
             Assert.Equal("VALUE", Environment.GetEnvironmentVariable("ENV_TEST_KEY"));
+            DotNetEnv.Env.LoadContents("ENV_TEST_KEY=VAL UE");
+            Assert.Equal("VAL UE", Environment.GetEnvironmentVariable("ENV_TEST_KEY"));
 
             DotNetEnv.Env.LoadContents("ENV_TEST_K1=V1\nENV_TEST_K2=V2");
             Assert.Equal("V1", Environment.GetEnvironmentVariable("ENV_TEST_K1"));

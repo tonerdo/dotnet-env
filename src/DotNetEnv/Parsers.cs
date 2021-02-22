@@ -36,6 +36,7 @@ namespace DotNetEnv
         private static readonly Parser<char> DollarSign = Parse.Char('$');
         private static readonly Parser<char> Backslash = Parse.Char('\\');
         private static readonly Parser<char> Underscore = Parse.Char('_');
+        private static readonly Parser<char> InlineWhitespaceChars = Parse.Chars(" \t");
 
         private const string EscapeChars = "abfnrtv\\'\"?$`";
 
@@ -169,19 +170,23 @@ namespace DotNetEnv
                 .Or(OctalChar)
                 .Or(EscapedChar);
 
-        // unquoted values can have interpolated variables, but no whitespace,
+        // unquoted values can have interpolated variables,
+        // but only inline whitespace -- until a comment,
         // and no escaped chars, nor byte code chars
+        // FIXME: would be nice to solve multi word with comment case with parser directly (no split + trim)
         internal static readonly Parser<ValueCalculator> UnquotedValue =
             InterpolatedValue.Or(
                 NotControlNorWhitespace("'\"$")
+                .Or(InlineWhitespaceChars.AtLeastOnce().Text())
                 .AtLeastOnce()
                 .Select(strs => new ValueActual(strs))
-            ).Many().Select(vs => new ValueCalculator(vs));
+            ).Many().Select(vs => new ValueCalculator(vs).Split("[ \t]#").Trim());
 
         // double quoted values can have everything: interpolated variables,
         // plus whitespace, escaped chars, and byte code chars
         internal static Parser<ValueCalculator> DoubleQuotedValueContents =
-            InterpolatedValue.Or(SpecialChar
+            InterpolatedValue.Or(
+                SpecialChar
                 .Or(NotControlNorWhitespace("\"\\$"))
                 .Or(Parse.WhiteSpace.AtLeastOnce().Text())
                 .AtLeastOnce()
@@ -215,7 +220,6 @@ namespace DotNetEnv
             from _c in Parse.Char('"')
             select value;
 
-        // MUST do single quoted first because of possible leading dollar sign which otherwise would be start of unquoted value
         internal static readonly Parser<ValueCalculator> Value =
             SingleQuotedValue.Or(DoubleQuotedValue).Or(UnquotedValue);
 
@@ -225,7 +229,7 @@ namespace DotNetEnv
             select comment;
 
         private static readonly Parser<string> InlineWhitespace =
-            Parse.Chars(" \t").Many().Text();
+            InlineWhitespaceChars.Many().Text();
 
         private static readonly Parser<string> ExportExpression =
             from export in Parse.String("export")
@@ -233,7 +237,7 @@ namespace DotNetEnv
                 .Or(Parse.String("set"))
                 .Or(Parse.String("SET"))
                 .Text()
-            from _ws in Parse.Chars(" \t").AtLeastOnce()
+            from _ws in InlineWhitespaceChars.AtLeastOnce()
             select export;
 
         internal static readonly Parser<KeyValuePair<string, string>> Assignment =
