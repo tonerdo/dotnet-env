@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace DotNetEnv
 {
@@ -46,13 +47,26 @@ namespace DotNetEnv
 
     public class ValueCalculator
     {
-        public readonly string Value;
+        public string Value { get; private set; }
 
         public ValueCalculator (IEnumerable<IValue> values)
         {
             // note that we do want this lookup / calculation / GetValue calls in the ctor
             // because it is the state of the world at the moment that this value is calculated
             Value = string.Join(string.Empty, values.Select(val => val.GetValue()));
+        }
+
+        public ValueCalculator Split (string pattern)
+        {
+            Value = new Regex(pattern).Split(Value, 2)[0];
+//            Value = Value.Split(new[] { delimiter }, 2, StringSplitOptions.None)[0];
+            return this;
+        }
+
+        public ValueCalculator Trim ()
+        {
+            Value = Value.Trim();
+            return this;
         }
     }
 }
