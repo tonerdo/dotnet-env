@@ -160,8 +160,12 @@ namespace DotNetEnv
             from _c in Parse.Char('}')
             select new ValueInterpolated(id);
 
+        internal static readonly Parser<IValue> JustDollarValue =
+            from d in DollarSign
+            select new ValueActual(d.ToString());
+
         internal static readonly Parser<IValue> InterpolatedValue =
-            InterpolatedEnvVar.Or(InterpolatedBracesEnvVar);
+            InterpolatedEnvVar.Or(InterpolatedBracesEnvVar).Or(JustDollarValue);
 
         internal static readonly Parser<string> SpecialChar =
             Utf32Char

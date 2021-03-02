@@ -184,6 +184,23 @@ namespace DotNetEnv.Tests
             Assert.Equal("value;andvalue3", System.Environment.GetEnvironmentVariable("THIRD_KEY"));
             // DNE_VAR does not exist (has no value)
             Assert.Equal(";nope", System.Environment.GetEnvironmentVariable("FOURTH_KEY"));
+
+            Assert.Equal("^((?!Everyone).)*$", Environment.GetEnvironmentVariable("GROUP_FILTER_REGEX"));
+
+            Assert.Equal("value$", Environment.GetEnvironmentVariable("DOLLAR1_U"));
+            Assert.Equal("valuevalue$$", Environment.GetEnvironmentVariable("DOLLAR2_U"));
+            Assert.Equal("value$.$", Environment.GetEnvironmentVariable("DOLLAR3_U"));
+            Assert.Equal("value$$", Environment.GetEnvironmentVariable("DOLLAR4_U"));
+
+            Assert.Equal("value$", Environment.GetEnvironmentVariable("DOLLAR1_S"));
+            Assert.Equal("value$DOLLAR1_S$", Environment.GetEnvironmentVariable("DOLLAR2_S"));
+            Assert.Equal("value$.$", Environment.GetEnvironmentVariable("DOLLAR3_S"));
+            Assert.Equal("value$$", Environment.GetEnvironmentVariable("DOLLAR4_S"));
+
+            Assert.Equal("value$", Environment.GetEnvironmentVariable("DOLLAR1_D"));
+            Assert.Equal("valuevalue$$", Environment.GetEnvironmentVariable("DOLLAR2_D"));
+            Assert.Equal("value$.$", Environment.GetEnvironmentVariable("DOLLAR3_D"));
+            Assert.Equal("value$$", Environment.GetEnvironmentVariable("DOLLAR4_D"));
         }
 
         [Fact]
