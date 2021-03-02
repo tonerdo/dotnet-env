@@ -30,9 +30,7 @@ namespace DotNetEnv
         private readonly string _value;
 
         public ValueActual (IEnumerable<string> strs)
-        {
-            _value = string.Join(string.Empty, strs);
-        }
+            : this(string.Join(string.Empty, strs)) {}
 
         public ValueActual (string str)
         {
