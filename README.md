@@ -3,7 +3,7 @@
 [![NuGet version](https://badge.fury.io/nu/DotNetEnv.svg)](https://www.nuget.org/packages/DotNetEnv)
 # dotnet-env
 
-A .NET library to load environment variables from .env files. Supports .NET Core and .NET Framework
+A .NET library to load environment variables from .env files. Supports .NET Core and .NET Framework (4.6+).
 
 ## Installation
 
