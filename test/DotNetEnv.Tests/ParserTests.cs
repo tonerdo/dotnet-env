@@ -48,8 +48,17 @@ namespace DotNetEnv.Tests
             Assert.Equal("_n", Parsers.Identifier.End().Parse("_n"));
             Assert.Equal("__", Parsers.Identifier.End().Parse("__"));
             Assert.Equal("_0", Parsers.Identifier.End().Parse("_0"));
+            Assert.Equal("a_b", Parsers.Identifier.End().Parse("a_b"));
+            Assert.Equal("_a_b", Parsers.Identifier.End().Parse("_a_b"));
+            Assert.Equal("a.b", Parsers.Identifier.End().Parse("a.b"));
+            Assert.Equal("a-b", Parsers.Identifier.End().Parse("a-b"));
             Assert.Throws<ParseException>(() => Parsers.Identifier.End().Parse("\"name"));
             Assert.Throws<ParseException>(() => Parsers.Identifier.End().Parse("0name"));
+            Assert.Throws<ParseException>(() => Parsers.Identifier.End().Parse(".a.b"));
+            Assert.Throws<ParseException>(() => Parsers.Identifier.End().Parse("-a.b"));
+            Assert.Throws<ParseException>(() => Parsers.Identifier.End().Parse("a!b"));
+            Assert.Throws<ParseException>(() => Parsers.Identifier.End().Parse("a?b"));
+            Assert.Throws<ParseException>(() => Parsers.Identifier.End().Parse("a*b"));
         }
 
         [Fact]
