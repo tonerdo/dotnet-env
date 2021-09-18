@@ -67,13 +67,12 @@ namespace DotNetEnv
             from c in Parse.AnyChar
             select ToEscapeChar(c);
 
-        //public static readonly Parser<string> Identifier = Parse.RegexMatch(@"[a-zA-Z_][a-zA-Z_0-9]*").Token();
-        // https://github.com/sprache/Sprache/blob/c8a3b0c5d06dcf5f0d8d4e0087cd8a628aa6549c/samples/XmlExample/Program.cs#L52
-        // I am not clear why that uses XOr instead of just Or, which seems more accurate and cheaper
-        // maybe should be using https://github.com/sprache/Sprache/blob/c8a3b0c5d06dcf5f0d8d4e0087cd8a628aa6549c/src/Sprache/Parse.Primitives.cs#L26
+        // officially *nix env vars can only be /[a-zA-Z_][a-zA-Z_0-9]*/
+        // but because technically you can set env vars that are basically anything except equals signs, allow some flexibility
+        private static readonly Parser<char> IdentifierSpecialChars = Parse.Chars(".-");
         internal static readonly Parser<string> Identifier =
             from head in Parse.Letter.Or(Underscore)
-            from tail in Parse.LetterOrDigit.Or(Underscore).Many().Text()
+            from tail in Parse.LetterOrDigit.Or(Underscore).Or(IdentifierSpecialChars).Many().Text()
             select head + tail;
 
         private static byte ToOctalByte (string value)
@@ -188,7 +187,7 @@ namespace DotNetEnv
 
         // double quoted values can have everything: interpolated variables,
         // plus whitespace, escaped chars, and byte code chars
-        internal static Parser<ValueCalculator> DoubleQuotedValueContents =
+        internal static readonly Parser<ValueCalculator> DoubleQuotedValueContents =
             InterpolatedValue.Or(
                 SpecialChar
                 .Or(NotControlNorWhitespace("\"\\$"))
@@ -201,7 +200,7 @@ namespace DotNetEnv
         // but no interpolation, no escaped chars, no byte code chars
         // notably no single quotes inside either -- no escaping!
         // single quotes are for when you want truly raw values
-        internal static Parser<ValueCalculator> SingleQuotedValueContents =
+        internal static readonly Parser<ValueCalculator> SingleQuotedValueContents =
             NotControlNorWhitespace("'")
                 .Or(Parse.WhiteSpace.AtLeastOnce().Text())
                 .AtLeastOnce()
