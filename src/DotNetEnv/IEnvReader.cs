@@ -88,21 +88,6 @@ namespace DotNetEnv
     public class EnvReader : IEnvReader
     {
         private const string EnvVariableNotFoundMessage = "The value could not be retrieved because it does not exist in the current process.";
-        private static EnvReader instance;
-
-        /// <summary>
-        /// Gets an instance of type EnvReader.
-        /// </summary>
-        public static EnvReader Instance
-        {
-            get
-            {
-                if (instance == null)
-                    instance = new EnvReader();
-
-                return instance;
-            }
-        }
 
         public string this[string variable] => GetStringValue(variable);
 
