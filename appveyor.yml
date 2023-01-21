@@ -4,6 +4,7 @@ configuration:
   - Release
 build_script:
   - echo "Building for %CONFIGURATION%"
+  - dotnet --list-sdks
   - dotnet restore
   - dotnet build -c %CONFIGURATION%
 test_script:
