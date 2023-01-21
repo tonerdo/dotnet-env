@@ -66,5 +66,18 @@ namespace DotNetEnv.Tests
 
             Assert.Empty(config.AsEnumerable());
         }
+
+        [Fact]
+        public void AddSourceToBuilderAndGetSection()
+        {
+            var config = new ConfigurationBuilder()
+                .AddDotNetEnv("./.env_sections")
+                .Build();
+
+            var section = config.GetSection("SECTION");
+
+            Assert.Equal("value1", section["Key1"]);
+            Assert.Equal("value2", section["Key2"]);
+        }
     }
 }

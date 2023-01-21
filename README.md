@@ -161,6 +161,18 @@ See `DotNetEnvTraverse.Tests` for examples.
 DotNetEnv.Env.TraversePath().Load();
 ```
 
+### Using .NET Configuration provider
+
+Integrating with the usual ConfigurationBuilder used in .NET is simple!
+
+```
+var configuration = new ConfigurationBuilder()
+    .AddDotNetEnv(".env", LoadOptions.TraversePath()) // Simply add the DotNetEnv configuration source!
+    .Build();
+```
+
+The configuration provider will map `__` as `:` to allow sections!
+
 ## .env file structure
 
 All lines must be valid assignments or empty lines (with optional comments).
