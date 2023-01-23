@@ -36,7 +36,7 @@ namespace DotNetEnv.Configuration
                 }
             }
 
-            // Since the Load method does not take car of cloberring, We have to check it here!
+            // Since the Load method does not take care of cloberring, We have to check it here!
             foreach (var value in values)
             {
                 var key = NormalizeKey(value.Key);
