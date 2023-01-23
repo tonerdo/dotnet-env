@@ -14,7 +14,7 @@ namespace DotNetEnv.Configuration
             LoadOptions options)
         {
             this.paths = paths;
-            this.options = (options ?? LoadOptions.DEFAULT).NoEnvVars();
+            this.options = options ?? LoadOptions.DEFAULT;
         }
 
         public override void Load()
