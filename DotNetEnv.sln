@@ -1,17 +1,30 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26124.0
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33205.214
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{E1CC46FC-4D7C-42C0-8F3A-BCB1B45CD459}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotNetEnv", "src\DotNetEnv\DotNetEnv.csproj", "{56AE6D80-197D-426C-B4A3-B1F329263B71}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetEnv", "src\DotNetEnv\DotNetEnv.csproj", "{56AE6D80-197D-426C-B4A3-B1F329263B71}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{DECBE6ED-4F14-424C-BEF1-0B9D45EEDB79}"
+	ProjectSection(SolutionItems) = preProject
+		test\.env = test\.env
+	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotNetEnv.Tests", "test\DotNetEnv.Tests\DotNetEnv.Tests.csproj", "{062FD47B-69A9-4808-97CA-CF24CD65B0F0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetEnv.Tests", "test\DotNetEnv.Tests\DotNetEnv.Tests.csproj", "{062FD47B-69A9-4808-97CA-CF24CD65B0F0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotNetEnvTraverse.Tests", "test\DotNetEnvTraverse.Tests\DotNetEnvTraverse.Tests.csproj", "{947252C9-700A-4A6E-A9EA-DFA6631916EF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotNetEnvTraverse.Tests", "test\DotNetEnvTraverse.Tests\DotNetEnvTraverse.Tests.csproj", "{947252C9-700A-4A6E-A9EA-DFA6631916EF}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C5790CAC-6A56-45A4-8AC9-EA2D0C7120A8}"
+	ProjectSection(SolutionItems) = preProject
+		.env_much_higher = .env_much_higher
+		.gitignore = .gitignore
+		appveyor.yml = appveyor.yml
+		global.json = global.json
+		LICENSE = LICENSE
+		README.md = README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,9 +34,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{56AE6D80-197D-426C-B4A3-B1F329263B71}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -63,9 +73,15 @@ Global
 		{947252C9-700A-4A6E-A9EA-DFA6631916EF}.Release|x86.ActiveCfg = Release|Any CPU
 		{947252C9-700A-4A6E-A9EA-DFA6631916EF}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{56AE6D80-197D-426C-B4A3-B1F329263B71} = {E1CC46FC-4D7C-42C0-8F3A-BCB1B45CD459}
 		{062FD47B-69A9-4808-97CA-CF24CD65B0F0} = {DECBE6ED-4F14-424C-BEF1-0B9D45EEDB79}
 		{947252C9-700A-4A6E-A9EA-DFA6631916EF} = {DECBE6ED-4F14-424C-BEF1-0B9D45EEDB79}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {DD9551C5-6762-4AB7-BF95-E02EC1EE2285}
 	EndGlobalSection
 EndGlobal
