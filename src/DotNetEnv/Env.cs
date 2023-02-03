@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Text;
 
 namespace DotNetEnv
 {
@@ -25,7 +26,7 @@ namespace DotNetEnv
             var file = Path.GetFileName(path);
             if (file == null || file == string.Empty) file = DEFAULT_ENVFILENAME;
             var dir = Path.GetDirectoryName(path);
-            if (dir == null || dir == string.Empty) dir = AppContext.BaseDirectory;
+            if (dir == null || dir == string.Empty) dir = Directory.GetCurrentDirectory();
             path = Path.Combine(dir, file);
 
             if (options.OnlyExactPath)
