@@ -33,7 +33,7 @@ DotNetEnv.Env.TraversePath().Load();
 ```
 
 Or you can specify the path directly to the `.env` file,
- amd as above, with `TraversePath()`, it will start looking there
+ and as above, with `TraversePath()`, it will start looking there
  and then look in higher dirs from there if not found.
 ```csharp
 DotNetEnv.Env.Load("./path/to/.env");
