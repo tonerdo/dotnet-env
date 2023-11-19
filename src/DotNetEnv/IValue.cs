@@ -54,13 +54,6 @@ namespace DotNetEnv
             Value = string.Join(string.Empty, values.Select(val => val.GetValue()));
         }
 
-        public ValueCalculator Split (string pattern)
-        {
-            Value = new Regex(pattern).Split(Value, 2)[0];
-//            Value = Value.Split(new[] { delimiter }, 2, StringSplitOptions.None)[0];
-            return this;
-        }
-
         public ValueCalculator Trim ()
         {
             Value = Value.Trim();

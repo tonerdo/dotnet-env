@@ -229,6 +229,17 @@ namespace DotNetEnv.Tests
         }
 
         [Fact]
+        public void ParseInlineCommentBeginOrControl()
+        {
+            Assert.Equal("\t#", Parsers.InlineCommentBeginOrControl.Parse("\t#mycomment"));
+            Assert.Equal(" #", Parsers.InlineCommentBeginOrControl.Parse(" #mycomment"));
+            Assert.Equal("\r", Parsers.InlineCommentBeginOrControl.Parse("\rnextLine"));
+            Assert.Equal("\r", Parsers.InlineCommentBeginOrControl.Parse("\r\nnextLine"));
+            
+            Assert.Throws<ParseException>(() => Parsers.InlineCommentBeginOrControl.Parse("\ttabShouldBeIgnored"));
+        }
+
+        [Fact]
         public void ParseUnquotedValue ()
         {
             Assert.Equal("abc", Parsers.UnquotedValue.End().Parse("abc").Value);
@@ -244,11 +255,8 @@ namespace DotNetEnv.Tests
             Assert.Equal("", Parsers.UnquotedValue.Parse("\"").Value);  // unmatched doubleQuote
             Assert.Equal("", Parsers.UnquotedValue.Parse("\"unmatched doubleQuote").Value);
 
-            //todo: replace following test with: Assert.Equal("", Parsers.UnquotedValue.Parse("#").Value); // no value, empty comment
-            Assert.Equal("#", Parsers.UnquotedValue.Parse("#").Value); // leading hash resolves to unquoted value
-
-            //todo: replace following test with: Assert.Equal("", Parsers.UnquotedValue.Parse("#commentOnly").Value);
-            Assert.Equal("#leading hash resolves to unquoted value", Parsers.UnquotedValue.Parse("#leading hash resolves to unquoted value").Value);
+            Assert.Equal("", Parsers.UnquotedValue.Parse("#").Value); // no value, empty comment
+            Assert.Equal("", Parsers.UnquotedValue.Parse("#commentOnly").Value);
 
             Assert.Equal("", Parsers.UnquotedValue.Parse(" #").Value); // no value, empty comment with preceding whitespace
             Assert.Equal("", Parsers.UnquotedValue.Parse(" #no value, comment with preceding whitespace").Value);
@@ -353,31 +361,14 @@ namespace DotNetEnv.Tests
                 Assert.Equal(value, kvp.Value);
             };
 
-            //todo: replace following test with: testParse("EV_DNE", "", "EV_DNE=#no value just comment");
-            testParse("EV_DNE", "# hash without whitespace is a value", "EV_DNE=# hash without whitespace is a value");
-
-            //todo: replace following test with: testParse("EV_DNE", "", "EV_DNE= #no value just comment");
-            testParse("EV_DNE", "# hash with whitespace is a value", "EV_DNE= # hash with whitespace is a value");
-
+            testParse("EV_DNE", "", "EV_DNE=#no value just comment");
+            testParse("EV_DNE", "", "EV_DNE= #no value just comment");
             testParse("EV_DNE", "test", "EV_DNE= test #basic comment");
-
-            //todo: replace following test with: testParse("EV_DNE", "test", "EV_DNE= test  #a'bc allow singleQuotes in comment");
-            Assert.Throws<ParseException>(() =>
-                Parsers.Assignment.End().Parse("EV_DNE= test  #a'bc use singleQuotes in comment"));
-
-            //todo: replace following test with: testParse("EV_DNE", "test", "EV_DNE= test  #a\"bc allow doubleQuotes in comment");
-            Assert.Throws<ParseException>(() =>
-                Parsers.Assignment.End().Parse("EV_DNE= test  #a'bc use doubleQuotes in comment"));
-
+            testParse("EV_DNE", "test", "EV_DNE= test  #a'bc allow singleQuotes in comment");
+            testParse("EV_DNE", "test", "EV_DNE= test  #a\"bc allow doubleQuotes in comment");
             testParse("EV_DNE", "test", "EV_DNE= test  #a$bc allow dollarSign in comment");
-
-            //todo: replace following test with: testParse("EV_DNE", "a'b''c", "EV_DNE=a'b''c #allow inline singleQuotes in unquoted values");
-            Assert.Throws<ParseException>(() =>
-                Parsers.Assignment.End().Parse("EV_DNE=a'b''c #use inline singleQuotes in unquoted values"));
-
-            //todo: replace following test with: testParse("EV_DNE", "a\"b\"\"c", "EV_DNE=a\"b\"\"c #allow inline doubleQuotes in unquoted values");
-            Assert.Throws<ParseException>(() =>
-                Parsers.Assignment.End().Parse("EV_DNE=a'b''c #use inline doubleQuotes in unquoted values"));
+            testParse("EV_DNE", "a'b''c", "EV_DNE=a'b''c #allow inline singleQuotes in unquoted values");
+            testParse("EV_DNE", "a\"b\"\"c", "EV_DNE=a\"b\"\"c #allow inline doubleQuotes in unquoted values");
 
             testParse("EV_DNE", "abc", "EV_DNE=abc");
             testParse("EV_DNE", "a b c", "EV_DNE=a b c");

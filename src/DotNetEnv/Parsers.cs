@@ -173,17 +173,23 @@ namespace DotNetEnv
                 .Or(OctalChar)
                 .Or(EscapedChar);
 
+        internal static readonly Parser<IEnumerable<char>> InlineCommentBeginOrControl =
+            Parse.Regex("[ \t]#").Or(Parse.Char(c => char.IsControl(c) && c != '\t', "controls except tab").Once());
+
         // unquoted values can have interpolated variables,
         // but only inline whitespace -- until a comment,
         // and no escaped chars, nor byte code chars
-        // FIXME: would be nice to solve multi word with comment case with parser directly (no split + trim)
         internal static readonly Parser<ValueCalculator> UnquotedValue =
-            InterpolatedValue.Or(
-                NotControlNorWhitespace("'\"$")
-                .Or(InlineWhitespaceChars.AtLeastOnce().Text())
-                .AtLeastOnce()
-                .Select(strs => new ValueActual(strs))
-            ).Many().Select(vs => new ValueCalculator(vs).Split("[ \t]#").Trim());
+            InterpolatedValue
+                .Or(Parse.CharExcept('$').Except(InlineCommentBeginOrControl)
+                    .AtLeastOnce()
+                    .Text()
+                    .Select(x => new ValueActual(x))
+                )
+                .Many()
+                .Except(Parse.Chars("'\"#"))
+                .Or(Parse.Return(new List<IValue>()))
+                .Select(vs => new ValueCalculator(vs).Trim());
 
         // double quoted values can have everything: interpolated variables,
         // plus whitespace, escaped chars, and byte code chars
