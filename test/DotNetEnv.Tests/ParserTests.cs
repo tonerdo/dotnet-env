@@ -252,14 +252,19 @@ namespace DotNetEnv.Tests
             Assert.Equal("0", Parsers.UnquotedValue.Parse("0\n1").Value);   // value ends on linebreak
             Assert.Equal("", Parsers.UnquotedValue.Parse("'").Value);  // unmatched singleQuote
             Assert.Equal("", Parsers.UnquotedValue.Parse("'unmatched singleQuote").Value);
+            Assert.Equal("", Parsers.UnquotedValue.Parse("   'unmatched singleQuote with preceding whitespace").Value);
+            Assert.Equal("", Parsers.UnquotedValue.Parse("\t\t'unmatched singleQuote with preceding tabs").Value);
             Assert.Equal("", Parsers.UnquotedValue.Parse("\"").Value);  // unmatched doubleQuote
             Assert.Equal("", Parsers.UnquotedValue.Parse("\"unmatched doubleQuote").Value);
+            Assert.Equal("", Parsers.UnquotedValue.Parse("   \"unmatched doubleQuote with preceding whitespace").Value);
+            Assert.Equal("", Parsers.UnquotedValue.Parse("\t\t\"unmatched doubleQuote with preceding tabs").Value);
 
             Assert.Equal("", Parsers.UnquotedValue.Parse("#").Value); // no value, empty comment
             Assert.Equal("", Parsers.UnquotedValue.Parse("#commentOnly").Value);
 
             Assert.Equal("", Parsers.UnquotedValue.Parse(" #").Value); // no value, empty comment with preceding whitespace
-            Assert.Equal("", Parsers.UnquotedValue.Parse(" #no value, comment with preceding whitespace").Value);
+            Assert.Equal("", Parsers.UnquotedValue.Parse("   #no value, comment with preceding whitespace").Value);
+            Assert.Equal("", Parsers.UnquotedValue.Parse("\t\t#no value, comment with preceding tabs").Value);
 
             Assert.Equal("a\\?b", Parsers.UnquotedValue.End().Parse("a\\?b").Value);
             Assert.Equal(@"\xe6\x97\xa5ENV value本", Parsers.UnquotedValue.End().Parse("\\xe6\\x97\\xa5${ENVVAR_TEST}本").Value);

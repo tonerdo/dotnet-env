@@ -187,7 +187,7 @@ namespace DotNetEnv
                     .Select(x => new ValueActual(x))
                 )
                 .Many()
-                .Except(Parse.Chars("'\"#"))
+                .Except(Parse.Regex("[ \t]*['\"#]"))
                 .Or(Parse.Return(new List<IValue>()))
                 .Select(vs => new ValueCalculator(vs).Trim());
 
