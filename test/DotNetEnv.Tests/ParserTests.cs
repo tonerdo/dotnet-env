@@ -238,8 +238,20 @@ namespace DotNetEnv.Tests
             // TODO: is it possible to get the system to recognize when a complete unicode char is present and start the next one then, without a space?
 //            Assert.Equal("日本", Parsers.UnquotedValue.Parse(@"\xe6\x97\xa5\xe6\x9c\xac"));
 
-            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.End().Parse("0\n1"));
-            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.End().Parse("'"));
+            Assert.Equal("0", Parsers.UnquotedValue.Parse("0\n1").Value);   // value ends on linebreak
+            Assert.Equal("", Parsers.UnquotedValue.Parse("'").Value);  // unmatched singleQuote
+            Assert.Equal("", Parsers.UnquotedValue.Parse("'unmatched singleQuote").Value);
+            Assert.Equal("", Parsers.UnquotedValue.Parse("\"").Value);  // unmatched doubleQuote
+            Assert.Equal("", Parsers.UnquotedValue.Parse("\"unmatched doubleQuote").Value);
+
+            //todo: replace following test with: Assert.Equal("", Parsers.UnquotedValue.Parse("#").Value); // no value, empty comment
+            Assert.Equal("#", Parsers.UnquotedValue.Parse("#").Value); // leading hash resolves to unquoted value
+
+            //todo: replace following test with: Assert.Equal("", Parsers.UnquotedValue.Parse("#commentOnly").Value);
+            Assert.Equal("#leading hash resolves to unquoted value", Parsers.UnquotedValue.Parse("#leading hash resolves to unquoted value").Value);
+
+            Assert.Equal("", Parsers.UnquotedValue.Parse(" #").Value); // no value, empty comment with preceding whitespace
+            Assert.Equal("", Parsers.UnquotedValue.Parse(" #no value, comment with preceding whitespace").Value);
 
             Assert.Equal("a\\?b", Parsers.UnquotedValue.End().Parse("a\\?b").Value);
             Assert.Equal(@"\xe6\x97\xa5ENV value本", Parsers.UnquotedValue.End().Parse("\\xe6\\x97\\xa5${ENVVAR_TEST}本").Value);
@@ -309,8 +321,9 @@ namespace DotNetEnv.Tests
             // TODO: is it possible to get the system to recognize when a complete unicode char is present and start the next one then, without a space?
 //            Assert.Equal("日本", Parsers.Value.End().Parse(@"\xe6\x97\xa5\xe6\x9c\xac"));
 
-            Assert.Throws<ParseException>(() => Parsers.Value.End().Parse("0\n1"));
-            Assert.Throws<ParseException>(() => Parsers.Value.End().Parse("'"));
+            Assert.Equal("0", Parsers.Value.Parse("0\n1").Value);   // value ends on linebreak
+            Assert.Equal("", Parsers.Value.Parse("'").Value);   // value ends on singleQuote
+            Assert.Equal("", Parsers.Value.Parse("\"").Value);   // value ends on doubleQuote
 
             Assert.Equal(@"\xe6\x97\xa5", Parsers.Value.End().Parse(@"\xe6\x97\xa5").Value);
             Assert.Equal(@"\xE2\x98\xA0", Parsers.Value.End().Parse(@"\xE2\x98\xA0").Value);
@@ -339,6 +352,32 @@ namespace DotNetEnv.Tests
                 Assert.Equal(key, kvp.Key);
                 Assert.Equal(value, kvp.Value);
             };
+
+            //todo: replace following test with: testParse("EV_DNE", "", "EV_DNE=#no value just comment");
+            testParse("EV_DNE", "# hash without whitespace is a value", "EV_DNE=# hash without whitespace is a value");
+
+            //todo: replace following test with: testParse("EV_DNE", "", "EV_DNE= #no value just comment");
+            testParse("EV_DNE", "# hash with whitespace is a value", "EV_DNE= # hash with whitespace is a value");
+
+            testParse("EV_DNE", "test", "EV_DNE= test #basic comment");
+
+            //todo: replace following test with: testParse("EV_DNE", "test", "EV_DNE= test  #a'bc allow singleQuotes in comment");
+            Assert.Throws<ParseException>(() =>
+                Parsers.Assignment.End().Parse("EV_DNE= test  #a'bc use singleQuotes in comment"));
+
+            //todo: replace following test with: testParse("EV_DNE", "test", "EV_DNE= test  #a\"bc allow doubleQuotes in comment");
+            Assert.Throws<ParseException>(() =>
+                Parsers.Assignment.End().Parse("EV_DNE= test  #a'bc use doubleQuotes in comment"));
+
+            testParse("EV_DNE", "test", "EV_DNE= test  #a$bc allow dollarSign in comment");
+
+            //todo: replace following test with: testParse("EV_DNE", "a'b''c", "EV_DNE=a'b''c #allow inline singleQuotes in unquoted values");
+            Assert.Throws<ParseException>(() =>
+                Parsers.Assignment.End().Parse("EV_DNE=a'b''c #use inline singleQuotes in unquoted values"));
+
+            //todo: replace following test with: testParse("EV_DNE", "a\"b\"\"c", "EV_DNE=a\"b\"\"c #allow inline doubleQuotes in unquoted values");
+            Assert.Throws<ParseException>(() =>
+                Parsers.Assignment.End().Parse("EV_DNE=a'b''c #use inline doubleQuotes in unquoted values"));
 
             testParse("EV_DNE", "abc", "EV_DNE=abc");
             testParse("EV_DNE", "a b c", "EV_DNE=a b c");
