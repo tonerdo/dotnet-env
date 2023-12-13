@@ -67,14 +67,6 @@ namespace DotNetEnv
             from c in Parse.AnyChar
             select ToEscapeChar(c);
 
-        // officially *nix env vars can only be /[a-zA-Z_][a-zA-Z_0-9]*/
-        // but because technically you can set env vars that are basically anything except equals signs, allow some flexibility
-        private static readonly Parser<char> IdentifierSpecialChars = Parse.Chars(".-");
-        internal static readonly Parser<string> Identifier =
-            from head in Parse.Letter.Or(Underscore)
-            from tail in Parse.LetterOrDigit.Or(Underscore).Or(IdentifierSpecialChars).Many().Text()
-            select head + tail;
-
         private static byte ToOctalByte (string value)
         {
             return Convert.ToByte(value, 8);
@@ -141,11 +133,22 @@ namespace DotNetEnv
             from value in Parse.Repeat(Hex, 2, 8).Text()
             select ToUtf32Char(value);
 
-        internal static Parser<string> NotControlNorWhitespace (string exceptChars) =>
+        internal static Parser<char> NotControlNorWhitespaceChar (string exceptChars) =>
             Parse.Char(
                 c => !char.IsControl(c) && !char.IsWhiteSpace(c) && !exceptChars.Contains(c),
                 $"not control nor whitespace nor {exceptChars}"
-            ).AtLeastOnce().Text();
+            );
+
+        internal static Parser<string> NotControlNorWhitespace (string exceptChars) =>
+            NotControlNorWhitespaceChar(exceptChars).AtLeastOnce().Text();
+
+        // officially *nix env vars can only be /[a-zA-Z_][a-zA-Z_0-9]*/
+        // but because technically you can set env vars that are basically anything except equals signs, allow some flexibility
+        private static readonly Parser<char> IdentifierSpecialChars = Parse.Chars(".-");
+        internal static readonly Parser<string> Identifier =
+            from head in Parse.Letter.Or(Underscore)
+            from tail in Parse.LetterOrDigit.Or(Underscore).Or(IdentifierSpecialChars).Many().Text()
+            select head + tail;
 
         internal static readonly Parser<IValue> InterpolatedEnvVar =
             from _d in DollarSign
@@ -176,14 +179,20 @@ namespace DotNetEnv
         // unquoted values can have interpolated variables,
         // but only inline whitespace -- until a comment,
         // and no escaped chars, nor byte code chars
-        // FIXME: would be nice to solve multi word with comment case with parser directly (no split + trim)
         internal static readonly Parser<ValueCalculator> UnquotedValue =
             InterpolatedValue.Or(
                 NotControlNorWhitespace("'\"$")
-                .Or(InlineWhitespaceChars.AtLeastOnce().Text())
-                .AtLeastOnce()
-                .Select(strs => new ValueActual(strs))
-            ).Many().Select(vs => new ValueCalculator(vs).Split("[ \t]#").Trim());
+                    .Select(s => new ValueActual(s))
+            ).Or(
+                InlineWhitespaceChars.AtLeastOnce().Then(w =>
+                    NotControlNorWhitespaceChar("#'\"$").Once().Then(
+                        c => NotControlNorWhitespaceChar("'\"$").Many().Select(
+                            cs => w.Concat(c).Concat(cs)
+                        )
+                    )
+                ).Text()
+                .Select(s => new ValueActual(s))
+            ).Many().Select(vs => new ValueCalculator(vs));
 
         // double quoted values can have everything: interpolated variables,
         // plus whitespace, escaped chars, and byte code chars
