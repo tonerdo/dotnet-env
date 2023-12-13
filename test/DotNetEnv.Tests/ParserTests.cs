@@ -399,8 +399,15 @@ namespace DotNetEnv.Tests
             testParse("EV_DNE", "test", "EV_DNE= test #a$bc allow dollarSign in comment");
 
             testParse("EV_DNE", "http://www.google.com/#anchor", "EV_DNE=http://www.google.com/#anchor");
-            testParse("EV_DNE", "#anchor", "EV_DNE=#anchor");
+            testParse("EV_DNE", "", "EV_DNE= #no value just comment");
             testParse("EV_DNE", "", "EV_DNE=#no value just comment");
+            testParse("EV_DNE", "a'b''c", "EV_DNE=a'b''c #allow inline singleQuotes in unquoted values");
+            testParse("EV_DNE", "a\"b\"\"c", "EV_DNE=a\"b\"\"c #allow inline doubleQuotes in unquoted values");
+
+            testParse("EV_DNE", "a'b''c", "EV_DNE=\"a'b''c\" #this already works");
+            testParse("EV_DNE", "a\"b\"\"c", "EV_DNE='a\"b\"\"c' #this already works");
+            testParse("EV_DNE", "a 'b' c", "EV_DNE=\"a 'b' c\" #this already works");
+            testParse("EV_DNE", "a \"b\" c", "EV_DNE='a \"b\" c' #this already works");
 
             testParse("EV_DNE", "abc", "EV_DNE='abc'");
             testParse("EV_DNE", "a b c", "EV_DNE='a b c' # comment");

@@ -181,12 +181,9 @@ namespace DotNetEnv
         // and no escaped chars, nor byte code chars
         internal static readonly Parser<ValueCalculator> UnquotedValue =
             InterpolatedValue.Or(
-                NotControlNorWhitespace("'\"$")
-                    .Select(s => new ValueActual(s))
-            ).Or(
-                InlineWhitespaceChars.AtLeastOnce().Then(w =>
+                InlineWhitespaceChars.Many().Then(w =>
                     NotControlNorWhitespaceChar("#'\"$").Once().Then(
-                        c => NotControlNorWhitespaceChar("'\"$").Many().Select(
+                        c => NotControlNorWhitespaceChar("$").Many().Select(
                             cs => w.Concat(c).Concat(cs)
                         )
                     )
