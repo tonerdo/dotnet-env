@@ -180,16 +180,20 @@ namespace DotNetEnv
         // but only inline whitespace -- until a comment,
         // and no escaped chars, nor byte code chars
         internal static readonly Parser<ValueCalculator> UnquotedValue =
-            InterpolatedValue
-                .Or(Parse.CharExcept('$').Except(InlineCommentBeginOrControl)
-                    .AtLeastOnce()
-                    .Text()
-                    .Select(x => new ValueActual(x))
-                )
-                .Many()
-                .Except(Parse.Regex("[ \t]*['\"#]"))
-                .Or(Parse.Return(new List<IValue>()))
-                .Select(vs => new ValueCalculator(vs).Trim());
+            Parse
+                .Regex("[ \t]*['\"]").Not() // unquoted value must not start with single or doubleQuotes ==> throws
+                .Then(_ => Parse.Regex("[ \t]*#").Not() // prevent parsing comment only-values
+                    .Then(_2 =>
+                        InterpolatedValue
+                            .Or(Parse.CharExcept('$').Except(InlineCommentBeginOrControl)
+                                .AtLeastOnce()
+                                .Text()
+                                .Select(x => new ValueActual(x))
+                            )
+                            .Many()
+                            .Select(vs => new ValueCalculator(vs).Trim()))
+                    .Or(Parse.Return(new ValueCalculator(Array.Empty<IValue>()))) // return empty value instead of throwing on comment-only value
+                );
 
         // double quoted values can have everything: interpolated variables,
         // plus whitespace, escaped chars, and byte code chars

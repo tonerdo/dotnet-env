@@ -254,15 +254,15 @@ namespace DotNetEnv.Tests
 
             Assert.Equal("0", Parsers.UnquotedValue.Parse("0\n1").Value);   // value ends on linebreak
 
-            // leading singlequotes/doublequotes are not allowed
-            Assert.Equal("", Parsers.UnquotedValue.Parse("'").Value);  // stop on unmatched singleQuote
-            Assert.Equal("", Parsers.UnquotedValue.Parse("'stop on unmatched singleQuote").Value);
-            Assert.Equal("", Parsers.UnquotedValue.Parse("   'stop on unmatched singleQuote with preceding whitespace").Value);
-            Assert.Equal("", Parsers.UnquotedValue.Parse("\t\t'stop on unmatched singleQuote with preceding tabs").Value);
-            Assert.Equal("", Parsers.UnquotedValue.Parse("\"").Value);  // stop on unmatched doubleQuote
-            Assert.Equal("", Parsers.UnquotedValue.Parse("\"stop on unmatched doubleQuote").Value);
-            Assert.Equal("", Parsers.UnquotedValue.Parse("   \"stop on unmatched doubleQuote with preceding whitespace").Value);
-            Assert.Equal("", Parsers.UnquotedValue.Parse("\t\t\"stop on unmatched doubleQuote with preceding tabs").Value);
+            // leading singlequotes/doublequotes are not allowed (tabs and whitespaces are generally ignored)
+            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.Parse("'"));
+            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.Parse("   '"));
+            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.Parse("\t\t'"));
+            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.Parse("\t \t '"));
+            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.Parse("\""));
+            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.Parse("   \""));
+            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.Parse("\t\t\""));
+            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.Parse("\t \t \""));
 
             Assert.Equal("", Parsers.UnquotedValue.Parse("#").Value); // no value, empty comment
             Assert.Equal("", Parsers.UnquotedValue.Parse("#commentOnly").Value);
@@ -344,9 +344,9 @@ namespace DotNetEnv.Tests
 
             Assert.Equal("0", Parsers.Value.Parse("0\n1").Value);   // value ends on linebreak
             
-            // unmatched quotes are ignored by quote-matchers, unquotedParser stops on leading quotes
-            Assert.Equal("", Parsers.Value.Parse("'").Value);   // value ends on singleQuote
-            Assert.Equal("", Parsers.Value.Parse("\"").Value);   // value ends on doubleQuote
+            // throw on unmatched quotes
+            Assert.Throws<ParseException>(() => Parsers.Value.Parse("'"));
+            Assert.Throws<ParseException>(() => Parsers.Value.Parse("\""));
 
             Assert.Equal(@"\xe6\x97\xa5", Parsers.Value.End().Parse(@"\xe6\x97\xa5").Value);
             Assert.Equal(@"\xE2\x98\xA0", Parsers.Value.End().Parse(@"\xE2\x98\xA0").Value);
