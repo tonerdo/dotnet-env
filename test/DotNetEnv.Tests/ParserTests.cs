@@ -406,6 +406,9 @@ namespace DotNetEnv.Tests
             Assert.Throws<ParseException>(() => Parsers.Assignment.End().Parse("EV_DNE='"));
             Assert.Throws<ParseException>(() => Parsers.Assignment.End().Parse("EV_DNE=0\n1"));
 
+            testParse("EV_DNE", "a'b'' 'c' d", "EV_DNE=\"a'b'' 'c' d\" #allow inline singleQuotes in doubleQuoted values");
+            testParse("EV_DNE", "a\"b\"\" \"c\" d", "EV_DNE='a\"b\"\" \"c\" d' #allow inline doubleQuotes in singleQuoted values");
+
             testParse("EV_DNE", "abc", "EV_DNE='abc'");
             testParse("EV_DNE", "a b c", "EV_DNE='a b c' # comment");
             testParse("EV_DNE", "0\n1", "EV_DNE='0\n1'");
