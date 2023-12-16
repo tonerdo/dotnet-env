@@ -339,7 +339,12 @@ namespace DotNetEnv.Tests
             // TODO: is it possible to get the system to recognize when a complete unicode char is present and start the next one then, without a space?
 //            Assert.Equal("日本", Parsers.Value.End().Parse(@"\xe6\x97\xa5\xe6\x9c\xac"));
 
+            Assert.Throws<ParseException>(() => Parsers.Value.End().Parse("0\n1"));
+            Assert.Throws<ParseException>(() => Parsers.Value.End().Parse("'"));
+
             Assert.Equal("0", Parsers.Value.Parse("0\n1").Value);   // value ends on linebreak
+            
+            // unmatched quotes are ignored by quote-matchers, unquotedParser stops on leading quotes
             Assert.Equal("", Parsers.Value.Parse("'").Value);   // value ends on singleQuote
             Assert.Equal("", Parsers.Value.Parse("\"").Value);   // value ends on doubleQuote
 
