@@ -249,15 +249,20 @@ namespace DotNetEnv.Tests
             // TODO: is it possible to get the system to recognize when a complete unicode char is present and start the next one then, without a space?
 //            Assert.Equal("日本", Parsers.UnquotedValue.Parse(@"\xe6\x97\xa5\xe6\x9c\xac"));
 
+            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.End().Parse("0\n1"));
+            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.End().Parse("'"));
+
             Assert.Equal("0", Parsers.UnquotedValue.Parse("0\n1").Value);   // value ends on linebreak
-            Assert.Equal("", Parsers.UnquotedValue.Parse("'").Value);  // unmatched singleQuote
-            Assert.Equal("", Parsers.UnquotedValue.Parse("'unmatched singleQuote").Value);
-            Assert.Equal("", Parsers.UnquotedValue.Parse("   'unmatched singleQuote with preceding whitespace").Value);
-            Assert.Equal("", Parsers.UnquotedValue.Parse("\t\t'unmatched singleQuote with preceding tabs").Value);
-            Assert.Equal("", Parsers.UnquotedValue.Parse("\"").Value);  // unmatched doubleQuote
-            Assert.Equal("", Parsers.UnquotedValue.Parse("\"unmatched doubleQuote").Value);
-            Assert.Equal("", Parsers.UnquotedValue.Parse("   \"unmatched doubleQuote with preceding whitespace").Value);
-            Assert.Equal("", Parsers.UnquotedValue.Parse("\t\t\"unmatched doubleQuote with preceding tabs").Value);
+
+            // leading singlequotes/doublequotes are not allowed
+            Assert.Equal("", Parsers.UnquotedValue.Parse("'").Value);  // stop on unmatched singleQuote
+            Assert.Equal("", Parsers.UnquotedValue.Parse("'stop on unmatched singleQuote").Value);
+            Assert.Equal("", Parsers.UnquotedValue.Parse("   'stop on unmatched singleQuote with preceding whitespace").Value);
+            Assert.Equal("", Parsers.UnquotedValue.Parse("\t\t'stop on unmatched singleQuote with preceding tabs").Value);
+            Assert.Equal("", Parsers.UnquotedValue.Parse("\"").Value);  // stop on unmatched doubleQuote
+            Assert.Equal("", Parsers.UnquotedValue.Parse("\"stop on unmatched doubleQuote").Value);
+            Assert.Equal("", Parsers.UnquotedValue.Parse("   \"stop on unmatched doubleQuote with preceding whitespace").Value);
+            Assert.Equal("", Parsers.UnquotedValue.Parse("\t\t\"stop on unmatched doubleQuote with preceding tabs").Value);
 
             Assert.Equal("", Parsers.UnquotedValue.Parse("#").Value); // no value, empty comment
             Assert.Equal("", Parsers.UnquotedValue.Parse("#commentOnly").Value);
