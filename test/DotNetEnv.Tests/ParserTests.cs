@@ -233,8 +233,8 @@ namespace DotNetEnv.Tests
         {
             Assert.Equal("\t#", Parsers.InlineCommentBeginOrControl.Parse("\t#mycomment"));
             Assert.Equal(" #", Parsers.InlineCommentBeginOrControl.Parse(" #mycomment"));
-            Assert.Equal("\r", Parsers.InlineCommentBeginOrControl.Parse("\rnextLine"));
-            Assert.Equal("\r", Parsers.InlineCommentBeginOrControl.Parse("\r\nnextLine"));
+            Assert.Equal("\r".ToCharArray(), Parsers.InlineCommentBeginOrControl.Parse("\rnextLine"));
+            Assert.Equal("\r".ToCharArray(), Parsers.InlineCommentBeginOrControl.Parse("\r\nnextLine"));
             
             Assert.Throws<ParseException>(() => Parsers.InlineCommentBeginOrControl.Parse("\ttabShouldBeIgnored"));
         }
