@@ -166,37 +166,6 @@ namespace DotNetEnv.Tests
         }
 
         [Fact]
-        public void ParseUnquotedPieces ()
-        {
-            Assert.Equal("a", Parsers.NotControlNorWhitespace(EXCEPT_CHARS).End().Parse("a"));
-            Assert.Equal(" ", Parse.Chars(" \t").AtLeastOnce().Text().End().Parse(" "));
-            Assert.Equal("a", Parsers.NotControlNorWhitespaceChar("#'\"$").Once().Text().End().Parse("a"));
-            Assert.Throws<ParseException>(() => Parsers.NotControlNorWhitespaceChar("#'\"$").Once().Text().End().Parse("#"));
-
-            Assert.Equal(" a",
-                Parse.Chars(" \t").AtLeastOnce().Then(w =>
-                    Parsers.NotControlNorWhitespaceChar("#'\"$").Once().Select(
-                        c => w.Concat(c)
-                    )
-                ).Text().End().Parse(" a"));
-            Assert.Equal(" ab",
-                Parse.Chars(" \t").AtLeastOnce().Then(w =>
-                    Parsers.NotControlNorWhitespaceChar("#'\"$").Once().Then(
-                        c => Parsers.NotControlNorWhitespaceChar("'\"$").Many().Select(
-                            cs => w.Concat(c).Concat(cs)
-                        )
-                    )
-                ).Text().End().Parse(" ab"));
-
-            Assert.Equal(" ab", Parsers.UnquotedValue.End().Parse(" ab").Value);
-            Assert.Equal(" a b", Parsers.UnquotedValue.End().Parse(" a b").Value);
-            Assert.Equal(" a b", Parsers.UnquotedValue.End().Parse("$EV_DNE a b").Value);
-            Assert.Equal("a b", Parsers.UnquotedValue.End().Parse("a b").Value);
-            // no .End() because this does not consume the whole string to parse -- as intended
-            Assert.Equal("a b", Parsers.UnquotedValue.Parse("a b #c").Value);
-        }
-
-        [Fact]
         public void ParseSpecialChar ()
         {
             Assert.Equal("Z", Parsers.SpecialChar.End().Parse(@"\x5A"));
@@ -263,12 +232,12 @@ namespace DotNetEnv.Tests
         public void ParseUnquotedValue ()
         {
             Assert.Equal("abc", Parsers.UnquotedValue.End().Parse("abc").Value);
-            Assert.Equal("a b c", Parsers.UnquotedValue.End().Parse("a b c").Value);
             Assert.Equal("041", Parsers.UnquotedValue.End().Parse("041").Value);
             Assert.Equal("日本", Parsers.UnquotedValue.End().Parse("日本").Value);
             // TODO: is it possible to get the system to recognize when a complete unicode char is present and start the next one then, without a space?
 //            Assert.Equal("日本", Parsers.UnquotedValue.Parse(@"\xe6\x97\xa5\xe6\x9c\xac"));
 
+            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.End().Parse("a b c"));
             Assert.Throws<ParseException>(() => Parsers.UnquotedValue.End().Parse("0\n1"));
             Assert.Throws<ParseException>(() => Parsers.UnquotedValue.End().Parse("'"));
 
@@ -334,7 +303,8 @@ namespace DotNetEnv.Tests
         public void ParseValue ()
         {
             Assert.Equal("abc", Parsers.Value.End().Parse("abc").Value);
-            Assert.Equal("a b c", Parsers.Value.End().Parse("a b c").Value);
+            Assert.Equal("a b c", Parsers.Value.End().Parse("'a b c'").Value);
+            Assert.Equal("a#b#c", Parsers.Value.End().Parse("a#b#c").Value);
             Assert.Equal("041", Parsers.Value.End().Parse("041").Value);
             Assert.Equal("日本", Parsers.Value.End().Parse("日本").Value);
             // TODO: is it possible to get the system to recognize when a complete unicode char is present and start the next one then, without a space?
@@ -372,13 +342,10 @@ namespace DotNetEnv.Tests
             };
 
             testParse("EV_DNE", "abc", "EV_DNE=abc");
-            testParse("EV_DNE", "a b c", "EV_DNE=a b c");
+            testParse("EV_DNE", "a b c", "EV_DNE='a b c'");
             testParse("EV_DNE", "041", "EV_DNE=041 # comment");
             // Note that there are no comments without whitespace in unquoted strings!
             testParse("EV_DNE", "日本#c", "EV_DNE=日本#c");
-
-            testParse("EV_DNE", @"\xe6\x97\xa5 \xe6\x9c\xac", @"EV_DNE=\xe6\x97\xa5 \xe6\x9c\xac");
-            testParse("EV_DNE", @"\xE2\x98\xA0 \uae", @"EV_DNE=\xE2\x98\xA0 \uae");
 
             var kvp = Parsers.Assignment.End().Parse("EV_DNE=");
             Assert.Equal("EV_DNE", kvp.Key);
@@ -393,7 +360,8 @@ namespace DotNetEnv.Tests
             Assert.Throws<ParseException>(() => Parsers.Assignment.End().Parse("EV_DNE=0\n1"));
 
             testParse("EV_DNE", "", "EV_DNE=");
-            testParse("EV_DNE", "a b c", "EV_DNE=a b c # comment");
+            testParse("EV_DNE", "EV_DNE=", "EV_DNE=EV_DNE=");
+            testParse("EV_DNE", "a#b#c", "EV_DNE=a#b#c # comment");
             testParse("EV_DNE", "test", "EV_DNE= test  #a'bc allow singleQuotes in comment");
             testParse("EV_DNE", "test", "EV_DNE= test  #a\"bc allow doubleQuotes in comment");
             testParse("EV_DNE", "test", "EV_DNE= test #a$bc allow dollarSign in comment");
@@ -401,8 +369,6 @@ namespace DotNetEnv.Tests
             testParse("EV_DNE", "http://www.google.com/#anchor", "EV_DNE=http://www.google.com/#anchor");
             testParse("EV_DNE", "", "EV_DNE= #no value just comment");
             testParse("EV_DNE", "", "EV_DNE=#no value just comment");
-            testParse("EV_DNE", "a'b''c", "EV_DNE=a'b''c #allow inline singleQuotes in unquoted values");
-            testParse("EV_DNE", "a\"b\"\"c", "EV_DNE=a\"b\"\"c #allow inline doubleQuotes in unquoted values");
 
             testParse("EV_DNE", "a'b''c", "EV_DNE=\"a'b''c\" #this already works");
             testParse("EV_DNE", "a\"b\"\"c", "EV_DNE='a\"b\"\"c' #this already works");
@@ -429,8 +395,68 @@ namespace DotNetEnv.Tests
             testParse("EV_DNE", "a b c", "EV_DNE= \"a b c\" # comment");
             testParse("EV_DNE", "a b c", "EV_DNE ='a b c' # comment");
             testParse("EV_DNE", "abc", "EV_DNE = abc # comment");
-            testParse("EV_DNE", "VAL UE", "EV_DNE=VAL UE");
-            testParse("EV_DNE", "VAL UE", "EV_DNE=VAL UE #comment");
+
+            /*
+                When setting env vars in bash or fish, these do not do what one might think:
+                (So we choose not to support unquoted values with whitespace or quotes in them)
+
+                BASH:
+                    EVDNE=abc
+                    echo $EVDNE
+                    # abc
+                    EVDNE=a'b'c
+                    echo $EVDNE
+                    # abc
+                    EVDNE=a"b"c
+                    echo $EVDNE
+                    # abc
+
+                    EVDNE=a b c
+                    # b: command not found
+                    EVDNE=a "b" c
+                    # b: command not found
+                    EVDNE=a 'b' c
+                    # b: command not found
+
+                FISH:
+                    set EVDNE abc
+                    echo $EVDNE
+                    # abc
+                    set EVDNE a'b'c
+                    echo $EVDNE
+                    # abc
+                    set EVDNE a"b"c
+                    echo $EVDNE
+                    # abc
+
+                    set EVDNE a b c
+                    echo $EVDNE
+                    # a b c
+                    set EVDNE a "b" c
+                    echo $EVDNE
+                    # a b c
+                    set EVDNE a 'b' c
+                    echo $EVDNE
+                    # a b c
+
+                But, both accept hash chars inside strings like:
+
+                BASH:
+                    EVDNE=a#b#c
+                    echo $EVDNE
+                    # a#b#c
+
+                FISH:
+                    set EVDNE a#b#c
+                    echo $EVDNE
+                    # a#b#c
+            */
+            Assert.Throws<ParseException>(() => Parsers.Assignment.End().Parse("EV_DNE=a'b'c"));
+            Assert.Throws<ParseException>(() => Parsers.Assignment.End().Parse("EV_DNE=a\"b\"c"));
+            Assert.Throws<ParseException>(() => Parsers.Assignment.End().Parse("EV_DNE=a b c"));
+            Assert.Throws<ParseException>(() => Parsers.Assignment.End().Parse("EV_DNE=a 'b' c"));
+            Assert.Throws<ParseException>(() => Parsers.Assignment.End().Parse("EV_DNE=a \"b\" c"));
+            Assert.Throws<ParseException>(() => Parsers.Assignment.End().Parse("EV_DNE=a#b#c# not a comment"));
 
             Assert.Throws<ParseException>(() => Parsers.Assignment.End().Parse("EV_DNE='a b c'EV_TEST_1=more"));
             Assert.Throws<ParseException>(() => Parsers.Assignment.End().Parse("EV_DNE='a b c' EV_TEST_1=more"));

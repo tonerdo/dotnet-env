@@ -389,7 +389,7 @@ base64
         {
             DotNetEnv.Env.LoadContents("ENV_TEST_KEY=VALUE");
             Assert.Equal("VALUE", Environment.GetEnvironmentVariable("ENV_TEST_KEY"));
-            DotNetEnv.Env.LoadContents("ENV_TEST_KEY=VAL UE");
+            DotNetEnv.Env.LoadContents("ENV_TEST_KEY=\"VAL UE\"");
             Assert.Equal("VAL UE", Environment.GetEnvironmentVariable("ENV_TEST_KEY"));
 
             DotNetEnv.Env.LoadContents("ENV_TEST_K1=V1\nENV_TEST_K2=V2");
