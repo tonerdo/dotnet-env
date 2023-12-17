@@ -177,20 +177,22 @@ namespace DotNetEnv
                 .Or(EscapedChar);
 
         // unquoted values can have interpolated variables,
-        // but no whitespace, no quote chars, no escaped chars, nor byte code chars
+        // but only inline whitespace, and no quote chars, no escaped chars, nor byte code chars
         internal static readonly Parser<ValueCalculator> UnquotedValue =
             InterpolatedValue.Or(
-                // can't start with a hash, that's a comment, but can include inside text
-                // no quote chars are allowed tho, they mean something different when unquoted in shells for env vars
-                NotControlNorWhitespaceChar("#'\"$")
-                    .Once()
-                    .Then(c =>
-                        NotControlNorWhitespaceChar("'\"$")
-                            .Many()
-                            .Select(cs => c.Concat(cs))
-                    )
-                    .Text()
-                    .Select(s => new ValueActual(s))
+                InlineWhitespaceChars.Many().Then(w =>
+                    // can't start with a hash, that's a comment, but can include inside text
+                    // no quote chars are allowed tho, they mean something different when unquoted in shells for env vars
+                    NotControlNorWhitespaceChar("#'\"$")
+                        .Once()
+                        .Then(c =>
+                            NotControlNorWhitespaceChar("'\"$")
+                                .Many()
+                                .Select(cs => w.Concat(c.Concat(cs)))
+                        )
+                )
+                .Text()
+                .Select(s => new ValueActual(s))
             ).Many().Select(vs => new ValueCalculator(vs));
 
         // double quoted values can have everything: interpolated variables,
