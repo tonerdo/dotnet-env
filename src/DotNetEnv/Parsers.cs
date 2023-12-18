@@ -184,7 +184,7 @@ namespace DotNetEnv
                         .Or(InlineWhitespace.Then(inlineWhitespaces
                             => Parse.Char('#').Not()
                                 .Then(_2 => NotControlNorWhitespace("$\"'"))
-                                .Select(valueString => (IValue)new ValueActual(string.Concat(inlineWhitespaces, valueString)))))
+                                .Select(valueString => new ValueActual(string.Concat(inlineWhitespaces, valueString)))))
                         .Many()
                         .Select(vs => new ValueCalculator(vs)));
 
