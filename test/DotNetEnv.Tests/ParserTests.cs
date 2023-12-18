@@ -231,8 +231,6 @@ namespace DotNetEnv.Tests
         [Fact]
         public void ParseUnquotedValue ()
         {
-            Assert.Equal("allow 'whitespace' before 'quotation' inline", Parsers.UnquotedValue.End().Parse("allow 'whitespace' before 'quotation' inline").Value);
-
             Assert.Equal("abc", Parsers.UnquotedValue.End().Parse("abc").Value);
             Assert.Equal("a b c", Parsers.UnquotedValue.End().Parse("a b c").Value);
             Assert.Equal("041", Parsers.UnquotedValue.End().Parse("041").Value);
@@ -253,6 +251,11 @@ namespace DotNetEnv.Tests
 
             Assert.Equal("", Parsers.UnquotedValue.Parse("#").Value); // no value, empty comment
             Assert.Equal("", Parsers.UnquotedValue.Parse("#commentOnly").Value);
+
+            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.End().Parse("no inline 'quotationChars'"));
+            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.End().Parse("noInline'QuotationChars"));
+            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.End().Parse("no inline \"quotationChars\""));
+            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.End().Parse("noInline\"QuotationChars"));
 
             Assert.Equal("a\\?b", Parsers.UnquotedValue.End().Parse("a\\?b").Value);
             Assert.Equal(@"\xe6\x97\xa5ENV value本", Parsers.UnquotedValue.End().Parse("\\xe6\\x97\\xa5${ENVVAR_TEST}本").Value);
@@ -365,8 +368,6 @@ namespace DotNetEnv.Tests
             testParse("EV_DNE", "test", "EV_DNE= test  #a'bc allow singleQuotes in comment");
             testParse("EV_DNE", "test", "EV_DNE= test  #a\"bc allow doubleQuotes in comment");
             testParse("EV_DNE", "test", "EV_DNE= test  #a$bc allow dollarSign in comment");
-            testParse("EV_DNE", "a'b''c", "EV_DNE=a'b''c #allow inline singleQuotes in unquoted values");
-            testParse("EV_DNE", "a\"b\"\"c", "EV_DNE=a\"b\"\"c #allow inline doubleQuotes in unquoted values");
 
             testParse("EV_DNE", "abc", "EV_DNE=abc");
             testParse("EV_DNE", "a b c", "EV_DNE=a b c");

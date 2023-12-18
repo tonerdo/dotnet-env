@@ -182,7 +182,7 @@ namespace DotNetEnv
                     InterpolatedValue
                         .Or(InlineWhitespace.Then(inlineWhitespaces
                             => Parse.Char('#').Not()
-                                .Then(_2 => NotControlNorWhitespace("$"))
+                                .Then(_2 => NotControlNorWhitespace("$\"'"))
                                 .Select(valueString => (IValue)new ValueActual(string.Concat(inlineWhitespaces, valueString)))))
                         .Many()
                         .Select(vs => new ValueCalculator(vs)));
