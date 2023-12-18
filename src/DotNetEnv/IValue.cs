@@ -53,11 +53,5 @@ namespace DotNetEnv
             // because it is the state of the world at the moment that this value is calculated
             Value = string.Join(string.Empty, values.Select(val => val.GetValue()));
         }
-
-        public ValueCalculator Trim ()
-        {
-            Value = Value.Trim();
-            return this;
-        }
     }
 }

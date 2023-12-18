@@ -173,27 +173,19 @@ namespace DotNetEnv
                 .Or(OctalChar)
                 .Or(EscapedChar);
 
-        internal static readonly Parser<IEnumerable<char>> InlineCommentBeginOrControl =
-            Parse.Regex("[ \t]#").Or(Parse.Char(c => char.IsControl(c) && c != '\t', "controls except tab").Once());
-
         // unquoted values can have interpolated variables,
         // but only inline whitespace -- until a comment,
         // and no escaped chars, nor byte code chars
         internal static readonly Parser<ValueCalculator> UnquotedValue =
-            Parse
-                .Regex("[ \t]*['\"]").Not() // unquoted value must not start with single or doubleQuotes ==> throws
-                .Then(_ => Parse.Regex("[ \t]*#").Not() // prevent parsing comment only-values
-                    .Then(_2 =>
-                        InterpolatedValue
-                            .Or(Parse.CharExcept('$').Except(InlineCommentBeginOrControl)
-                                .AtLeastOnce()
-                                .Text()
-                                .Select(x => new ValueActual(x))
-                            )
-                            .Many()
-                            .Select(vs => new ValueCalculator(vs).Trim()))
-                    .Or(Parse.Return(new ValueCalculator(Array.Empty<IValue>()))) // return empty value instead of throwing on comment-only value
-                );
+            Parse.Regex("[ \t\"']").Not()
+                .Then(_ =>
+                    InterpolatedValue
+                        .Or(InlineWhitespace.Then(inlineWhitespaces
+                            => Parse.Char('#').Not()
+                                .Then(_2 => NotControlNorWhitespace("$"))
+                                .Select(valueString => (IValue)new ValueActual(string.Concat(inlineWhitespaces, valueString)))))
+                        .Many()
+                        .Select(vs => new ValueCalculator(vs)));
 
         // double quoted values can have everything: interpolated variables,
         // plus whitespace, escaped chars, and byte code chars

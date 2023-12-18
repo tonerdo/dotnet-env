@@ -229,19 +229,10 @@ namespace DotNetEnv.Tests
         }
 
         [Fact]
-        public void ParseInlineCommentBeginOrControl()
-        {
-            Assert.Equal("\t#", Parsers.InlineCommentBeginOrControl.Parse("\t#mycomment"));
-            Assert.Equal(" #", Parsers.InlineCommentBeginOrControl.Parse(" #mycomment"));
-            Assert.Equal("\r".ToCharArray(), Parsers.InlineCommentBeginOrControl.Parse("\rnextLine"));
-            Assert.Equal("\r".ToCharArray(), Parsers.InlineCommentBeginOrControl.Parse("\r\nnextLine"));
-            
-            Assert.Throws<ParseException>(() => Parsers.InlineCommentBeginOrControl.Parse("\ttabShouldBeIgnored"));
-        }
-
-        [Fact]
         public void ParseUnquotedValue ()
         {
+            Assert.Equal("allow 'whitespace' before 'quotation' inline", Parsers.UnquotedValue.End().Parse("allow 'whitespace' before 'quotation' inline").Value);
+
             Assert.Equal("abc", Parsers.UnquotedValue.End().Parse("abc").Value);
             Assert.Equal("a b c", Parsers.UnquotedValue.End().Parse("a b c").Value);
             Assert.Equal("041", Parsers.UnquotedValue.End().Parse("041").Value);
@@ -254,22 +245,14 @@ namespace DotNetEnv.Tests
 
             Assert.Equal("0", Parsers.UnquotedValue.Parse("0\n1").Value);   // value ends on linebreak
 
-            // leading singlequotes/doublequotes are not allowed (tabs and whitespaces are generally ignored)
+            // leading singlequotes/doublequotes/whitespaces/tabs are not allowed
             Assert.Throws<ParseException>(() => Parsers.UnquotedValue.Parse("'"));
-            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.Parse("   '"));
-            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.Parse("\t\t'"));
-            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.Parse("\t \t '"));
             Assert.Throws<ParseException>(() => Parsers.UnquotedValue.Parse("\""));
-            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.Parse("   \""));
-            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.Parse("\t\t\""));
-            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.Parse("\t \t \""));
+            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.Parse(" "));
+            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.Parse("\t"));
 
             Assert.Equal("", Parsers.UnquotedValue.Parse("#").Value); // no value, empty comment
             Assert.Equal("", Parsers.UnquotedValue.Parse("#commentOnly").Value);
-
-            Assert.Equal("", Parsers.UnquotedValue.Parse(" #").Value); // no value, empty comment with preceding whitespace
-            Assert.Equal("", Parsers.UnquotedValue.Parse("   #no value, comment with preceding whitespace").Value);
-            Assert.Equal("", Parsers.UnquotedValue.Parse("\t\t#no value, comment with preceding tabs").Value);
 
             Assert.Equal("a\\?b", Parsers.UnquotedValue.End().Parse("a\\?b").Value);
             Assert.Equal(@"\xe6\x97\xa5ENV value本", Parsers.UnquotedValue.End().Parse("\\xe6\\x97\\xa5${ENVVAR_TEST}本").Value);
