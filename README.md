@@ -205,7 +205,7 @@ The options for quoting values are:
 
 1. `""` double: can have everything: interpolated variables, plus whitespace, escaped chars, and byte code chars
 1. `''` single: can have whitespace, but no interpolation, no escaped chars, no byte code chars -- notably not even escaped single quotes inside -- single quoted values are for when you want truly raw values
-1. unquoted: can have interpolated variables, but only inline whitespace, and no escaped chars, nor byte code chars.
+1. unquoted: can have interpolated variables, but only inline whitespace, and no quote chars, no escaped chars, nor byte code chars
 
 As these are the options bash recognizes. However, while bash does have
  special meaning for each of these, in this library, they are all the same,
@@ -224,6 +224,16 @@ export TEST=value#notcomment #actualcomment
 env | grep TEST
 # TEST=value#notcomment
 ```
+
+However, unlike bash (but like fish), the `#` cannot be at the start, so as to not confuse with comments.
+In bash: `EVDNE=#value && echo $EVDNE` gives `#value` but in fish:
+```
+set EVDNE #value
+echo $EVDNE
+```
+Gives the empty string (not that you cannot even one line that demo, like bash above, because it is mostly a comment!). Here we choose to always treat it as a comment so as to make this more consistent.
+
+(To really confuse things tho, in bash: `EVDNE=#value echo $EVDNE` gives the empty string -- really whatever the previous value it had was -- whereas in fish `EVDNE=#value echo $EVDNE` gives `#value`... Thus we do not perfectly match all shell behavior because they are all even seemingly internally inconsistent.)
 
 However, unlike bash, inline whitespace is allowed so you can do:
 ```

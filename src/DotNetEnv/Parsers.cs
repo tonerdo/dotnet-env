@@ -67,14 +67,6 @@ namespace DotNetEnv
             from c in Parse.AnyChar
             select ToEscapeChar(c);
 
-        // officially *nix env vars can only be /[a-zA-Z_][a-zA-Z_0-9]*/
-        // but because technically you can set env vars that are basically anything except equals signs, allow some flexibility
-        private static readonly Parser<char> IdentifierSpecialChars = Parse.Chars(".-");
-        internal static readonly Parser<string> Identifier =
-            from head in Parse.Letter.Or(Underscore)
-            from tail in Parse.LetterOrDigit.Or(Underscore).Or(IdentifierSpecialChars).Many().Text()
-            select head + tail;
-
         private static byte ToOctalByte (string value)
         {
             return Convert.ToByte(value, 8);
@@ -146,6 +138,15 @@ namespace DotNetEnv
                 c => !char.IsControl(c) && !char.IsWhiteSpace(c) && !exceptChars.Contains(c),
                 $"not control nor whitespace nor {exceptChars}"
             ).AtLeastOnce().Text();
+
+
+        // officially *nix env vars can only be /[a-zA-Z_][a-zA-Z_0-9]*/
+        // but because technically you can set env vars that are basically anything except equals signs, allow some flexibility
+        private static readonly Parser<char> IdentifierSpecialChars = Parse.Chars(".-");
+        internal static readonly Parser<string> Identifier =
+            from head in Parse.Letter.Or(Underscore)
+            from tail in Parse.LetterOrDigit.Or(Underscore).Or(IdentifierSpecialChars).Many().Text()
+            select head + tail;
 
         internal static readonly Parser<IValue> InterpolatedEnvVar =
             from _d in DollarSign
