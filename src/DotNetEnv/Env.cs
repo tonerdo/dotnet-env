@@ -101,10 +101,4 @@ namespace DotNetEnv
         public static LoadOptions NoClobber () => LoadOptions.NoClobber();
         public static LoadOptions TraversePath () => LoadOptions.TraversePath();
     }
-
-    public static class Extensions
-    {
-        public static Dictionary<string, string> ToDictionary (this IEnumerable<KeyValuePair<string, string>> kvps) =>
-            kvps.GroupBy(kv => kv.Key).ToDictionary(g => g.Key, g => g.Last().Value);
-    }
 }

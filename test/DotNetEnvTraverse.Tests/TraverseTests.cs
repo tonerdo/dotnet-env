@@ -1,7 +1,8 @@
 using System;
 using System.Linq;
 using Xunit;
-using DotNetEnv;  // only needed for ToDictionary extension method
+using DotNetEnv;
+using DotNetEnv.Extensions; // only needed for ToDictionary extension method
 
 namespace DotNetEnvTraverse.Tests
 {
@@ -18,7 +19,7 @@ namespace DotNetEnvTraverse.Tests
         {
             var kvps = DotNetEnv.Env.TraversePath().Load().ToArray();
             Assert.Single(kvps);
-            var dict = kvps.ToDictionary();
+            var dict = kvps.ToDictionary(CreateDictionaryOption.TakeLast);
             Assert.Equal("here", dict["TEST"]);
             Assert.Equal("here", Environment.GetEnvironmentVariable("TEST"));
             Assert.Null(Environment.GetEnvironmentVariable("NAME"));
@@ -29,7 +30,7 @@ namespace DotNetEnvTraverse.Tests
         {
             var kvps = DotNetEnv.Env.TraversePath().Load("./.env").ToArray();
             Assert.Single(kvps);
-            var dict = kvps.ToDictionary();
+            var dict = kvps.ToDictionary(CreateDictionaryOption.TakeLast);
             Assert.Equal("here", dict["TEST"]);
             Assert.Equal("here", Environment.GetEnvironmentVariable("TEST"));
             Assert.Null(Environment.GetEnvironmentVariable("NAME"));
@@ -40,7 +41,7 @@ namespace DotNetEnvTraverse.Tests
         {
             var kvps = DotNetEnv.Env.TraversePath().Load(".env_much_higher").ToArray();
             Assert.Single(kvps);
-            var dict = kvps.ToDictionary();
+            var dict = kvps.ToDictionary(CreateDictionaryOption.TakeLast);
             Assert.Equal("See DotNetEnvTraverse.Tests for why this is here", dict["TEST"]);
             Assert.Equal("See DotNetEnvTraverse.Tests for why this is here", Environment.GetEnvironmentVariable("TEST"));
             Assert.Null(Environment.GetEnvironmentVariable("NAME"));
@@ -51,7 +52,7 @@ namespace DotNetEnvTraverse.Tests
         {
             var kvps = DotNetEnv.Env.TraversePath().Load("./").ToArray();
             Assert.Single(kvps);
-            var dict = kvps.ToDictionary();
+            var dict = kvps.ToDictionary(CreateDictionaryOption.TakeLast);
             Assert.Equal("here", dict["TEST"]);
             Assert.Equal("here", Environment.GetEnvironmentVariable("TEST"));
             Assert.Null(Environment.GetEnvironmentVariable("NAME"));
