@@ -1,19 +1,19 @@
-﻿namespace DotNetEnv.Extensions
+namespace DotNetEnv.Extensions
 {
     public enum CreateDictionaryOption
     {
         /// <summary>
-        /// Default behaviour, throws on duplicates.
+        /// Throws on duplicates.
         /// </summary>
-        Default,
+        Throw,
 
         /// <summary>
-        /// Takes the first occurrence for duplicates.
+        /// Takes the first occurrence on duplicates instead of throwing.
         /// </summary>
         TakeFirst,
 
         /// <summary>
-        /// Takes the last occurrence for duplicates.
+        /// Takes the last occurrence on duplicates instead of throwing.
         /// </summary>
         TakeLast,
     }

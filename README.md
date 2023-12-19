@@ -104,7 +104,7 @@ All parameters default to true, which means:
  Setting it `false` allows consumers of this library to process the .env file
  but use it for things other than updating env vars, as a generic configuration file.
  The Load methods all return an `IEnumerable<KeyValuePair<string,string>>` for this, but
- there is an extension method `ToDictionary(CreateDictionaryOption.TakeLast)` to get a dict with the last value for each key.
+ there is an extension method `ToDotEnvDictionary()` to get a dict with the last value for each key.
 
 ```env
 KEY=value
@@ -118,7 +118,7 @@ var kvps = DotNetEnv.Env.Load(
 )
 
 // or the recommended, cleaner (fluent) approach:
-var dict = DotNetEnv.Env.NoEnvVars().Load().ToDictionary(CreateDictionaryOption.TakeLast);
+var dict = DotNetEnv.Env.NoEnvVars().Load().ToDotEnvDictionary();
 
 // not "value" from the .env file
 null == System.Environment.GetEnvironmentVariable("KEY")

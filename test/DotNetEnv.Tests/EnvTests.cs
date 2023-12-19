@@ -284,7 +284,7 @@ base64
 
             var kvps = DotNetEnv.Env.Load("./.env_other").ToArray();
             Assert.Equal(35, kvps.Length);
-            var dict = kvps.ToDictionary(CreateDictionaryOption.TakeLast);
+            var dict = kvps.ToDotEnvDictionary();
 
             // note that env vars get only the final assignment, but all are returned
             Assert.Equal("dupe2", Environment.GetEnvironmentVariable("DUPLICATE"));

@@ -19,7 +19,7 @@ namespace DotNetEnvTraverse.Tests
         {
             var kvps = DotNetEnv.Env.TraversePath().Load().ToArray();
             Assert.Single(kvps);
-            var dict = kvps.ToDictionary(CreateDictionaryOption.TakeLast);
+            var dict = kvps.ToDotEnvDictionary();
             Assert.Equal("here", dict["TEST"]);
             Assert.Equal("here", Environment.GetEnvironmentVariable("TEST"));
             Assert.Null(Environment.GetEnvironmentVariable("NAME"));
@@ -30,7 +30,7 @@ namespace DotNetEnvTraverse.Tests
         {
             var kvps = DotNetEnv.Env.TraversePath().Load("./.env").ToArray();
             Assert.Single(kvps);
-            var dict = kvps.ToDictionary(CreateDictionaryOption.TakeLast);
+            var dict = kvps.ToDotEnvDictionary();
             Assert.Equal("here", dict["TEST"]);
             Assert.Equal("here", Environment.GetEnvironmentVariable("TEST"));
             Assert.Null(Environment.GetEnvironmentVariable("NAME"));
@@ -41,7 +41,7 @@ namespace DotNetEnvTraverse.Tests
         {
             var kvps = DotNetEnv.Env.TraversePath().Load(".env_much_higher").ToArray();
             Assert.Single(kvps);
-            var dict = kvps.ToDictionary(CreateDictionaryOption.TakeLast);
+            var dict = kvps.ToDotEnvDictionary();
             Assert.Equal("See DotNetEnvTraverse.Tests for why this is here", dict["TEST"]);
             Assert.Equal("See DotNetEnvTraverse.Tests for why this is here", Environment.GetEnvironmentVariable("TEST"));
             Assert.Null(Environment.GetEnvironmentVariable("NAME"));
@@ -52,7 +52,7 @@ namespace DotNetEnvTraverse.Tests
         {
             var kvps = DotNetEnv.Env.TraversePath().Load("./").ToArray();
             Assert.Single(kvps);
-            var dict = kvps.ToDictionary(CreateDictionaryOption.TakeLast);
+            var dict = kvps.ToDotEnvDictionary();
             Assert.Equal("here", dict["TEST"]);
             Assert.Equal("here", Environment.GetEnvironmentVariable("TEST"));
             Assert.Null(Environment.GetEnvironmentVariable("NAME"));
