@@ -179,21 +179,25 @@ namespace DotNetEnv
         // unquoted values can have interpolated variables,
         // but only inline whitespace, and no quote chars, no escaped chars, nor byte code chars
         internal static readonly Parser<ValueCalculator> UnquotedValue =
-            InterpolatedValue.Or(
-                InlineWhitespaceChars.Many().Then(w =>
-                    // can't start with a hash, that's a comment, but can include inside text
-                    // no quote chars are allowed tho, they mean something different when unquoted in shells for env vars
-                    NotControlNorWhitespaceChar("#'\"$")
-                        .Once()
-                        .Then(c =>
-                            NotControlNorWhitespaceChar("'\"$")
-                                .Many()
-                                .Select(cs => w.Concat(c.Concat(cs)))
-                        )
-                )
-                .Text()
-                .Select(s => new ValueActual(s))
-            ).Many().Select(vs => new ValueCalculator(vs));
+            // initial regex allows us to force to starting match on some char that is not one of these,
+            // so as to not just match empty if nothing else matches, even when there are chars
+            Parse.Chars(" \t\"'").Not().Then(_ =>
+                InterpolatedValue.Or(
+                    InlineWhitespaceChars.Many().Then(w =>
+                        // can't start with a hash, that's a comment, but can include inside text
+                        // no quote chars are allowed tho, they mean something different when unquoted in shells for env vars
+                        NotControlNorWhitespaceChar("#'\"$")
+                            .Once()
+                            .Then(c =>
+                                NotControlNorWhitespaceChar("'\"$")
+                                    .Many()
+                                    .Select(cs => w.Concat(c.Concat(cs)))
+                            )
+                    )
+                    .Text()
+                    .Select(s => new ValueActual(s))
+                ).Many().Select(vs => new ValueCalculator(vs))
+            );
 
         // double quoted values can have everything: interpolated variables,
         // plus whitespace, escaped chars, and byte code chars

@@ -360,9 +360,9 @@ base64
             Assert.Equal("Parsing failure: unexpected 'W'; expected = (Line 1, Column 7); recently consumed: MULTI ", ex.Message);
 
             ex = Assert.Throws<ParseException>(
-                () => DotNetEnv.Env.LoadContents("UNMATCHEDQUOTE='")
+                () => DotNetEnv.Env.LoadContents("UNMATCHEDQUOTE='abc")
             );
-            Assert.Equal("Parsing failure: unexpected '''; expected LineTerminator (Line 1, Column 16); recently consumed: CHEDQUOTE=", ex.Message);
+            Assert.Equal("Parsing failure: Unexpected end of input reached; expected ' (Line 1, Column 20); recently consumed: QUOTE='abc", ex.Message);
 
             ex = Assert.Throws<ParseException>(
                 () => DotNetEnv.Env.LoadContents("BADQUOTE='\\''")
@@ -370,9 +370,9 @@ base64
             Assert.Equal("Parsing failure: unexpected '''; expected LineTerminator (Line 1, Column 13); recently consumed: DQUOTE='\\'", ex.Message);
 
             ex = Assert.Throws<ParseException>(
-                () => DotNetEnv.Env.LoadContents("UNMATCHEDQUOTE=\"")
+                () => DotNetEnv.Env.LoadContents("UNMATCHEDQUOTE=\"abc")
             );
-            Assert.Equal("Parsing failure: unexpected '\"'; expected LineTerminator (Line 1, Column 16); recently consumed: CHEDQUOTE=", ex.Message);
+            Assert.Equal("Parsing failure: Unexpected end of input reached; expected \" (Line 1, Column 20); recently consumed: QUOTE=\"abc", ex.Message);
 
             ex = Assert.Throws<ParseException>(
                 () => DotNetEnv.Env.LoadContents("SSL_CERT=\"SPECIAL STUFF---\nLONG-BASE64\\ignore\"slash\"")
