@@ -174,19 +174,25 @@ namespace DotNetEnv
                 .Or(OctalChar)
                 .Or(EscapedChar);
 
+        private static readonly Parser<string> InlineWhitespace =
+            InlineWhitespaceChars.Many().Text();
+
         // unquoted values can have interpolated variables,
         // but only inline whitespace -- until a comment,
         // and no escaped chars, nor byte code chars
+        private static readonly Parser<ValueCalculator> UnquotedValueContents =
+            InterpolatedValue
+                .Or(from inlineWhitespaces in InlineWhitespace
+                    from _ in Parse.Char('#').Not()
+                    from partOfValue in NotControlNorWhitespace("$\"'")
+                    select new ValueActual(string.Concat(inlineWhitespaces, partOfValue)))
+                .Many()
+                .Select(vs => new ValueCalculator(vs));
+
         internal static readonly Parser<ValueCalculator> UnquotedValue =
-            Parse.Regex("[ \t\"']").Not()
-                .Then(_ =>
-                    InterpolatedValue
-                        .Or(InlineWhitespace.Then(inlineWhitespaces
-                            => Parse.Char('#').Not()
-                                .Then(_2 => NotControlNorWhitespace("$\"'"))
-                                .Select(valueString => new ValueActual(string.Concat(inlineWhitespaces, valueString)))))
-                        .Many()
-                        .Select(vs => new ValueCalculator(vs)));
+            from _ in Parse.Regex("[ \t\"']").Not()
+            from value in UnquotedValueContents
+            select value;
 
         // double quoted values can have everything: interpolated variables,
         // plus whitespace, escaped chars, and byte code chars
@@ -233,9 +239,6 @@ namespace DotNetEnv
             from _h in Parse.Char('#')
             from comment in Parse.CharExcept("\r\n").Many().Text()
             select comment;
-
-        private static readonly Parser<string> InlineWhitespace =
-            InlineWhitespaceChars.Many().Text();
 
         private static readonly Parser<string> ExportExpression =
             from export in Parse.String("export")
