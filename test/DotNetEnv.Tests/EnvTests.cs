@@ -178,6 +178,9 @@ namespace DotNetEnv.Tests
             Assert.Equal("$TEST:$TEST4 \\$\\$ \" \\uae and $TEST1", Environment.GetEnvironmentVariable("TEST5_SINGLE"));
             Assert.Equal("test:testtest1\\uaeandtest1", Environment.GetEnvironmentVariable("TEST5_UNQUOTED"));
 
+            // note that interpolated values will keep whitespace! (as they should, esp if surrounding them with other values)
+            Assert.Equal(" surrounded by spaces ", Environment.GetEnvironmentVariable("TEST_UNQUOTED_WITH_INTERPOLATED_SURROUNDING_SPACES"));
+
             Assert.Equal("value1", System.Environment.GetEnvironmentVariable("FIRST_KEY"));
             Assert.Equal("value2andvalue1", System.Environment.GetEnvironmentVariable("SECOND_KEY"));
             // EXISTING_ENVIRONMENT_VARIABLE already set to "value"

@@ -225,17 +225,14 @@ env | grep TEST
 # TEST=value#notcomment
 ```
 
-However, unlike bash (but like fish), the `#` cannot be at the start, so as to not confuse with comments.
-In bash: `EVDNE=#value && echo $EVDNE` gives `#value` but in fish:
+However, unlike bash, a `#` directly after the `=` will be recognized as a comment:
 ```
-set EVDNE #value
-echo $EVDNE
+KEY=#yesacomment
 ```
-Gives the empty string (not that you cannot even one line that demo, like bash above, because it is mostly a comment!). Here we choose to always treat it as a comment so as to make this more consistent.
 
-(To really confuse things tho, in bash: `EVDNE=#value echo $EVDNE` gives the empty string -- really whatever the previous value it had was -- whereas in fish `EVDNE=#value echo $EVDNE` gives `#value`... Thus we do not perfectly match all shell behavior because they are all even seemingly internally inconsistent.)
+This is because whitespaces between `=` and the value are allowed by this library, which is not allowed in bash. This prevents confusion between `KEY=#comment` and `KEY= #comment`, which is expected to give the same result when leading whitespaces before the value are allowed.
 
-However, unlike bash, inline whitespace is allowed so you can do:
+Also unlike bash, inline whitespace is allowed so you can do:
 ```
 KEY=value#notcomment more	words here # yes comment
 
