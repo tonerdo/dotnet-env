@@ -253,10 +253,10 @@ namespace DotNetEnv.Tests
             Assert.Equal("", Parsers.UnquotedValue.Parse("#commentOnly").Value);
 
             // prevent quotationChars inside unquoted values
-            Assert.Throws<ParseException>(() => Parsers.Assignment.End().Parse("EV_DNE=a'b'c"));
-            Assert.Throws<ParseException>(() => Parsers.Assignment.End().Parse("EV_DNE=a\"b\"c"));
-            Assert.Throws<ParseException>(() => Parsers.Assignment.End().Parse("EV_DNE=a 'b' c"));
-            Assert.Throws<ParseException>(() => Parsers.Assignment.End().Parse("EV_DNE=a \"b\" c"));
+            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.End().Parse("a'b'c"));
+            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.End().Parse("a\"b\"c"));
+            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.End().Parse("a 'b' c"));
+            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.End().Parse("a \"b\" c"));
 
             Assert.Equal("a\\?b", Parsers.UnquotedValue.End().Parse("a\\?b").Value);
             Assert.Equal(@"\xe6\x97\xa5ENV value本", Parsers.UnquotedValue.End().Parse("\\xe6\\x97\\xa5${ENVVAR_TEST}本").Value);
@@ -364,6 +364,7 @@ namespace DotNetEnv.Tests
                 Assert.Equal(key, kvp.Key);
                 Assert.Equal(value, kvp.Value);
             };
+
             testParse("EV_DNE", "abc", "EV_DNE=abc");
             testParse("EV_DNE", "a b c", "EV_DNE=a b c");
             testParse("EV_DNE", "a b c", "EV_DNE='a b c'");
@@ -386,8 +387,8 @@ namespace DotNetEnv.Tests
             Assert.Throws<ParseException>(() => Parsers.Assignment.End().Parse("EV_DNE='"));
             Assert.Throws<ParseException>(() => Parsers.Assignment.End().Parse("EV_DNE=0\n1"));
 
-            testParse("EV_DNE", "a'b'' 'c' d", "EV_DNE=\"a'b'' 'c' d\" #allow inline singleQuotes in doubleQuoted values");
-            testParse("EV_DNE", "a\"b\"\" \"c\" d", "EV_DNE='a\"b\"\" \"c\" d' #allow inline doubleQuotes in singleQuoted values");
+            testParse("EV_DNE", "a'b'' 'c' d", "EV_DNE=\"a'b'' 'c' d\" #allow singleQuotes in doubleQuoted values");
+            testParse("EV_DNE", "a\"b\"\" \"c\" d", "EV_DNE='a\"b\"\" \"c\" d' #allow doubleQuotes in singleQuoted values");
 
             testParse("EV_DNE", "", "EV_DNE=");
             testParse("EV_DNE", "EV_DNE=", "EV_DNE=EV_DNE=");

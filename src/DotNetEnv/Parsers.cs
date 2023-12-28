@@ -183,14 +183,14 @@ namespace DotNetEnv
         private static readonly Parser<ValueCalculator> UnquotedValueContents =
             InterpolatedValue
                 .Or(from inlineWhitespaces in InlineWhitespace
-                    from _ in Parse.Char('#').Not()
-                    from partOfValue in NotControlNorWhitespace("$\"'")
+                    from _ in Parse.Char('#').Not() // "#" after a whitespace is the beginning of a comment --> not allowed
+                    from partOfValue in NotControlNorWhitespace("$\"'") // quotes are not allowed in values, because in a shell they lead to inconsistent results
                     select new ValueActual(string.Concat(inlineWhitespaces, partOfValue)))
                 .Many()
                 .Select(vs => new ValueCalculator(vs));
 
         internal static readonly Parser<ValueCalculator> UnquotedValue =
-            from _ in Parse.Regex("[ \t\"']").Not()
+            from _ in Parse.Chars(" \t\"'").Not()
             from value in UnquotedValueContents
             select value;
 

@@ -225,11 +225,14 @@ env | grep TEST
 # TEST=value#notcomment
 ```
 
-Unlike bash, a `#` directly after the EqualSign will be recognized as comment.
-This is because whitespaces between EqualSign and Value are allowed, which is not allowed in bash.
-This prevents confusion between `KEY=#comment` and `KEY= #comment`, which is expected to give the same result when leading whitespaces before the value are allowed.
+However, unlike bash, a `#` directly after the `=` will be recognized as a comment:
+```
+KEY=#yesacomment
+```
 
-And, unlike bash, inline whitespace is allowed so you can do:
+This is because whitespaces between `=` and the value are allowed by this library, which is not allowed in bash. This prevents confusion between `KEY=#comment` and `KEY= #comment`, which is expected to give the same result when leading whitespaces before the value are allowed.
+
+Also unlike bash, inline whitespace is allowed so you can do:
 ```
 KEY=value#notcomment more	words here # yes comment
 
