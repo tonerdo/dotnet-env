@@ -1,8 +1,7 @@
 using System;
 using System.Linq;
 using Xunit;
-using DotNetEnv;
-using DotNetEnv.Extensions; // only needed for ToDictionary extension method
+using DotNetEnv.Extensions;
 
 namespace DotNetEnvTraverse.Tests
 {
