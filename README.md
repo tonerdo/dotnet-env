@@ -126,6 +126,8 @@ null == System.Environment.GetEnvironmentVariable("KEY")
 "value" == kvps.First().Value
 ```
 
+With `CreateDictionaryOption` you can change behavior of `ToDotEnvDictionary` to take either the First value or to throw on duplicates. With the `TakeFirst` options you can simulate `NoClobber`-behavior.
+
 2. `clobberExistingVars`, second arg: `true` to always set env vars,
  `false` would leave existing env vars alone.
 
