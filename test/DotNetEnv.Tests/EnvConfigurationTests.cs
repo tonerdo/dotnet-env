@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using DotNetEnv.Configuration;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration.EnvironmentVariables;
 using Xunit;
 
 namespace DotNetEnv.Tests
@@ -13,11 +15,34 @@ namespace DotNetEnv.Tests
     {
         private IConfigurationRoot configuration;
 
+        private const string EV_TEST = "ENVVAR_TEST";
+        private const string EV_DNE = "EV_DNE";
+        private const string EV_TEST_1 = "EV_TEST_1";
+        private const string EV_TEST_2 = "EV_TEST_2";
+
+        private Dictionary<string,string> oldEnvvars = new Dictionary<string,string>();
+        private static readonly string[] ALL_EVS = { EV_TEST, EV_DNE, EV_TEST_1, EV_TEST_2 };
+
+        public EnvConfigurationTests ()
+        {
+            foreach (var ev in ALL_EVS)
+            {
+                oldEnvvars[ev] = Environment.GetEnvironmentVariable(ev);
+            }
+
+            Environment.SetEnvironmentVariable(EV_TEST, "ENV value");
+        }
+
         public void Dispose()
         {
-            foreach (var conf in this.configuration.AsEnumerable())
+            foreach (var conf in configuration.AsEnumerable())
             {
                 Environment.SetEnvironmentVariable(conf.Key, null);
+            }
+
+            foreach (var ev in ALL_EVS)
+            {
+                Environment.SetEnvironmentVariable(ev, oldEnvvars[ev]);
             }
         }
 
@@ -57,6 +82,7 @@ namespace DotNetEnv.Tests
                 .Build();
 
             Assert.Equal("Other", this.configuration["NAME"]);
+            Assert.Equal("overridden_2", configuration["ENVVAR_TEST"]);
         }
 
         [Fact]
@@ -67,6 +93,14 @@ namespace DotNetEnv.Tests
                 .Build();
 
             Assert.Equal("Toni", this.configuration["NAME"]);
+            Assert.Null(configuration["ENVVAR_TEST"]); // the configuration should not clobber the existing EnvironmentVariable ==> no entry in this configuration
+
+            var configurationIncludingEnvironmentVars = new ConfigurationBuilder()
+                .Add(new EnvironmentVariablesConfigurationSource())
+                .AddDotNetEnvMulti(new[] { "./.env", "./.env2" }, LoadOptions.NoEnvVars().NoClobber())
+                .Build();
+
+            Assert.Equal("ENV value", configurationIncludingEnvironmentVars["ENVVAR_TEST"]); // the configuration should not clobber the existing EnvironmentVariable ==> we receive the EnvironmentVariable-Value directly from EnvironmentVariables
         }
 
         [Fact]
