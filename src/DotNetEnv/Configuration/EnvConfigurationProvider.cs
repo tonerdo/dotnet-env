@@ -38,9 +38,8 @@ namespace DotNetEnv.Configuration
             }
 
             // Since the Load method does not take care of cloberring, We have to check it here!
-            var dotEnvDictionary = values.ToDotEnvDictionary(options.ClobberExistingVars ? CreateDictionaryOption.TakeLast : CreateDictionaryOption.TakeFirst);
-
-            foreach (var value in dotEnvDictionary)
+            var dictionaryOption = options.ClobberExistingVars ? CreateDictionaryOption.TakeLast : CreateDictionaryOption.TakeFirst;
+            foreach (var value in values.ToDotEnvDictionary(dictionaryOption))
                 Data[NormalizeKey(value.Key)] = value.Value;
         }
 
