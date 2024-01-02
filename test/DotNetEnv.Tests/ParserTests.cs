@@ -332,7 +332,7 @@ namespace DotNetEnv.Tests
             Assert.Throws<ParseException>(() => Parsers.Value.Parse(" "));
 
             Assert.Equal("0", Parsers.Value.Parse("0\n1").Value);   // value ends on linebreak
-            
+
             // throw on unmatched quotes
             Assert.Throws<ParseException>(() => Parsers.Value.Parse("'"));
             Assert.Throws<ParseException>(() => Parsers.Value.Parse("\""));
@@ -387,12 +387,6 @@ namespace DotNetEnv.Tests
             Assert.Throws<ParseException>(() => Parsers.Assignment.End().Parse("EV_DNE='"));
             Assert.Throws<ParseException>(() => Parsers.Assignment.End().Parse("EV_DNE=0\n1"));
 
-            testParse("EV_DNE", "a'b'' 'c' d", "EV_DNE=\"a'b'' 'c' d\" #allow singleQuotes in doubleQuoted values");
-            testParse("EV_DNE", "a\"b\"\" \"c\" d", "EV_DNE='a\"b\"\" \"c\" d' #allow doubleQuotes in singleQuoted values");
-            testParse("EV_DNE", "a\"b\"\" \"c\" d", "EV_DNE=\"a\\\"b\\\"\\\" \\\"c\\\" d\" #allow escaped doubleQuotes in doubleQuoted values");
-            Assert.Throws<ParseException>(() => Parsers.Assignment.Parse("EV_DNE='a'b'' 'c' d'"));  // no singleQuotes inside singleQuoted values
-            Assert.Throws<ParseException>(() => Parsers.Assignment.Parse("EV_DNE=\"a\"b\""));  // no unescaped doubleQuotes inside doubleQuoted values
-
             testParse("EV_DNE", "", "EV_DNE=");
             testParse("EV_DNE", "EV_DNE=", "EV_DNE=EV_DNE=");
 
@@ -427,6 +421,13 @@ namespace DotNetEnv.Tests
             testParse("EV_DNE", "a b c", "EV_DNE= \"a b c\" # comment");
             testParse("EV_DNE", "a b c", "EV_DNE ='a b c' # comment");
             testParse("EV_DNE", "abc", "EV_DNE = abc # comment");
+
+            testParse("EV_DNE", "a'b'' 'c' d", "EV_DNE=\"a'b'' 'c' d\" #allow singleQuotes in doubleQuoted values");
+            testParse("EV_DNE", "a\"b\"\" \"c\" d", "EV_DNE='a\"b\"\" \"c\" d' #allow doubleQuotes in singleQuoted values");
+            testParse("EV_DNE", "a\"b\"\" \"c\" d", "EV_DNE=\"a\\\"b\\\"\\\" \\\"c\\\" d\" #allow escaped doubleQuotes in doubleQuoted values");
+            Assert.Throws<ParseException>(() => Parsers.Assignment.Parse("EV_DNE='a'b'' 'c' d'"));  // no singleQuotes inside singleQuoted values
+            Assert.Throws<ParseException>(() => Parsers.Assignment.Parse("EV_DNE=\"a\"b\""));  // no unescaped doubleQuotes inside doubleQuoted values
+
             testParse("EV_DNE", "VAL UE", "EV_DNE=VAL UE");
             testParse("EV_DNE", "VAL UE", "EV_DNE=VAL UE #comment");
 
