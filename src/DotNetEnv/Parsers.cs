@@ -184,7 +184,7 @@ namespace DotNetEnv
             InterpolatedValue
                 .Or(from inlineWhitespaces in InlineWhitespace
                     from _ in Parse.Char('#').Not() // "#" after a whitespace is the beginning of a comment --> not allowed
-                    from partOfValue in NotControlNorWhitespace("$\"'") // quotes are not allowed in values, because in a shell they lead to inconsistent results
+                    from partOfValue in NotControlNorWhitespace("$\"'") // quotes are not allowed in values, because in a shell they mean something different
                     select new ValueActual(string.Concat(inlineWhitespaces, partOfValue)))
                 .Many()
                 .Select(vs => new ValueCalculator(vs));

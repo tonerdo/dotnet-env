@@ -329,7 +329,7 @@ namespace DotNetEnv.Tests
 //            Assert.Equal("日本", Parsers.Value.End().Parse(@"\xe6\x97\xa5\xe6\x9c\xac"));
 
             Assert.Throws<ParseException>(() => Parsers.Value.End().Parse("0\n1"));
-            Assert.Throws<ParseException>(() => Parsers.Value.End().Parse("'"));
+            Assert.Throws<ParseException>(() => Parsers.Value.Parse(" "));
 
             Assert.Equal("0", Parsers.Value.Parse("0\n1").Value);   // value ends on linebreak
             
@@ -389,6 +389,9 @@ namespace DotNetEnv.Tests
 
             testParse("EV_DNE", "a'b'' 'c' d", "EV_DNE=\"a'b'' 'c' d\" #allow singleQuotes in doubleQuoted values");
             testParse("EV_DNE", "a\"b\"\" \"c\" d", "EV_DNE='a\"b\"\" \"c\" d' #allow doubleQuotes in singleQuoted values");
+            testParse("EV_DNE", "a\"b\"\" \"c\" d", "EV_DNE=\"a\\\"b\\\"\\\" \\\"c\\\" d\" #allow escaped doubleQuotes in doubleQuoted values");
+            Assert.Throws<ParseException>(() => Parsers.Assignment.Parse("EV_DNE='a'b'' 'c' d'"));  // no singleQuotes inside singleQuoted values
+            Assert.Throws<ParseException>(() => Parsers.Assignment.Parse("EV_DNE=\"a\"b\""));  // no unescaped doubleQuotes inside doubleQuoted values
 
             testParse("EV_DNE", "", "EV_DNE=");
             testParse("EV_DNE", "EV_DNE=", "EV_DNE=EV_DNE=");
@@ -396,11 +399,13 @@ namespace DotNetEnv.Tests
             testParse("EV_DNE", "test", "EV_DNE= test #basic comment");
             testParse("EV_DNE", "", "EV_DNE=#no value just comment");
             testParse("EV_DNE", "", "EV_DNE= #no value just comment");
+            testParse("EV_DNE", "a#b#c", "EV_DNE=a#b#c #inner hashes are allowed in unquoted value");
             testParse("EV_DNE", "test", "EV_DNE= test  #a'bc allow singleQuotes in comment");
             testParse("EV_DNE", "test", "EV_DNE= test  #a\"bc allow doubleQuotes in comment");
             testParse("EV_DNE", "test", "EV_DNE= test #a$bc allow dollarSign in comment");
+            testParse("EV_DNE", "a#b#c# not a comment", "EV_DNE=a#b#c# not a comment");
 
-            testParse("EV_DNE", "http://www.google.com/#anchor", "EV_DNE=http://www.google.com/#anchor #inline hash is part of value");
+            testParse("EV_DNE", "http://www.google.com/#anchor", "EV_DNE=http://www.google.com/#anchor #inner hash is part of value");
 
             testParse("EV_DNE", "abc", "EV_DNE='abc'");
             testParse("EV_DNE", "a b c", "EV_DNE='a b c' # comment");
