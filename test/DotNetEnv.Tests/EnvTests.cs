@@ -178,6 +178,9 @@ namespace DotNetEnv.Tests
             Assert.Equal("$TEST:$TEST4 \\$\\$ \" \\uae and $TEST1", Environment.GetEnvironmentVariable("TEST5_SINGLE"));
             Assert.Equal("test:testtest1\\uaeandtest1", Environment.GetEnvironmentVariable("TEST5_UNQUOTED"));
 
+            // note that interpolated values will keep whitespace! (as they should, esp if surrounding them with other values)
+            Assert.Equal(" surrounded by spaces ", Environment.GetEnvironmentVariable("TEST_UNQUOTED_WITH_INTERPOLATED_SURROUNDING_SPACES"));
+
             Assert.Equal("value1", System.Environment.GetEnvironmentVariable("FIRST_KEY"));
             Assert.Equal("value2andvalue1", System.Environment.GetEnvironmentVariable("SECOND_KEY"));
             // EXISTING_ENVIRONMENT_VARIABLE already set to "value"
@@ -357,9 +360,9 @@ base64
             Assert.Equal("Parsing failure: unexpected 'W'; expected = (Line 1, Column 7); recently consumed: MULTI ", ex.Message);
 
             ex = Assert.Throws<ParseException>(
-                () => DotNetEnv.Env.LoadContents("UNMATCHEDQUOTE='")
+                () => DotNetEnv.Env.LoadContents("UNMATCHEDQUOTE='abc")
             );
-            Assert.Equal("Parsing failure: unexpected '''; expected LineTerminator (Line 1, Column 16); recently consumed: CHEDQUOTE=", ex.Message);
+            Assert.Equal("Parsing failure: Unexpected end of input reached; expected ' (Line 1, Column 20); recently consumed: QUOTE='abc", ex.Message);
 
             ex = Assert.Throws<ParseException>(
                 () => DotNetEnv.Env.LoadContents("BADQUOTE='\\''")
@@ -367,9 +370,9 @@ base64
             Assert.Equal("Parsing failure: unexpected '''; expected LineTerminator (Line 1, Column 13); recently consumed: DQUOTE='\\'", ex.Message);
 
             ex = Assert.Throws<ParseException>(
-                () => DotNetEnv.Env.LoadContents("UNMATCHEDQUOTE=\"")
+                () => DotNetEnv.Env.LoadContents("UNMATCHEDQUOTE=\"abc")
             );
-            Assert.Equal("Parsing failure: unexpected '\"'; expected LineTerminator (Line 1, Column 16); recently consumed: CHEDQUOTE=", ex.Message);
+            Assert.Equal("Parsing failure: Unexpected end of input reached; expected \" (Line 1, Column 20); recently consumed: QUOTE=\"abc", ex.Message);
 
             ex = Assert.Throws<ParseException>(
                 () => DotNetEnv.Env.LoadContents("SSL_CERT=\"SPECIAL STUFF---\nLONG-BASE64\\ignore\"slash\"")

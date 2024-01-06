@@ -241,6 +241,23 @@ namespace DotNetEnv.Tests
             Assert.Throws<ParseException>(() => Parsers.UnquotedValue.End().Parse("0\n1"));
             Assert.Throws<ParseException>(() => Parsers.UnquotedValue.End().Parse("'"));
 
+            Assert.Equal("0", Parsers.UnquotedValue.Parse("0\n1").Value);   // value ends on linebreak
+
+            // leading singlequotes/doublequotes/whitespaces/tabs are not allowed
+            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.Parse("'"));
+            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.Parse("\""));
+            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.Parse(" "));
+            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.Parse("\t"));
+
+            Assert.Equal("", Parsers.UnquotedValue.Parse("#").Value); // no value, empty comment
+            Assert.Equal("", Parsers.UnquotedValue.Parse("#commentOnly").Value);
+
+            // prevent quotationChars inside unquoted values
+            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.End().Parse("a'b'c"));
+            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.End().Parse("a\"b\"c"));
+            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.End().Parse("a 'b' c"));
+            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.End().Parse("a \"b\" c"));
+
             Assert.Equal("a\\?b", Parsers.UnquotedValue.End().Parse("a\\?b").Value);
             Assert.Equal(@"\xe6\x97\xa5ENV value本", Parsers.UnquotedValue.End().Parse("\\xe6\\x97\\xa5${ENVVAR_TEST}本").Value);
         }
@@ -304,13 +321,21 @@ namespace DotNetEnv.Tests
         {
             Assert.Equal("abc", Parsers.Value.End().Parse("abc").Value);
             Assert.Equal("a b c", Parsers.Value.End().Parse("a b c").Value);
+            Assert.Equal("a b c", Parsers.Value.End().Parse("'a b c'").Value);
+            Assert.Equal("a#b#c", Parsers.Value.End().Parse("a#b#c").Value);
             Assert.Equal("041", Parsers.Value.End().Parse("041").Value);
             Assert.Equal("日本", Parsers.Value.End().Parse("日本").Value);
             // TODO: is it possible to get the system to recognize when a complete unicode char is present and start the next one then, without a space?
 //            Assert.Equal("日本", Parsers.Value.End().Parse(@"\xe6\x97\xa5\xe6\x9c\xac"));
 
             Assert.Throws<ParseException>(() => Parsers.Value.End().Parse("0\n1"));
-            Assert.Throws<ParseException>(() => Parsers.Value.End().Parse("'"));
+            Assert.Throws<ParseException>(() => Parsers.Value.Parse(" "));
+
+            Assert.Equal("0", Parsers.Value.Parse("0\n1").Value);   // value ends on linebreak
+
+            // throw on unmatched quotes
+            Assert.Throws<ParseException>(() => Parsers.Value.Parse("'"));
+            Assert.Throws<ParseException>(() => Parsers.Value.Parse("\""));
 
             Assert.Equal(@"\xe6\x97\xa5", Parsers.Value.End().Parse(@"\xe6\x97\xa5").Value);
             Assert.Equal(@"\xE2\x98\xA0", Parsers.Value.End().Parse(@"\xE2\x98\xA0").Value);
@@ -342,6 +367,7 @@ namespace DotNetEnv.Tests
 
             testParse("EV_DNE", "abc", "EV_DNE=abc");
             testParse("EV_DNE", "a b c", "EV_DNE=a b c");
+            testParse("EV_DNE", "a b c", "EV_DNE='a b c'");
             testParse("EV_DNE", "041", "EV_DNE=041 # comment");
             // Note that there are no comments without whitespace in unquoted strings!
             testParse("EV_DNE", "日本#c", "EV_DNE=日本#c");
@@ -360,6 +386,20 @@ namespace DotNetEnv.Tests
 
             Assert.Throws<ParseException>(() => Parsers.Assignment.End().Parse("EV_DNE='"));
             Assert.Throws<ParseException>(() => Parsers.Assignment.End().Parse("EV_DNE=0\n1"));
+
+            testParse("EV_DNE", "", "EV_DNE=");
+            testParse("EV_DNE", "EV_DNE=", "EV_DNE=EV_DNE=");
+
+            testParse("EV_DNE", "test", "EV_DNE= test #basic comment");
+            testParse("EV_DNE", "", "EV_DNE=#no value just comment");
+            testParse("EV_DNE", "", "EV_DNE= #no value just comment");
+            testParse("EV_DNE", "a#b#c", "EV_DNE=a#b#c #inner hashes are allowed in unquoted value");
+            testParse("EV_DNE", "test", "EV_DNE= test  #a'bc allow singleQuotes in comment");
+            testParse("EV_DNE", "test", "EV_DNE= test  #a\"bc allow doubleQuotes in comment");
+            testParse("EV_DNE", "test", "EV_DNE= test #a$bc allow dollarSign in comment");
+            testParse("EV_DNE", "a#b#c# not a comment", "EV_DNE=a#b#c# not a comment");
+
+            testParse("EV_DNE", "http://www.google.com/#anchor", "EV_DNE=http://www.google.com/#anchor #inner hash is part of value");
 
             testParse("EV_DNE", "abc", "EV_DNE='abc'");
             testParse("EV_DNE", "a b c", "EV_DNE='a b c' # comment");
@@ -381,6 +421,13 @@ namespace DotNetEnv.Tests
             testParse("EV_DNE", "a b c", "EV_DNE= \"a b c\" # comment");
             testParse("EV_DNE", "a b c", "EV_DNE ='a b c' # comment");
             testParse("EV_DNE", "abc", "EV_DNE = abc # comment");
+
+            testParse("EV_DNE", "a'b'' 'c' d", "EV_DNE=\"a'b'' 'c' d\" #allow singleQuotes in doubleQuoted values");
+            testParse("EV_DNE", "a\"b\"\" \"c\" d", "EV_DNE='a\"b\"\" \"c\" d' #allow doubleQuotes in singleQuoted values");
+            testParse("EV_DNE", "a\"b\"\" \"c\" d", "EV_DNE=\"a\\\"b\\\"\\\" \\\"c\\\" d\" #allow escaped doubleQuotes in doubleQuoted values");
+            Assert.Throws<ParseException>(() => Parsers.Assignment.Parse("EV_DNE='a'b'' 'c' d'"));  // no singleQuotes inside singleQuoted values
+            Assert.Throws<ParseException>(() => Parsers.Assignment.Parse("EV_DNE=\"a\"b\""));  // no unescaped doubleQuotes inside doubleQuoted values
+
             testParse("EV_DNE", "VAL UE", "EV_DNE=VAL UE");
             testParse("EV_DNE", "VAL UE", "EV_DNE=VAL UE #comment");
 

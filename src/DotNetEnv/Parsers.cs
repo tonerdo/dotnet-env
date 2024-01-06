@@ -67,14 +67,6 @@ namespace DotNetEnv
             from c in Parse.AnyChar
             select ToEscapeChar(c);
 
-        // officially *nix env vars can only be /[a-zA-Z_][a-zA-Z_0-9]*/
-        // but because technically you can set env vars that are basically anything except equals signs, allow some flexibility
-        private static readonly Parser<char> IdentifierSpecialChars = Parse.Chars(".-");
-        internal static readonly Parser<string> Identifier =
-            from head in Parse.Letter.Or(Underscore)
-            from tail in Parse.LetterOrDigit.Or(Underscore).Or(IdentifierSpecialChars).Many().Text()
-            select head + tail;
-
         private static byte ToOctalByte (string value)
         {
             return Convert.ToByte(value, 8);
@@ -147,6 +139,15 @@ namespace DotNetEnv
                 $"not control nor whitespace nor {exceptChars}"
             ).AtLeastOnce().Text();
 
+
+        // officially *nix env vars can only be /[a-zA-Z_][a-zA-Z_0-9]*/
+        // but because technically you can set env vars that are basically anything except equals signs, allow some flexibility
+        private static readonly Parser<char> IdentifierSpecialChars = Parse.Chars(".-");
+        internal static readonly Parser<string> Identifier =
+            from head in Parse.Letter.Or(Underscore)
+            from tail in Parse.LetterOrDigit.Or(Underscore).Or(IdentifierSpecialChars).Many().Text()
+            select head + tail;
+
         internal static readonly Parser<IValue> InterpolatedEnvVar =
             from _d in DollarSign
             from id in Identifier
@@ -173,17 +174,25 @@ namespace DotNetEnv
                 .Or(OctalChar)
                 .Or(EscapedChar);
 
+        private static readonly Parser<string> InlineWhitespace =
+            InlineWhitespaceChars.Many().Text();
+
         // unquoted values can have interpolated variables,
         // but only inline whitespace -- until a comment,
         // and no escaped chars, nor byte code chars
-        // FIXME: would be nice to solve multi word with comment case with parser directly (no split + trim)
+        private static readonly Parser<ValueCalculator> UnquotedValueContents =
+            InterpolatedValue
+                .Or(from inlineWhitespaces in InlineWhitespace
+                    from _ in Parse.Char('#').Not() // "#" after a whitespace is the beginning of a comment --> not allowed
+                    from partOfValue in NotControlNorWhitespace("$\"'") // quotes are not allowed in values, because in a shell they mean something different
+                    select new ValueActual(string.Concat(inlineWhitespaces, partOfValue)))
+                .Many()
+                .Select(vs => new ValueCalculator(vs));
+
         internal static readonly Parser<ValueCalculator> UnquotedValue =
-            InterpolatedValue.Or(
-                NotControlNorWhitespace("'\"$")
-                .Or(InlineWhitespaceChars.AtLeastOnce().Text())
-                .AtLeastOnce()
-                .Select(strs => new ValueActual(strs))
-            ).Many().Select(vs => new ValueCalculator(vs).Split("[ \t]#").Trim());
+            from _ in Parse.Chars(" \t\"'").Not()
+            from value in UnquotedValueContents
+            select value;
 
         // double quoted values can have everything: interpolated variables,
         // plus whitespace, escaped chars, and byte code chars
@@ -230,9 +239,6 @@ namespace DotNetEnv
             from _h in Parse.Char('#')
             from comment in Parse.CharExcept("\r\n").Many().Text()
             select comment;
-
-        private static readonly Parser<string> InlineWhitespace =
-            InlineWhitespaceChars.Many().Text();
 
         private static readonly Parser<string> ExportExpression =
             from export in Parse.String("export")

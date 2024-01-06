@@ -205,7 +205,7 @@ The options for quoting values are:
 
 1. `""` double: can have everything: interpolated variables, plus whitespace, escaped chars, and byte code chars
 1. `''` single: can have whitespace, but no interpolation, no escaped chars, no byte code chars -- notably not even escaped single quotes inside -- single quoted values are for when you want truly raw values
-1. unquoted: can have interpolated variables, but only inline whitespace, and no escaped chars, nor byte code chars.
+1. unquoted: can have interpolated variables, but only inline whitespace, and no quote chars, no escaped chars, nor byte code chars
 
 As these are the options bash recognizes. However, while bash does have
  special meaning for each of these, in this library, they are all the same,
@@ -225,7 +225,14 @@ env | grep TEST
 # TEST=value#notcomment
 ```
 
-However, unlike bash, inline whitespace is allowed so you can do:
+However, unlike bash, a `#` directly after the `=` will be recognized as a comment:
+```
+KEY=#yesacomment
+```
+
+This is because whitespaces between `=` and the value are allowed by this library, which is not allowed in bash. This prevents confusion between `KEY=#comment` and `KEY= #comment`, which is expected to give the same result when leading whitespaces before the value are allowed.
+
+Also unlike bash, inline whitespace is allowed so you can do:
 ```
 KEY=value#notcomment more	words here # yes comment
 
