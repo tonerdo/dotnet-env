@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Text;
 using Xunit;
 using Sprache;
-using DotNetEnv;
 
 namespace DotNetEnv.Tests
 {
@@ -59,6 +58,7 @@ namespace DotNetEnv.Tests
             Assert.Throws<ParseException>(() => Parsers.Identifier.End().Parse("a!b"));
             Assert.Throws<ParseException>(() => Parsers.Identifier.End().Parse("a?b"));
             Assert.Throws<ParseException>(() => Parsers.Identifier.End().Parse("a*b"));
+            Assert.Throws<ParseException>(() => Parsers.Identifier.End().Parse("a:b"));
         }
 
         [Fact]

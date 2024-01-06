@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using DotNetEnv.Extensions;
 using Microsoft.Extensions.Configuration;
 
 namespace DotNetEnv.Configuration
@@ -37,22 +38,12 @@ namespace DotNetEnv.Configuration
             }
 
             // Since the Load method does not take care of cloberring, We have to check it here!
-            foreach (var value in values)
-            {
-                var key = NormalizeKey(value.Key);
-                if (this.options.ClobberExistingVars)
-                {
-                    this.Data[key] = value.Value;
-                }
-                else
-                {
-                    if (!this.Data.ContainsKey(key))
-                    {
-                        this.Data.Add(key, value.Value);
-                    }
-                }
-            }
+            var dictionaryOption = options.ClobberExistingVars ? CreateDictionaryOption.TakeLast : CreateDictionaryOption.TakeFirst;
+            foreach (var value in values.ToDotEnvDictionary(dictionaryOption))
+                Data[NormalizeKey(value.Key)] = value.Value;
         }
-        private static string NormalizeKey(string key) => key.Replace("__", ConfigurationPath.KeyDelimiter);
+
+        private static string NormalizeKey(string key)
+            => key.Replace("__", ConfigurationPath.KeyDelimiter);
     }
 }

@@ -103,8 +103,8 @@ All parameters default to true, which means:
 1. `setEnvVars`, first arg: `true` in order to actually update env vars.
  Setting it `false` allows consumers of this library to process the .env file
  but use it for things other than updating env vars, as a generic configuration file.
- The Load methods all return an `IEnumerable<KeyValuePair<string,string>> for this, but
- there is an extension method ToDictionary to get a dict with the last value for each key.
+ The Load methods all return an `IEnumerable<KeyValuePair<string,string>>` for this, but
+ there is an extension method `ToDotEnvDictionary()` to get a dict with the last value for each key.
 
 ```env
 KEY=value
@@ -118,13 +118,15 @@ var kvps = DotNetEnv.Env.Load(
 )
 
 // or the recommended, cleaner (fluent) approach:
-var dict = DotNetEnv.Env.NoEnvVars().Load().ToDictionary();
+var dict = DotNetEnv.Env.NoEnvVars().Load().ToDotEnvDictionary();
 
 // not "value" from the .env file
 null == System.Environment.GetEnvironmentVariable("KEY")
 "KEY" == kvps.First().Key
 "value" == kvps.First().Value
 ```
+
+With `CreateDictionaryOption` you can change behavior of `ToDotEnvDictionary` to take either the First value or to throw on duplicates. With the `TakeFirst` options you can simulate `NoClobber`-behavior.
 
 2. `clobberExistingVars`, second arg: `true` to always set env vars,
  `false` would leave existing env vars alone.
