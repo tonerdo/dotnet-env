@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using DotNetEnv.Extensions;
 using Microsoft.Extensions.Configuration;
 
@@ -37,9 +38,16 @@ namespace DotNetEnv.Configuration
                 }
             }
 
-            // Since the Load method does not take care of cloberring, We have to check it here!
+            // Since the Load method does not take care of clobberring, We have to check it here!
             var dictionaryOption = options.ClobberExistingVars ? CreateDictionaryOption.TakeLast : CreateDictionaryOption.TakeFirst;
-            foreach (var value in values.ToDotEnvDictionary(dictionaryOption))
+            var dotEnvDictionary = values.ToDotEnvDictionary(dictionaryOption);
+
+            if (!options.ClobberExistingVars)
+                foreach (string key in Environment.GetEnvironmentVariables().Keys)
+                    if (dotEnvDictionary.ContainsKey(key))
+                        dotEnvDictionary[key] = Environment.GetEnvironmentVariable(key);
+
+            foreach (var value in dotEnvDictionary)
                 Data[NormalizeKey(value.Key)] = value.Value;
         }
 
