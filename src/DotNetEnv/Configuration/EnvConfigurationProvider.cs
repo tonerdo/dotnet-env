@@ -44,7 +44,8 @@ namespace DotNetEnv.Configuration
 
             if (!options.ClobberExistingVars)
                 foreach (string key in Environment.GetEnvironmentVariables().Keys)
-                    dotEnvDictionary.Remove(key);
+                    if (dotEnvDictionary.ContainsKey(key))
+                        dotEnvDictionary[key] = Environment.GetEnvironmentVariable(key);
 
             foreach (var value in dotEnvDictionary)
                 Data[NormalizeKey(value.Key)] = value.Value;

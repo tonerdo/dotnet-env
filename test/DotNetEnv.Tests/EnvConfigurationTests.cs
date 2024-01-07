@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using DotNetEnv.Configuration;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Configuration.EnvironmentVariables;
 using Xunit;
 
 namespace DotNetEnv.Tests
@@ -93,14 +92,7 @@ namespace DotNetEnv.Tests
                 .Build();
 
             Assert.Equal("Toni", this.configuration["NAME"]);
-            Assert.Null(configuration["ENVVAR_TEST"]); // the configuration should not clobber the existing EnvironmentVariable ==> no entry in this configuration
-
-            var configurationIncludingEnvironmentVars = new ConfigurationBuilder()
-                .Add(new EnvironmentVariablesConfigurationSource())
-                .AddDotNetEnvMulti(new[] { "./.env", "./.env2" }, LoadOptions.NoEnvVars().NoClobber())
-                .Build();
-
-            Assert.Equal("ENV value", configurationIncludingEnvironmentVars["ENVVAR_TEST"]); // the configuration should not clobber the existing EnvironmentVariable ==> we receive the EnvironmentVariable-Value directly from EnvironmentVariables
+            Assert.Equal("ENV value", configuration["ENVVAR_TEST"]);
         }
 
         [Fact]
