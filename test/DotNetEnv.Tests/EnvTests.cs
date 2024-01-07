@@ -100,13 +100,13 @@ namespace DotNetEnv.Tests
             var expected = "totally the original value";
             Environment.SetEnvironmentVariable("NAME", null);
             Environment.SetEnvironmentVariable("URL", expected);
-            DotNetEnv.Env.Load(options: new DotNetEnv.LoadOptions(clobberExistingVars: false));
+            DotNetEnv.Env.Load(new DotNetEnv.LoadOptions() { ClobberExistingVars = false });
             Assert.Equal(expected, Environment.GetEnvironmentVariable("URL"));
             Assert.Equal("Toni", Environment.GetEnvironmentVariable("NAME"));
 
             Environment.SetEnvironmentVariable("NAME", null);
             Environment.SetEnvironmentVariable("URL", "i'm going to be overwritten");
-            DotNetEnv.Env.Load(options: new DotNetEnv.LoadOptions(clobberExistingVars: true));
+            DotNetEnv.Env.Load(new DotNetEnv.LoadOptions() { ClobberExistingVars = true });
             Assert.Equal("https://github.com/tonerdo", Environment.GetEnvironmentVariable("URL"));
             Assert.Equal("Toni", Environment.GetEnvironmentVariable("NAME"));
         }
@@ -117,14 +117,14 @@ namespace DotNetEnv.Tests
             var expected = "totally the original value";
             Environment.SetEnvironmentVariable("NAME", null);
             Environment.SetEnvironmentVariable("URL", expected);
-            DotNetEnv.Env.Load(options: new DotNetEnv.LoadOptions(setEnvVars: false));
+            DotNetEnv.Env.Load(new DotNetEnv.LoadOptions() { SetEnvVars = false });
             Assert.Equal(expected, Environment.GetEnvironmentVariable("URL"));
             // this env var remaining null is the difference between NoSetEnvVars and NoClobber
             Assert.Null(Environment.GetEnvironmentVariable("NAME"));
 
             Environment.SetEnvironmentVariable("NAME", null);
             Environment.SetEnvironmentVariable("URL", "i'm going to be overwritten");
-            DotNetEnv.Env.Load(options: new DotNetEnv.LoadOptions(setEnvVars: true));
+            DotNetEnv.Env.Load(new DotNetEnv.LoadOptions() { SetEnvVars = true });
             Assert.Equal("https://github.com/tonerdo", Environment.GetEnvironmentVariable("URL"));
             Assert.Equal("Toni", Environment.GetEnvironmentVariable("NAME"));
         }
@@ -144,21 +144,21 @@ namespace DotNetEnv.Tests
         public void LoadOsCasingTest()
         {
             Environment.SetEnvironmentVariable("CASING", "neither");
-            DotNetEnv.Env.Load("./.env_casing", new DotNetEnv.LoadOptions(clobberExistingVars: false));
+            DotNetEnv.Env.Load("./.env_casing", new DotNetEnv.LoadOptions() { ClobberExistingVars = false });
             Assert.Equal(IsWindows ? "neither" : "lower", Environment.GetEnvironmentVariable("casing"));
             Assert.Equal("neither", Environment.GetEnvironmentVariable("CASING"));
 
-            DotNetEnv.Env.Load("./.env_casing", new DotNetEnv.LoadOptions(clobberExistingVars: true));
+            DotNetEnv.Env.Load("./.env_casing", new DotNetEnv.LoadOptions() { ClobberExistingVars = true });
             Assert.Equal("lower", Environment.GetEnvironmentVariable("casing"));
             Assert.Equal(IsWindows ? "lower" : "neither", Environment.GetEnvironmentVariable("CASING"));
 
             Environment.SetEnvironmentVariable("CASING", null);
             Environment.SetEnvironmentVariable("casing", "neither");
-            DotNetEnv.Env.Load("./.env_casing", new DotNetEnv.LoadOptions(clobberExistingVars: false));
+            DotNetEnv.Env.Load("./.env_casing", new DotNetEnv.LoadOptions() { ClobberExistingVars = false });
             Assert.Equal("neither", Environment.GetEnvironmentVariable("casing"));
             Assert.Equal(IsWindows ? "neither" : null, Environment.GetEnvironmentVariable("CASING"));
 
-            DotNetEnv.Env.Load("./.env_casing", new DotNetEnv.LoadOptions(clobberExistingVars: true));
+            DotNetEnv.Env.Load("./.env_casing", new DotNetEnv.LoadOptions() { ClobberExistingVars = true });
             Assert.Equal("lower", Environment.GetEnvironmentVariable("casing"));
             Assert.Equal(IsWindows ? "lower" : null, Environment.GetEnvironmentVariable("CASING"));
         }

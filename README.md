@@ -85,10 +85,12 @@ DotNetEnv.Env.GetString("THIS_DOES_NOT_EXIST", "Variable not found");
 You can also pass a `LoadOptions` object arg to all `DotNetEnv.Env.Load` variants to affect the Load/Parse behavior:
 
 ```csharp
-new DotNetEnv.LoadOptions(
-    setEnvVars: true,
-    clobberExistingVars: true,
-    onlyExactPath: true
+new DotNetEnv.LoadOptions()
+    {
+        SetEnvVars = true,
+        ClobberExistingVars = true,
+        OnlyExactPath = true,
+    }
 )
 ```
 
@@ -112,9 +114,8 @@ KEY=value
 
 ```csharp
 var kvps = DotNetEnv.Env.Load(
-    options: new DotNetEnv.Env.LoadOptions(
-        setEnvVars: false
-    )
+    new DotNetEnv.LoadOptions()
+        { SetEnvVars = false }
 )
 
 // or the recommended, cleaner (fluent) approach:
@@ -138,9 +139,10 @@ KEY=value
 ```csharp
 System.Environment.SetEnvironmentVariable("KEY", "really important value, don't overwrite");
 DotNetEnv.Env.Load(
-    options: new DotNetEnv.Env.LoadOptions(
-        clobberExistingVars: false
-    )
+    new DotNetEnv.LoadOptions()
+    {
+        ClobberExistingVars = false
+    }
 )
 
 // or the recommended, cleaner (fluent) approach:
@@ -167,7 +169,7 @@ DotNetEnv.Env.TraversePath().Load();
 
 Integrating with the usual ConfigurationBuilder used in .NET is simple!
 
-```
+```csharp
 var configuration = new ConfigurationBuilder()
     .AddDotNetEnv(".env", LoadOptions.TraversePath()) // Simply add the DotNetEnv configuration source!
     .Build();

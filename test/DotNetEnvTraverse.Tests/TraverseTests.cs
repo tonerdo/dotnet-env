@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using DotNetEnv;
 using Xunit;
 using DotNetEnv.Extensions;
 
@@ -16,7 +17,7 @@ namespace DotNetEnvTraverse.Tests
         [Fact]
         public void LoadDotenvTraverse()
         {
-            var kvps = DotNetEnv.Env.TraversePath().Load().ToArray();
+            var kvps = Env.TraversePath().Load().ToArray();
             Assert.Single(kvps);
             var dict = kvps.ToDotEnvDictionary();
             Assert.Equal("here", dict["TEST"]);
@@ -27,7 +28,7 @@ namespace DotNetEnvTraverse.Tests
         [Fact]
         public void LoadRenamedDotenvTraverse()
         {
-            var kvps = DotNetEnv.Env.TraversePath().Load("./.env").ToArray();
+            var kvps = Env.TraversePath().Load("./.env").ToArray();
             Assert.Single(kvps);
             var dict = kvps.ToDotEnvDictionary();
             Assert.Equal("here", dict["TEST"]);
@@ -38,7 +39,7 @@ namespace DotNetEnvTraverse.Tests
         [Fact]
         public void LoadRenamedDotenvMuchTraverse()
         {
-            var kvps = DotNetEnv.Env.TraversePath().Load(".env_much_higher").ToArray();
+            var kvps = Env.TraversePath().Load(".env_much_higher").ToArray();
             Assert.Single(kvps);
             var dict = kvps.ToDotEnvDictionary();
             Assert.Equal("See DotNetEnvTraverse.Tests for why this is here", dict["TEST"]);
@@ -49,7 +50,7 @@ namespace DotNetEnvTraverse.Tests
         [Fact]
         public void LoadOnlyDirectoryDotenvTraverse()
         {
-            var kvps = DotNetEnv.Env.TraversePath().Load("./").ToArray();
+            var kvps = Env.TraversePath().Load("./").ToArray();
             Assert.Single(kvps);
             var dict = kvps.ToDotEnvDictionary();
             Assert.Equal("here", dict["TEST"]);
@@ -60,7 +61,7 @@ namespace DotNetEnvTraverse.Tests
         [Fact]
         public void DoNotLoadSkippedDotenv()
         {
-            var kvps = DotNetEnv.Env.TraversePath().Load("../../../../../../").ToArray();
+            var kvps = Env.TraversePath().Load("../../../../../../").ToArray();
             Assert.Empty(kvps);
             Assert.Null(Environment.GetEnvironmentVariable("TEST"));
             Assert.Null(Environment.GetEnvironmentVariable("NAME"));
