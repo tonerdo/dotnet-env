@@ -8,6 +8,13 @@ namespace DotNetEnv
         public bool ClobberExistingVars { get; set; } = true;
         public bool OnlyExactPath { get; set; } = true;
 
+        public LoadOptions(bool? setEnvVars = null, bool? clobberExistingVars = null, bool? onlyExactPath = null)
+        {
+            SetEnvVars = setEnvVars ?? SetEnvVars;
+            ClobberExistingVars = clobberExistingVars ?? ClobberExistingVars;
+            OnlyExactPath = onlyExactPath ?? OnlyExactPath;
+        }
+
         public static LoadOptions DEFAULT => new LoadOptions();
 
         public static LoadOptions NoEnvVars(LoadOptions options = null) =>
