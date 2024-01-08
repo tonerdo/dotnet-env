@@ -29,25 +29,25 @@ namespace DotNetEnv
 
     public static class LoadOptionExtensions
     {
-        public static LoadOptions NoEnvVars(this LoadOptions @this)
+        public static LoadOptions NoEnvVars(this LoadOptions options)
         {
-            @this.SetEnvVars = false;
-            return @this;
+            options.SetEnvVars = false;
+            return options;
         }
 
-        public static LoadOptions NoClobber(this LoadOptions @this)
+        public static LoadOptions NoClobber(this LoadOptions options)
         {
-            @this.ClobberExistingVars = false;
-            return @this;
+            options.ClobberExistingVars = false;
+            return options;
         }
 
-        public static LoadOptions TraversePath(this LoadOptions @this)
+        public static LoadOptions TraversePath(this LoadOptions options)
         {
-            @this.OnlyExactPath = false;
-            return @this;
+            options.OnlyExactPath = false;
+            return options;
         }
 
-        public static IEnumerable<KeyValuePair<string, string>> Load(this LoadOptions @this, string path = null) => Env.Load(path, @this);
-        public static IEnumerable<KeyValuePair<string, string>> LoadMulti(this LoadOptions @this, string[] paths) => Env.LoadMulti(paths, @this);
+        public static IEnumerable<KeyValuePair<string, string>> Load(this LoadOptions options, string path = null) => Env.Load(path, options);
+        public static IEnumerable<KeyValuePair<string, string>> LoadMulti(this LoadOptions options, string[] paths) => Env.LoadMulti(paths, options);
     }
 }
