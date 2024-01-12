@@ -26,7 +26,7 @@ namespace DotNetEnv.Tests
         public void AddSourceToBuilderAndLoad()
         {
             this.configuration = new ConfigurationBuilder()
-                .AddDotNetEnv(LoadOptions.NoEnvVars())
+                .AddDotNetEnv(options: LoadOptions.NoEnvVars())
                 .Build();
 
             Assert.Empty(this.configuration["EMPTY"]);
