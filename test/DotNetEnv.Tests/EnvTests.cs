@@ -208,6 +208,52 @@ namespace DotNetEnv.Tests
         }
 
         [Fact]
+        public void ParseInterpolationDisabledTest()
+        {
+            Environment.SetEnvironmentVariable("EXISTING_ENVIRONMENT_VARIABLE", "value");
+            Environment.SetEnvironmentVariable("DNE_VAR", null);
+            Env.Load("./.env_embedded", Env.DisableInterpolation());
+
+            Assert.Equal("test", Environment.GetEnvironmentVariable("TEST"));
+            Assert.Equal("test1", Environment.GetEnvironmentVariable("TEST1"));
+            Assert.Equal("$TEST", Environment.GetEnvironmentVariable("TEST2"));
+            Assert.Equal("$TEST${TEST2}", Environment.GetEnvironmentVariable("TEST3"));
+            Assert.Equal("$TEST${TEST4}$TEST1", Environment.GetEnvironmentVariable("TEST4"));
+
+            // should this test return "$TEST:$TEST4 \\$\\$ '\\\" \u00ae and $TEST1"? Escaping of dollarSigns seems wrong when Interpolation is disabled.
+            Assert.Equal("$TEST:$TEST4 $$ '\" \u00ae and $TEST1", Environment.GetEnvironmentVariable("TEST5_DOUBLE"));
+            Assert.Equal("$TEST:$TEST4 \\$\\$ \" \\uae and $TEST1", Environment.GetEnvironmentVariable("TEST5_SINGLE"));
+            Assert.Equal("$TEST:$TEST4\\uaeand$TEST1", Environment.GetEnvironmentVariable("TEST5_UNQUOTED"));
+
+            // note that interpolated values will keep whitespace! (as they should, esp if surrounding them with other values)
+            Assert.Equal("$TEST_VALUE_WITH_SURROUNDING_SPACES", Environment.GetEnvironmentVariable("TEST_UNQUOTED_WITH_INTERPOLATED_SURROUNDING_SPACES"));
+
+            Assert.Equal("value1", System.Environment.GetEnvironmentVariable("FIRST_KEY"));
+            Assert.Equal("value2and$FIRST_KEY", System.Environment.GetEnvironmentVariable("SECOND_KEY"));
+            // EXISTING_ENVIRONMENT_VARIABLE already set to "value"
+            Assert.Equal("$EXISTING_ENVIRONMENT_VARIABLE;andvalue3", System.Environment.GetEnvironmentVariable("THIRD_KEY"));
+            // DNE_VAR does not exist (has no value)
+            Assert.Equal("$DNE_VAR;nope", System.Environment.GetEnvironmentVariable("FOURTH_KEY"));
+
+            Assert.Equal("^((?!Everyone).)*$", Environment.GetEnvironmentVariable("GROUP_FILTER_REGEX"));
+
+            Assert.Equal("value$", Environment.GetEnvironmentVariable("DOLLAR1_U"));
+            Assert.Equal("value$DOLLAR1_U$", Environment.GetEnvironmentVariable("DOLLAR2_U"));
+            Assert.Equal("value$.$", Environment.GetEnvironmentVariable("DOLLAR3_U"));
+            Assert.Equal("value$$", Environment.GetEnvironmentVariable("DOLLAR4_U"));
+
+            Assert.Equal("value$", Environment.GetEnvironmentVariable("DOLLAR1_S"));
+            Assert.Equal("value$DOLLAR1_S$", Environment.GetEnvironmentVariable("DOLLAR2_S"));
+            Assert.Equal("value$.$", Environment.GetEnvironmentVariable("DOLLAR3_S"));
+            Assert.Equal("value$$", Environment.GetEnvironmentVariable("DOLLAR4_S"));
+
+            Assert.Equal("value$", Environment.GetEnvironmentVariable("DOLLAR1_D"));
+            Assert.Equal("value$DOLLAR1_D$", Environment.GetEnvironmentVariable("DOLLAR2_D"));
+            Assert.Equal("value$.$", Environment.GetEnvironmentVariable("DOLLAR3_D"));
+            Assert.Equal("value$$", Environment.GetEnvironmentVariable("DOLLAR4_D"));
+        }
+
+        [Fact]
         public void QuotedHashTest()
         {
             DotNetEnv.Env.Load("./.env_quoted_hash");
