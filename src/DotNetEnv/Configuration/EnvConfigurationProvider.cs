@@ -23,7 +23,7 @@ namespace DotNetEnv.Configuration
             IEnumerable<KeyValuePair<string, string>> values;
             if (this.paths == null)
             {
-                values = Env.Load(options: this.options);
+                values = Env.Load(options);
             }
             else
             {

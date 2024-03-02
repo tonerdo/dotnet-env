@@ -18,6 +18,9 @@ namespace DotNetEnv
             );
         }
 
+        public static IEnumerable<KeyValuePair<string, string>> Load(LoadOptions options) =>
+            Load((string)null, options);
+
         public static IEnumerable<KeyValuePair<string, string>> Load (string path = null, LoadOptions options = null)
         {
             if (options == null) options = LoadOptions.DEFAULT;

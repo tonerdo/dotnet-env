@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using DotNetEnv;
 using Xunit;
 using DotNetEnv.Extensions;
 

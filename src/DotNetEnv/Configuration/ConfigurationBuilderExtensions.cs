@@ -4,6 +4,9 @@ namespace DotNetEnv.Configuration
 {
     public static class ConfigurationBuilderExtensions
     {
+        public static IConfigurationBuilder AddDotNetEnv(this IConfigurationBuilder builder, LoadOptions options) =>
+            builder.AddDotNetEnv(null, options);
+
         public static IConfigurationBuilder AddDotNetEnv(
             this IConfigurationBuilder builder,
             string path = null,

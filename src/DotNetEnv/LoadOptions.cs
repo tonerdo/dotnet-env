@@ -4,47 +4,64 @@ namespace DotNetEnv
 {
     public class LoadOptions
     {
-        public static readonly LoadOptions DEFAULT = new LoadOptions();
+        private const bool DefaultSetEnvVars = true;
 
-        public bool SetEnvVars { get; }
-        public bool ClobberExistingVars { get; }
-        public bool OnlyExactPath { get; }
+        public bool SetEnvVars { get; set; }
+        public bool ClobberExistingVars { get; set; }
+        public bool OnlyExactPath { get; set; }
+
+        public LoadOptions()
+            : this(DefaultSetEnvVars)
+        {
+        }
 
         public LoadOptions(
-            bool setEnvVars = true,
+            bool setEnvVars = DefaultSetEnvVars,
             bool clobberExistingVars = true,
             bool onlyExactPath = true
-        ) {
+        )
+        {
             SetEnvVars = setEnvVars;
             ClobberExistingVars = clobberExistingVars;
             OnlyExactPath = onlyExactPath;
         }
 
-        public LoadOptions(
-            LoadOptions old,
-            bool? setEnvVars = null,
-            bool? clobberExistingVars = null,
-            bool? onlyExactPath = null
-        ) {
-            SetEnvVars = setEnvVars ?? old.SetEnvVars;
-            ClobberExistingVars = clobberExistingVars ?? old.ClobberExistingVars;
-            OnlyExactPath = onlyExactPath ?? old.OnlyExactPath;
+        public static LoadOptions DEFAULT => new LoadOptions();
+
+        public static LoadOptions NoEnvVars(LoadOptions options = null) =>
+            (options ?? DEFAULT).NoEnvVars();
+
+        public static LoadOptions NoClobber(LoadOptions options = null) =>
+            (options ?? DEFAULT).NoClobber();
+
+        public static LoadOptions TraversePath(LoadOptions options = null) =>
+            (options ?? DEFAULT).TraversePath();
+    }
+
+    public static class LoadOptionExtensions
+    {
+        public static LoadOptions NoEnvVars(this LoadOptions options)
+        {
+            options.SetEnvVars = false;
+            return options;
         }
 
-        public static LoadOptions NoEnvVars (LoadOptions options = null) =>
-            options == null ? DEFAULT.NoEnvVars() : options.NoEnvVars();
+        public static LoadOptions NoClobber(this LoadOptions options)
+        {
+            options.ClobberExistingVars = false;
+            return options;
+        }
 
-        public static LoadOptions NoClobber (LoadOptions options = null) =>
-            options == null ? DEFAULT.NoClobber() : options.NoClobber();
+        public static LoadOptions TraversePath(this LoadOptions options)
+        {
+            options.OnlyExactPath = false;
+            return options;
+        }
 
-        public static LoadOptions TraversePath (LoadOptions options = null) =>
-            options == null ? DEFAULT.TraversePath() : options.TraversePath();
+        public static IEnumerable<KeyValuePair<string, string>> Load(this LoadOptions options, string path = null) =>
+            Env.Load(path, options);
 
-        public LoadOptions NoEnvVars () => new LoadOptions(this, setEnvVars: false);
-        public LoadOptions NoClobber () => new LoadOptions(this, clobberExistingVars: false);
-        public LoadOptions TraversePath () => new LoadOptions(this, onlyExactPath: false);
-
-        public IEnumerable<KeyValuePair<string, string>> Load (string path = null) => Env.Load(path, this);
-        public IEnumerable<KeyValuePair<string, string>> LoadMulti (string[] paths) => Env.LoadMulti(paths, this);
+        public static IEnumerable<KeyValuePair<string, string>> LoadMulti(this LoadOptions options, string[] paths) =>
+            Env.LoadMulti(paths, options);
     }
 }
