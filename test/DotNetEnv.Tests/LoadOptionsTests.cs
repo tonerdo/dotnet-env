@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration.Json;
 using Xunit;
 
 namespace DotNetEnv.Tests
@@ -143,6 +145,20 @@ namespace DotNetEnv.Tests
             Assert.False(options.SetEnvVars);
             Assert.True(options.ClobberExistingVars);
             Assert.False(options.OnlyExactPath);
+        }
+
+        [Fact]
+        public void CreateLoadOptionsFromConfiguration()
+        {
+            var configuration = new ConfigurationBuilder()
+                .Add(new JsonConfigurationSource() { Path = @".\config.json", Optional = false })
+                .Build();
+
+            var config = configuration.GetSection("LoadOptions").Get<LoadOptions>();
+            
+            Assert.False(config.SetEnvVars);
+            Assert.False(config.ClobberExistingVars);
+            Assert.False(config.OnlyExactPath);
         }
     }
 }

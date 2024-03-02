@@ -4,12 +4,19 @@ namespace DotNetEnv
 {
     public class LoadOptions
     {
+        private const bool DefaultSetEnvVars = true;
+
         public bool SetEnvVars { get; set; }
         public bool ClobberExistingVars { get; set; }
         public bool OnlyExactPath { get; set; }
 
+        public LoadOptions()
+            : this(DefaultSetEnvVars)
+        {
+        }
+
         public LoadOptions(
-            bool setEnvVars = true,
+            bool setEnvVars = DefaultSetEnvVars,
             bool clobberExistingVars = true,
             bool onlyExactPath = true
         )
@@ -51,7 +58,10 @@ namespace DotNetEnv
             return options;
         }
 
-        public static IEnumerable<KeyValuePair<string, string>> Load(this LoadOptions options, string path = null) => Env.Load(path, options);
-        public static IEnumerable<KeyValuePair<string, string>> LoadMulti(this LoadOptions options, string[] paths) => Env.LoadMulti(paths, options);
+        public static IEnumerable<KeyValuePair<string, string>> Load(this LoadOptions options, string path = null) =>
+            Env.Load(path, options);
+
+        public static IEnumerable<KeyValuePair<string, string>> LoadMulti(this LoadOptions options, string[] paths) =>
+            Env.LoadMulti(paths, options);
     }
 }

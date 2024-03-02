@@ -1,0 +1,7 @@
+{
+  "LoadOptions": {
+    "SetEnvVars": false,
+    "ClobberExistingVars": false,
+    "OnlyExactPath": false
+  }
+}
