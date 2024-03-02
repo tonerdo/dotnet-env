@@ -52,13 +52,15 @@ namespace DotNetEnv
         public string Value { get; private set; }
         public string RawValue { get; private set; }
 
-        public ValueCalculator (IList<IValue> values)
+        public ValueCalculator (IEnumerable<IValue> values)
         {
-            RawValue = string.Concat(values.Select(val => val.GetValue(false)));
+            var enumeratedValues = values as IValue[] ?? values.ToArray();
+
+            RawValue = string.Concat(enumeratedValues.Select(val => val.GetValue(false)));
             
             // note that we do want this lookup / calculation / GetValue calls in the ctor
             // because it is the state of the world at the moment that this value is calculated
-            Value = string.Join(string.Empty, values.Select(val => val.GetValue(true)));
+            Value = string.Concat(enumeratedValues.Select(val => val.GetValue(true)));
         }
     }
 }

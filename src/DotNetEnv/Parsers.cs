@@ -187,7 +187,7 @@ namespace DotNetEnv
                     from partOfValue in NotControlNorWhitespace("$\"'") // quotes are not allowed in values, because in a shell they mean something different
                     select new ValueActual(string.Concat(inlineWhitespaces, partOfValue)))
                 .Many()
-                .Select(vs => new ValueCalculator(vs.ToArray()));
+                .Select(vs => new ValueCalculator(vs));
 
         internal static readonly Parser<ValueCalculator> UnquotedValue =
             from _ in Parse.Chars(" \t\"'").Not()
@@ -203,7 +203,7 @@ namespace DotNetEnv
                 .Or(Parse.WhiteSpace.AtLeastOnce().Text())
                 .AtLeastOnce()
                 .Select(strs => new ValueActual(strs))
-            ).Many().Select(vs => new ValueCalculator(vs.ToArray()));
+            ).Many().Select(vs => new ValueCalculator(vs));
 
         // single quoted values can have whitespace,
         // but no interpolation, no escaped chars, no byte code chars
@@ -215,7 +215,7 @@ namespace DotNetEnv
                 .AtLeastOnce()
                 .Select(strs => new ValueActual(strs))
                 .Many()
-                .Select(vs => new ValueCalculator(vs.ToArray<IValue>()));
+                .Select(vs => new ValueCalculator(vs));
 
         // compare against bash quoting rules:
         // https://stackoverflow.com/questions/6697753/difference-between-single-and-double-quotes-in-bash/42082956#42082956
