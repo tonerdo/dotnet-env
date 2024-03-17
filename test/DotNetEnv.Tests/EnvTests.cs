@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Linq;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -8,9 +9,24 @@ using Sprache;
 
 namespace DotNetEnv.Tests
 {
-    public class EnvTests
+    public class EnvTests : IDisposable
     {
+        private readonly IDictionary _environmentVariablesSnapshot;
         private static bool IsWindows => RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+
+        public EnvTests()
+        {
+            _environmentVariablesSnapshot = Environment.GetEnvironmentVariables();
+        }
+
+        public void Dispose()
+        {
+            foreach (DictionaryEntry dictionaryEntry in Environment.GetEnvironmentVariables())
+                Environment.SetEnvironmentVariable(dictionaryEntry.Key.ToString()!,
+                    _environmentVariablesSnapshot.Contains(dictionaryEntry.Key)
+                        ? _environmentVariablesSnapshot[dictionaryEntry.Key]!.ToString()
+                        : null);
+        }
 
         [Fact]
         public void LoadTest()
