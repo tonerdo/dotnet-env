@@ -151,14 +151,14 @@ namespace DotNetEnv
         internal static readonly Parser<IValue> InterpolatedEnvVar =
             from _d in DollarSign
             from id in Identifier
-            select new ValueInterpolated(id);
+            select new ValueInterpolated(id, string.Concat(_d, id));
 
         internal static readonly Parser<IValue> InterpolatedBracesEnvVar =
             from _d in DollarSign
             from _o in Parse.Char('{')
             from id in Identifier
             from _c in Parse.Char('}')
-            select new ValueInterpolated(id);
+            select new ValueInterpolated(id, string.Concat(_d, _o, id, _c));
 
         internal static readonly Parser<IValue> JustDollarValue =
             from d in DollarSign
@@ -249,7 +249,7 @@ namespace DotNetEnv
             from _ws in InlineWhitespaceChars.AtLeastOnce()
             select export;
 
-        internal static readonly Parser<KeyValuePair<string, string>> Assignment =
+        internal static Parser<KeyValuePair<string, string>> Assignment(bool interpolationEnabled = true) =>
             from _ws_head in InlineWhitespace
             from export in ExportExpression.Optional()
             from name in Identifier
@@ -260,7 +260,7 @@ namespace DotNetEnv
             from _ws_tail in InlineWhitespace
             from _c in Comment.Optional()
             from _lt in Parse.LineTerminator
-            select new KeyValuePair<string, string>(name, value.Value);
+            select new KeyValuePair<string, string>(name, interpolationEnabled ? value.Value : value.RawValue);
 
         internal static readonly Parser<KeyValuePair<string, string>> Empty =
             from _ws in InlineWhitespace
@@ -270,9 +270,10 @@ namespace DotNetEnv
 
         public static IEnumerable<KeyValuePair<string, string>> ParseDotenvFile (
             string contents,
-            Func<KeyValuePair<string, string>, KeyValuePair<string, string>> tranform
+            Func<KeyValuePair<string, string>, KeyValuePair<string, string>> transform,
+            bool enableInterpolation = true
         ) {
-            return Assignment.Select(tranform).Or(Empty).AtLeastOnce().End()
+            return Assignment(enableInterpolation).Select(transform).Or(Empty).AtLeastOnce().End()
                 .Parse(contents).Where(kvp => kvp.Key != null);
         }
     }

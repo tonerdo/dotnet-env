@@ -9,26 +9,31 @@ namespace DotNetEnv
         public bool SetEnvVars { get; }
         public bool ClobberExistingVars { get; }
         public bool OnlyExactPath { get; }
+        public bool InterpolationEnabled { get; }
 
         public LoadOptions(
             bool setEnvVars = true,
             bool clobberExistingVars = true,
-            bool onlyExactPath = true
+            bool onlyExactPath = true,
+            bool enableInterpolation = true
         ) {
             SetEnvVars = setEnvVars;
             ClobberExistingVars = clobberExistingVars;
             OnlyExactPath = onlyExactPath;
+            InterpolationEnabled = enableInterpolation;
         }
 
         public LoadOptions(
             LoadOptions old,
             bool? setEnvVars = null,
             bool? clobberExistingVars = null,
-            bool? onlyExactPath = null
+            bool? onlyExactPath = null,
+            bool? enableInterpolation = null
         ) {
             SetEnvVars = setEnvVars ?? old.SetEnvVars;
             ClobberExistingVars = clobberExistingVars ?? old.ClobberExistingVars;
             OnlyExactPath = onlyExactPath ?? old.OnlyExactPath;
+            InterpolationEnabled = enableInterpolation ?? old.InterpolationEnabled;
         }
 
         public static LoadOptions NoEnvVars (LoadOptions options = null) =>
@@ -40,9 +45,13 @@ namespace DotNetEnv
         public static LoadOptions TraversePath (LoadOptions options = null) =>
             options == null ? DEFAULT.TraversePath() : options.TraversePath();
 
+        public static LoadOptions DisableInterpolation (LoadOptions options = null) =>
+            options == null ? DEFAULT.DisableInterpolation() : options.DisableInterpolation();
+
         public LoadOptions NoEnvVars () => new LoadOptions(this, setEnvVars: false);
         public LoadOptions NoClobber () => new LoadOptions(this, clobberExistingVars: false);
         public LoadOptions TraversePath () => new LoadOptions(this, onlyExactPath: false);
+        public LoadOptions DisableInterpolation () => new LoadOptions(this, enableInterpolation: false);
 
         public IEnumerable<KeyValuePair<string, string>> Load (string path = null) => Env.Load(path, this);
         public IEnumerable<KeyValuePair<string, string>> LoadMulti (string[] paths) => Env.LoadMulti(paths, this);

@@ -360,7 +360,7 @@ namespace DotNetEnv.Tests
         {
             Action<string, string, string> testParse = (key, value, input) =>
             {
-                var kvp = Parsers.Assignment.End().Parse(input);
+                var kvp = Parsers.Assignment().End().Parse(input);
                 Assert.Equal(key, kvp.Key);
                 Assert.Equal(value, kvp.Value);
             };
@@ -375,7 +375,7 @@ namespace DotNetEnv.Tests
             testParse("EV_DNE", @"\xe6\x97\xa5 \xe6\x9c\xac", @"EV_DNE=\xe6\x97\xa5 \xe6\x9c\xac");
             testParse("EV_DNE", @"\xE2\x98\xA0 \uae", @"EV_DNE=\xE2\x98\xA0 \uae");
 
-            var kvp = Parsers.Assignment.End().Parse("EV_DNE=");
+            var kvp = Parsers.Assignment().End().Parse("EV_DNE=");
             Assert.Equal("EV_DNE", kvp.Key);
             Assert.Equal("", kvp.Value);
             // Note that dotnet returns null if the env var is empty -- even if it was set to empty!
@@ -384,8 +384,8 @@ namespace DotNetEnv.Tests
             // TODO: is it possible to get the system to recognize when a complete unicode char is present and start the next one then, without a space?
 //            Assert.Equal("EV_DNE=日本", Parsers.Assignment.End().Parse(@"EV_DNE=\xe6\x97\xa5\xe6\x9c\xac"));
 
-            Assert.Throws<ParseException>(() => Parsers.Assignment.End().Parse("EV_DNE='"));
-            Assert.Throws<ParseException>(() => Parsers.Assignment.End().Parse("EV_DNE=0\n1"));
+            Assert.Throws<ParseException>(() => Parsers.Assignment().End().Parse("EV_DNE='"));
+            Assert.Throws<ParseException>(() => Parsers.Assignment().End().Parse("EV_DNE=0\n1"));
 
             testParse("EV_DNE", "", "EV_DNE=");
             testParse("EV_DNE", "EV_DNE=", "EV_DNE=EV_DNE=");
@@ -425,14 +425,14 @@ namespace DotNetEnv.Tests
             testParse("EV_DNE", "a'b'' 'c' d", "EV_DNE=\"a'b'' 'c' d\" #allow singleQuotes in doubleQuoted values");
             testParse("EV_DNE", "a\"b\"\" \"c\" d", "EV_DNE='a\"b\"\" \"c\" d' #allow doubleQuotes in singleQuoted values");
             testParse("EV_DNE", "a\"b\"\" \"c\" d", "EV_DNE=\"a\\\"b\\\"\\\" \\\"c\\\" d\" #allow escaped doubleQuotes in doubleQuoted values");
-            Assert.Throws<ParseException>(() => Parsers.Assignment.Parse("EV_DNE='a'b'' 'c' d'"));  // no singleQuotes inside singleQuoted values
-            Assert.Throws<ParseException>(() => Parsers.Assignment.Parse("EV_DNE=\"a\"b\""));  // no unescaped doubleQuotes inside doubleQuoted values
+            Assert.Throws<ParseException>(() => Parsers.Assignment().Parse("EV_DNE='a'b'' 'c' d'"));  // no singleQuotes inside singleQuoted values
+            Assert.Throws<ParseException>(() => Parsers.Assignment().Parse("EV_DNE=\"a\"b\""));  // no unescaped doubleQuotes inside doubleQuoted values
 
             testParse("EV_DNE", "VAL UE", "EV_DNE=VAL UE");
             testParse("EV_DNE", "VAL UE", "EV_DNE=VAL UE #comment");
 
-            Assert.Throws<ParseException>(() => Parsers.Assignment.End().Parse("EV_DNE='a b c'EV_TEST_1=more"));
-            Assert.Throws<ParseException>(() => Parsers.Assignment.End().Parse("EV_DNE='a b c' EV_TEST_1=more"));
+            Assert.Throws<ParseException>(() => Parsers.Assignment().End().Parse("EV_DNE='a b c'EV_TEST_1=more"));
+            Assert.Throws<ParseException>(() => Parsers.Assignment().End().Parse("EV_DNE='a b c' EV_TEST_1=more"));
         }
 
         [Fact]

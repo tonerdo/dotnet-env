@@ -71,16 +71,16 @@ namespace DotNetEnv
             {
                 if (options.ClobberExistingVars)
                 {
-                    return Parsers.ParseDotenvFile(contents, Parsers.SetEnvVar);
+                    return Parsers.ParseDotenvFile(contents, Parsers.SetEnvVar, options.InterpolationEnabled);
                 }
                 else
                 {
-                    return Parsers.ParseDotenvFile(contents, Parsers.NoClobberSetEnvVar);
+                    return Parsers.ParseDotenvFile(contents, Parsers.NoClobberSetEnvVar, options.InterpolationEnabled);
                 }
             }
             else
             {
-                return Parsers.ParseDotenvFile(contents, Parsers.DoNotSetEnvVar);
+                return Parsers.ParseDotenvFile(contents, Parsers.DoNotSetEnvVar, options.InterpolationEnabled);
             }
         }
 
@@ -99,5 +99,6 @@ namespace DotNetEnv
         public static LoadOptions NoEnvVars () => LoadOptions.NoEnvVars();
         public static LoadOptions NoClobber () => LoadOptions.NoClobber();
         public static LoadOptions TraversePath () => LoadOptions.TraversePath();
+        public static LoadOptions DisableInterpolation () => LoadOptions.DisableInterpolation();
     }
 }
