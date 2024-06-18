@@ -400,5 +400,24 @@ base64
             Assert.Equal("V1", Environment.GetEnvironmentVariable("ENV_TEST_K1"));
             Assert.Equal("V2", Environment.GetEnvironmentVariable("ENV_TEST_K2"));
         }
+
+        [Fact]
+        public void LoadDefaultsTest()
+        {
+            DotNetEnv.Env.NoClobber().NoEnvVars().Load("./.env_defaults");
+            Assert.Equal("http://test1.com", Environment.GetEnvironmentVariable("URL_1"));
+            Assert.Equal("http://test2.com", Environment.GetEnvironmentVariable("URL_2"));
+            Assert.Equal("http://test3.com", Environment.GetEnvironmentVariable("URL_3"));
+        }
+
+        [Fact]
+        public void LoadDefaultsVariableExistTest()
+        {
+            Environment.SetEnvironmentVariable("URL", "http://test.com");
+            DotNetEnv.Env.NoClobber().NoEnvVars().Load("./.env_defaults");
+            Assert.Equal("http://test.com", Environment.GetEnvironmentVariable("URL_1"));
+            Assert.Equal("http://test.com", Environment.GetEnvironmentVariable("URL_2"));
+            Assert.Equal("http://test.com", Environment.GetEnvironmentVariable("URL_3"));
+        }
     }
 }
