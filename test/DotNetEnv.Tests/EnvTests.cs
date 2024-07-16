@@ -208,6 +208,51 @@ namespace DotNetEnv.Tests
         }
 
         [Fact]
+        public void ParseInterpolatedNoEnvVarsTest()
+        {
+            System.Environment.SetEnvironmentVariable("EXISTING_ENVIRONMENT_VARIABLE", "value");
+            System.Environment.SetEnvironmentVariable("DNE_VAR", null);
+            var environmentDictionary = DotNetEnv.Env.NoEnvVars().Load("./.env_embedded").ToDotEnvDictionary();
+            Assert.Equal("test", environmentDictionary["TEST"]);
+            Assert.Equal("test1", environmentDictionary["TEST1"]);
+            Assert.Equal("test", environmentDictionary["TEST2"]);
+            Assert.Equal("testtest", environmentDictionary["TEST3"]);
+            Assert.Equal("testtest1", environmentDictionary["TEST4"]);
+
+            Assert.Equal("test:testtest1 $$ '\" ® and test1", environmentDictionary["TEST5_DOUBLE"]);
+            Assert.Equal("$TEST:$TEST4 \\$\\$ \" \\uae and $TEST1", environmentDictionary["TEST5_SINGLE"]);
+            Assert.Equal("test:testtest1\\uaeandtest1", environmentDictionary["TEST5_UNQUOTED"]);
+
+            // note that interpolated values will keep whitespace! (as they should, esp if surrounding them with other values)
+            Assert.Equal(" surrounded by spaces ",
+                environmentDictionary["TEST_UNQUOTED_WITH_INTERPOLATED_SURROUNDING_SPACES"]);
+
+            Assert.Equal("value1", environmentDictionary["FIRST_KEY"]);
+            Assert.Equal("value2andvalue1", environmentDictionary["SECOND_KEY"]);
+            // EXISTING_ENVIRONMENT_VARIABLE already set to "value"
+            Assert.Equal("value;andvalue3", environmentDictionary["THIRD_KEY"]);
+            // DNE_VAR does not exist (has no value)
+            Assert.Equal(";nope", environmentDictionary["FOURTH_KEY"]);
+
+            Assert.Equal("^((?!Everyone).)*$", environmentDictionary["GROUP_FILTER_REGEX"]);
+
+            Assert.Equal("value$", environmentDictionary["DOLLAR1_U"]);
+            Assert.Equal("valuevalue$$", environmentDictionary["DOLLAR2_U"]);
+            Assert.Equal("value$.$", environmentDictionary["DOLLAR3_U"]);
+            Assert.Equal("value$$", environmentDictionary["DOLLAR4_U"]);
+
+            Assert.Equal("value$", environmentDictionary["DOLLAR1_S"]);
+            Assert.Equal("value$DOLLAR1_S$", environmentDictionary["DOLLAR2_S"]);
+            Assert.Equal("value$.$", environmentDictionary["DOLLAR3_S"]);
+            Assert.Equal("value$$", environmentDictionary["DOLLAR4_S"]);
+
+            Assert.Equal("value$", environmentDictionary["DOLLAR1_D"]);
+            Assert.Equal("valuevalue$$", environmentDictionary["DOLLAR2_D"]);
+            Assert.Equal("value$.$", environmentDictionary["DOLLAR3_D"]);
+            Assert.Equal("value$$", environmentDictionary["DOLLAR4_D"]);
+        }
+
+        [Fact]
         public void QuotedHashTest()
         {
             DotNetEnv.Env.Load("./.env_quoted_hash");
