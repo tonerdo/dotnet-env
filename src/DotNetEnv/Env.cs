@@ -80,8 +80,14 @@ namespace DotNetEnv
             }
             else
             {
-                return Parsers.ParseDotenvFile(contents, Parsers.DoNotSetEnvVar);
-            }
+				IEnumerable<KeyValuePair<string, string>> enumerable = Parsers.ParseDotenvFile(contents, Parsers.SetEnvVar);
+
+                enumerable
+                    .ToList()
+                    .ForEach((e) => Environment.SetEnvironmentVariable(e.Key, string.Empty));
+
+				return enumerable;
+			}
         }
 
         public static string GetString (string key, string fallback = default(string)) =>

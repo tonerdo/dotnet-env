@@ -14,11 +14,6 @@ namespace DotNetEnv
             return kvp;
         }
 
-        public static KeyValuePair<string, string> DoNotSetEnvVar (KeyValuePair<string, string> kvp)
-        {
-            return kvp;
-        }
-
         public static KeyValuePair<string, string> NoClobberSetEnvVar (KeyValuePair<string, string> kvp)
         {
             if (Environment.GetEnvironmentVariable(kvp.Key) == null)
@@ -272,8 +267,13 @@ namespace DotNetEnv
             string contents,
             Func<KeyValuePair<string, string>, KeyValuePair<string, string>> tranform
         ) {
-            return Assignment.Select(tranform).Or(Empty).AtLeastOnce().End()
-                .Parse(contents).Where(kvp => kvp.Key != null);
+            return Assignment
+                .Select(tranform)
+                .Or(Empty)
+                .AtLeastOnce()
+                .End()
+                .Parse(contents)
+                .Where(kvp => kvp.Key != null);
         }
     }
 }
