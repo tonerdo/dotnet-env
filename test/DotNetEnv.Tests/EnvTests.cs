@@ -18,7 +18,7 @@ namespace DotNetEnv.Tests
             DotNetEnv.Env.Load();
             Assert.Equal("Toni", Environment.GetEnvironmentVariable("NAME"));
             // unfortunately .NET removes empty env vars -- there can NEVER be an empty string env var value
-            //  https://msdn.microsoft.com/en-us/library/z46c489x(v=vs.110).aspx#Remarks
+            // https://msdn.microsoft.com/en-us/library/z46c489x(v=vs.110).aspx#Remarks
             Assert.Null(Environment.GetEnvironmentVariable("EMPTY"));
             Assert.Equal("'", Environment.GetEnvironmentVariable("QUOTE"));
             Assert.Equal("https://github.com/tonerdo", Environment.GetEnvironmentVariable("URL"));
@@ -210,7 +210,9 @@ namespace DotNetEnv.Tests
 		[Fact]
 		public void ParseInterpolatedNoEnvVarsTest()
 		{
-			Environment.SetEnvironmentVariable("EXISTING_ENVIRONMENT_VARIABLE", "value");
+            Environment.SetEnvironmentVariable("TEST", string.Empty);
+            Environment.SetEnvironmentVariable("TEST2", string.Empty);
+            Environment.SetEnvironmentVariable("EXISTING_ENVIRONMENT_VARIABLE", "value");
 			Environment.SetEnvironmentVariable("DNE_VAR", null);
 			var environmentDictionary = DotNetEnv.Env.NoEnvVars().Load("./.env_embedded").ToDotEnvDictionary();
 			Assert.Equal("test", environmentDictionary["TEST"]);
@@ -252,7 +254,7 @@ namespace DotNetEnv.Tests
 
             // Validate that the environment is not loaded 
 			Assert.Null(Environment.GetEnvironmentVariable("TEST"));
-			Assert.Null(Environment.GetEnvironmentVariable("TEST1"));
+            Assert.Null(Environment.GetEnvironmentVariable("TEST1"));
 			Assert.Null(Environment.GetEnvironmentVariable("TEST2"));
 			Assert.Null(Environment.GetEnvironmentVariable("TEST3"));
 			Assert.Null(Environment.GetEnvironmentVariable("TEST4"));
@@ -343,8 +345,8 @@ base64
             Assert.Equal("extra already here value", Environment.GetEnvironmentVariable("KEY_DOUBLE"));
             Assert.Equal("extraalready herevalue", Environment.GetEnvironmentVariable("KEY_UNQUOTED"));
             Assert.Equal("value#notcomment", Environment.GetEnvironmentVariable("KEY_UNQUOTED_HASH"));
-            Assert.Equal("value\nand more", Environment.GetEnvironmentVariable("KEY_MULTILINE"));
-            Assert.Equal("#not_comment\nline2", Environment.GetEnvironmentVariable("OTHER_MULTILINE"));
+            Assert.Equal("value\r\nand more", Environment.GetEnvironmentVariable("KEY_MULTILINE"));
+            Assert.Equal("#not_comment\r\nline2", Environment.GetEnvironmentVariable("OTHER_MULTILINE"));
 
             Assert.Equal("value", Environment.GetEnvironmentVariable("WHITE_PRE"));
             Assert.Equal("value", Environment.GetEnvironmentVariable("WHITE_POST"));

@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Collections;
 
 namespace DotNetEnv
 {
@@ -80,13 +81,25 @@ namespace DotNetEnv
             }
             else
             {
-				IEnumerable<KeyValuePair<string, string>> enumerable = Parsers.ParseDotenvFile(contents, Parsers.SetEnvVar);
+				IDictionary<string, string> existingEnvironmentVariables = Environment
+                    .GetEnvironmentVariables()
+                    .Cast<DictionaryEntry>()
+			        .ToDictionary(entry => (string)entry.Key, entry => (string)entry.Value);
 
-                enumerable
-                    .ToList()
+				IEnumerable<KeyValuePair<string, string>> parsedEnvironmentVariables = Parsers.ParseDotenvFile(contents, Parsers.SetEnvVar);
+
+				Environment
+					.GetEnvironmentVariables()
+					.Cast<DictionaryEntry>()
+					.ToDictionary(entry => (string)entry.Key, entry => (string)entry.Value)
+					.ToList()
                     .ForEach((e) => Environment.SetEnvironmentVariable(e.Key, string.Empty));
 
-				return enumerable;
+                existingEnvironmentVariables
+                    .ToList()
+                    .ForEach((e) => Environment.SetEnvironmentVariable(e.Key, e.Value));
+
+				return parsedEnvironmentVariables;
 			}
         }
 
@@ -105,5 +118,5 @@ namespace DotNetEnv
         public static LoadOptions NoEnvVars () => LoadOptions.NoEnvVars();
         public static LoadOptions NoClobber () => LoadOptions.NoClobber();
         public static LoadOptions TraversePath () => LoadOptions.TraversePath();
-    }
+	}
 }

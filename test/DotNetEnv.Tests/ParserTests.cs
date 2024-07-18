@@ -518,7 +518,7 @@ ENVVAR_TEST = ' yahooooo '
             expecteds = new[] {
                 new KeyValuePair<string, string>("EV_DNE", "x y z"),
                 new KeyValuePair<string, string>("EV_TEST_1", "日 $ENVVAR_TEST 本"),
-                new KeyValuePair<string, string>("EV_TEST_2", "☠\n®"),
+                new KeyValuePair<string, string>("EV_TEST_2", "☠\r\n®"),
                 new KeyValuePair<string, string>("ENVVAR_TEST", " yahooooo "),
             };
             testParse(expecteds, contents);
