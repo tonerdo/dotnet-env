@@ -21,7 +21,8 @@ namespace DotNetEnv
 
         public string GetValue ()
         {
-            return Environment.GetEnvironmentVariable(_id) ?? string.Empty;
+            var val = Environment.GetEnvironmentVariable(_id);
+            return val ?? (Env.FakeEnvVars.TryGetValue(_id, out val) ? val : string.Empty);
         }
     }
 

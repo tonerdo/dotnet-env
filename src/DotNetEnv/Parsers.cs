@@ -16,6 +16,10 @@ namespace DotNetEnv
 
         public static KeyValuePair<string, string> DoNotSetEnvVar (KeyValuePair<string, string> kvp)
         {
+            if (Env.FakeEnvVars.ContainsKey(kvp.Key)) {
+                Env.FakeEnvVars.Remove(kvp.Key);
+            }
+            Env.FakeEnvVars.Add(kvp.Key, kvp.Value);
             return kvp;
         }
 

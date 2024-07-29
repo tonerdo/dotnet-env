@@ -100,6 +100,7 @@ namespace DotNetEnv.Tests
 
             // Have to remove since it's recursive and can be set by the `EnvTests.cs`
             Environment.SetEnvironmentVariable("TEST4", null);
+            Env.FakeEnvVars.Clear();
 
             this.configuration = new ConfigurationBuilder()
                 .AddDotNetEnv("./.env_embedded")

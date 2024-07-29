@@ -12,6 +12,59 @@ namespace DotNetEnv.Tests
     {
         private static bool IsWindows => RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
 
+        private static string[] OldEnvVars = new string[]
+        {
+            "NAME",
+            "EMPTY",
+            "QUOTE",
+            "URL",
+            "CONNECTION",
+            "WHITEBOTH",
+            "SSL_CERT",
+            "IP",
+            "PORT",
+            "DOMAIN",
+            "EMBEDEXPORT",
+            "COMMENTLEAD",
+            "WHITELEAD",
+            "UNICODE",
+            "CASING",
+
+            "TEST",
+            "TEST1",
+            "TEST2",
+            "TEST3",
+            "TEST4",
+            "TEST5_DOUBLE",
+            "TEST5_SINGLE",
+            "TEST5_UNQUOTED",
+            "TEST_UNQUOTED_WITH_INTERPOLATED_SURROUNDING_SPACES",
+            "FIRST_KEY",
+            "SECOND_KEY",
+            "THIRD_KEY",
+            "FOURTH_KEY",
+            "GROUP_FILTER_REGEX",
+            "DOLLAR1_U",
+            "DOLLAR2_U",
+            "DOLLAR3_U",
+            "DOLLAR4_U",
+            "DOLLAR1_S",
+            "DOLLAR2_S",
+            "DOLLAR3_S",
+            "DOLLAR4_S",
+            "DOLLAR1_D",
+            "DOLLAR2_D",
+            "DOLLAR3_D",
+            "DOLLAR4_D",
+        };
+
+        public EnvTests() {
+            // Clear all env vars set from normal interpolated test
+            for (var i = 0; i < OldEnvVars.Length; i++) {
+                Environment.SetEnvironmentVariable(OldEnvVars[i], null);
+            }
+        }
+
         [Fact]
         public void LoadTest()
         {
@@ -169,6 +222,7 @@ namespace DotNetEnv.Tests
             System.Environment.SetEnvironmentVariable("EXISTING_ENVIRONMENT_VARIABLE", "value");
             System.Environment.SetEnvironmentVariable("DNE_VAR", null);
             DotNetEnv.Env.Load("./.env_embedded");
+
             Assert.Equal("test", Environment.GetEnvironmentVariable("TEST"));
             Assert.Equal("test1", Environment.GetEnvironmentVariable("TEST1"));
             Assert.Equal("test", Environment.GetEnvironmentVariable("TEST2"));
@@ -205,6 +259,56 @@ namespace DotNetEnv.Tests
             Assert.Equal("valuevalue$$", Environment.GetEnvironmentVariable("DOLLAR2_D"));
             Assert.Equal("value$.$", Environment.GetEnvironmentVariable("DOLLAR3_D"));
             Assert.Equal("value$$", Environment.GetEnvironmentVariable("DOLLAR4_D"));
+        }
+
+        [Fact]
+        public void ParseInterpolatedNoEnvVarsTest()
+        {
+            System.Environment.SetEnvironmentVariable("EXISTING_ENVIRONMENT_VARIABLE", "value");
+            System.Environment.SetEnvironmentVariable("DNE_VAR", null);
+            var environmentDictionary = DotNetEnv.Env.NoEnvVars().Load("./.env_embedded").ToDotEnvDictionary();
+
+            Assert.Equal("test", environmentDictionary["TEST"]);
+            Assert.Equal("test1", environmentDictionary["TEST1"]);
+            Assert.Equal("test", environmentDictionary["TEST2"]);
+            Assert.Equal("testtest", environmentDictionary["TEST3"]);
+            Assert.Equal("testtest1", environmentDictionary["TEST4"]);
+
+            Assert.Equal("test:testtest1 $$ '\" ® and test1", environmentDictionary["TEST5_DOUBLE"]);
+            Assert.Equal("$TEST:$TEST4 \\$\\$ \" \\uae and $TEST1", environmentDictionary["TEST5_SINGLE"]);
+            Assert.Equal("test:testtest1\\uaeandtest1", environmentDictionary["TEST5_UNQUOTED"]);
+
+            // note that interpolated values will keep whitespace! (as they should, esp if surrounding them with other values)
+            Assert.Equal(" surrounded by spaces ", environmentDictionary["TEST_UNQUOTED_WITH_INTERPOLATED_SURROUNDING_SPACES"]);
+
+            Assert.Equal("value1", environmentDictionary["FIRST_KEY"]);
+            Assert.Equal("value2andvalue1", environmentDictionary["SECOND_KEY"]);
+            // EXISTING_ENVIRONMENT_VARIABLE already set to "value"
+            Assert.Equal("value;andvalue3", environmentDictionary["THIRD_KEY"]);
+            // DNE_VAR does not exist (has no value)
+            Assert.Equal(";nope", environmentDictionary["FOURTH_KEY"]);
+
+            Assert.Equal("^((?!Everyone).)*$", environmentDictionary["GROUP_FILTER_REGEX"]);
+
+            Assert.Equal("value$", environmentDictionary["DOLLAR1_U"]);
+            Assert.Equal("valuevalue$$", environmentDictionary["DOLLAR2_U"]);
+            Assert.Equal("value$.$", environmentDictionary["DOLLAR3_U"]);
+            Assert.Equal("value$$", environmentDictionary["DOLLAR4_U"]);
+
+            Assert.Equal("value$", environmentDictionary["DOLLAR1_S"]);
+            Assert.Equal("value$DOLLAR1_S$", environmentDictionary["DOLLAR2_S"]);
+            Assert.Equal("value$.$", environmentDictionary["DOLLAR3_S"]);
+            Assert.Equal("value$$", environmentDictionary["DOLLAR4_S"]);
+
+            Assert.Equal("value$", environmentDictionary["DOLLAR1_D"]);
+            Assert.Equal("valuevalue$$", environmentDictionary["DOLLAR2_D"]);
+            Assert.Equal("value$.$", environmentDictionary["DOLLAR3_D"]);
+            Assert.Equal("value$$", environmentDictionary["DOLLAR4_D"]);
+
+            // Validate that the env vars are still not set
+            for (var i = 0; i < OldEnvVars.Length; i++) {
+                Assert.Null(Environment.GetEnvironmentVariable(OldEnvVars[i]));
+            }
         }
 
         [Fact]
