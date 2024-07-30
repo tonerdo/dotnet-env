@@ -81,26 +81,26 @@ namespace DotNetEnv
             }
             else
             {
-				IDictionary<string, string> existingEnvironmentVariables = Environment
+                IDictionary<string, string> existingEnvironmentVariables = Environment
                     .GetEnvironmentVariables()
                     .Cast<DictionaryEntry>()
-			        .ToDictionary(entry => (string)entry.Key, entry => (string)entry.Value);
+                    .ToDictionary(entry => (string)entry.Key, entry => (string)entry.Value);
 
-				IEnumerable<KeyValuePair<string, string>> parsedEnvironmentVariables = Parsers.ParseDotenvFile(contents, Parsers.SetEnvVar);
+                IEnumerable<KeyValuePair<string, string>> parsedEnvironmentVariables = Parsers.ParseDotenvFile(contents, Parsers.SetEnvVar);
 
-				Environment
-					.GetEnvironmentVariables()
-					.Cast<DictionaryEntry>()
-					.ToDictionary(entry => (string)entry.Key, entry => (string)entry.Value)
-					.ToList()
+                Environment
+                    .GetEnvironmentVariables()
+                    .Cast<DictionaryEntry>()
+                    .ToDictionary(entry => (string)entry.Key, entry => (string)entry.Value)
+                    .ToList()
                     .ForEach((e) => Environment.SetEnvironmentVariable(e.Key, string.Empty));
 
                 existingEnvironmentVariables
                     .ToList()
                     .ForEach((e) => Environment.SetEnvironmentVariable(e.Key, e.Value));
 
-				return parsedEnvironmentVariables;
-			}
+                return parsedEnvironmentVariables;
+            }
         }
 
         public static string GetString (string key, string fallback = default(string)) =>
@@ -118,5 +118,5 @@ namespace DotNetEnv
         public static LoadOptions NoEnvVars () => LoadOptions.NoEnvVars();
         public static LoadOptions NoClobber () => LoadOptions.NoClobber();
         public static LoadOptions TraversePath () => LoadOptions.TraversePath();
-	}
+    }
 }
