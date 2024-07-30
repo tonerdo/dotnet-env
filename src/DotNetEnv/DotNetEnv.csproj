@@ -24,6 +24,8 @@
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="1.1.2" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="1.1.2" />
     <PackageReference Include="Sprache" Version="2.3.1" />
+    <!-- Http + RegEx versions are manually updated to address sprache having a vulnerable, out of date library -->
+    <!-- https://github.com/tonerdo/dotnet-env/issues/68 -->
     <PackageReference Include="System.Net.Http" Version="4.3.4" />
     <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
   </ItemGroup>
