@@ -10,6 +10,8 @@ namespace DotNetEnv
     {
         public const string DEFAULT_ENVFILENAME = ".env";
 
+        public static Dictionary<string, string> FakeEnvVars = new Dictionary<string, string>();
+
         public static IEnumerable<KeyValuePair<string, string>> LoadMulti (string[] paths, LoadOptions options = null)
         {
             return paths.Aggregate(
