@@ -22,19 +22,19 @@ namespace DotNetEnv.Configuration
         public override void Load()
         {
             IEnumerable<KeyValuePair<string, string>> values;
-            if (this.paths == null)
+            if (paths == null)
             {
-                values = Env.Load(options: this.options);
+                values = Env.Load(options: options);
             }
             else
             {
-                if (this.paths.Length == 1)
+                if (paths.Length == 1)
                 {
-                    values = Env.Load(this.paths[0], this.options);
+                    values = Env.Load(paths[0], options);
                 }
                 else
                 {
-                    values = Env.LoadMulti(this.paths, this.options);
+                    values = Env.LoadMulti(paths, options);
                 }
             }
 

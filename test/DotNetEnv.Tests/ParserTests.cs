@@ -19,7 +19,7 @@ namespace DotNetEnv.Tests
         private const string EV_TEST_1 = "EV_TEST_1";
         private const string EV_TEST_2 = "EV_TEST_2";
 
-        private Dictionary<string,string> oldEnvvars = new Dictionary<string,string>();
+        private readonly Dictionary<string,string> oldEnvvars = new();
         private static readonly string[] ALL_EVS = { EV_TEST, EV_DNE, EV_TEST_1, EV_TEST_2 };
 
         public ParserTests ()

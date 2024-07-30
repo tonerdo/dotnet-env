@@ -167,7 +167,7 @@ DotNetEnv.Env.TraversePath().Load();
 
 Integrating with the usual ConfigurationBuilder used in .NET is simple!
 
-```
+```csharp
 var configuration = new ConfigurationBuilder()
     .AddDotNetEnv(".env", LoadOptions.TraversePath()) // Simply add the DotNetEnv configuration source!
     .Build();
@@ -180,7 +180,7 @@ The configuration provider will map `__` as `:` to allow sections!
 All lines must be valid assignments or empty lines (with optional comments).
 
 A minimal valid assignment looks like:
-```
+```sh
 KEY=value
 ```
 
@@ -188,7 +188,7 @@ There can optionally be one of a few export or equivalent keywords at the beginn
  and there can be a comment at the end, values can be quoted to include whitespace,
  and interpolated references can be included (unquoted values as well as double quoted,
  with optional braces in both cases -- but often more useful in unquoted), like:
-```
+```sh
 export KEY="extra $ENVVAR value" # comment
 set KEY2=extra${ENVVAR}value # comment
 ```
@@ -216,19 +216,19 @@ As these are the options bash recognizes. However, while bash does have
 
 As a special note: if a value is unquoted, it can still include a `#` char,
  which might look like it is starting a comment, like:
-```
+```sh
 KEY=value#notcomment #actualcomment
 ```
 
 This is how bash works as well:
-```
+```sh
 export TEST=value#notcomment #actualcomment
 env | grep TEST
 # TEST=value#notcomment
 ```
 
 However, unlike bash, a `#` directly after the `=` will be recognized as a comment:
-```
+```sh
 KEY=#yesacomment
 ```
 
@@ -252,7 +252,7 @@ Capitalization on the hex chars is irrelevant, and leading zeroes are optional.
 And standard escaped chars like `\t`, `\\``, `\n`, etc are also recognized
  -- though quoted strings can also be multi line, e.g.:
 
-```
+```sh
 KEY="value
 and more"
 OTHER='#not_comment
@@ -260,7 +260,7 @@ line2'
 ```
 
 Loaded gives:
-```
+```csharp
 "value\nand more" == System.Environment.GetEnvironmentVariable("KEY")
 "#not_comment\nline2" == System.Environment.GetEnvironmentVariable("OTHER")
 ```
@@ -269,13 +269,13 @@ You can also include whitespace before and after the equals sign in assignments,
  between the name/identifier, and the value, quoted or unquoted.
  Note that the pre/trailing and post/leading whitespace will be ignored.
  If you want leading whitepace on your values, quote them with whitespace.
-```
+```sh
 WHITE_BOTH = value
 WHITE_QUOTED=" value "
 ```
 
 Loaded gives:
-```
+```csharp
 "value" == System.Environment.GetEnvironmentVariable("WHITE_BOTH")
 " value " == System.Environment.GetEnvironmentVariable("WHITE_QUOTED")
 ```
