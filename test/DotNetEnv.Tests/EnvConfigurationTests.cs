@@ -19,7 +19,7 @@ namespace DotNetEnv.Tests
         private const string EV_TEST_1 = "EV_TEST_1";
         private const string EV_TEST_2 = "EV_TEST_2";
 
-        private Dictionary<string,string> oldEnvvars = new Dictionary<string,string>();
+        private readonly Dictionary<string,string> oldEnvvars = new();
         private static readonly string[] ALL_EVS = { EV_TEST, EV_DNE, EV_TEST_1, EV_TEST_2 };
 
         public EnvConfigurationTests ()
@@ -45,74 +45,73 @@ namespace DotNetEnv.Tests
             }
         }
 
-
         [Fact]
         public void AddSourceToBuilderAndLoad()
         {
-            this.configuration = new ConfigurationBuilder()
+            configuration = new ConfigurationBuilder()
                 .AddDotNetEnv(options: LoadOptions.NoEnvVars())
                 .Build();
 
-            Assert.Empty(this.configuration["EMPTY"]);
-            Assert.Equal("'", this.configuration["QUOTE"]);
-            Assert.Equal("https://github.com/tonerdo", this.configuration["URL"]);
-            Assert.Equal("user=test;password=secret", this.configuration["CONNECTION"]);
-            Assert.Equal("  leading and trailing white space   ", this.configuration["WHITEBOTH"]);
-            Assert.Equal("SPECIAL STUFF---\nLONG-BASE64\\ignore\"slash", this.configuration["SSL_CERT"]);
+            Assert.Empty(configuration["EMPTY"]);
+            Assert.Equal("'", configuration["QUOTE"]);
+            Assert.Equal("https://github.com/tonerdo", configuration["URL"]);
+            Assert.Equal("user=test;password=secret", configuration["CONNECTION"]);
+            Assert.Equal("  leading and trailing white space   ", configuration["WHITEBOTH"]);
+            Assert.Equal("SPECIAL STUFF---\nLONG-BASE64\\ignore\"slash", configuration["SSL_CERT"]);
         }
 
         [Fact]
         public void AddSourceToBuilderAndLoadDotenvHigherSkip()
         {
             // ./DotNetEnv.Tests/bin/Debug/netcoreapp3.1/DotNetEnv.Tests.dll -- get to the ./ (root of `test` folder)
-            this.configuration = new ConfigurationBuilder()
+            configuration = new ConfigurationBuilder()
                 .AddDotNetEnv("../../../../", LoadOptions.NoEnvVars())
                 .Build();
 
-            Assert.Null(this.configuration["NAME"]);
-            Assert.Equal("here", this.configuration["TEST"]);
+            Assert.Null(configuration["NAME"]);
+            Assert.Equal("here", configuration["TEST"]);
         }
 
         [Fact]
         public void AddSourceToBuilderAndLoadMulti()
         {
-            this.configuration = new ConfigurationBuilder()
+            configuration = new ConfigurationBuilder()
                 .AddDotNetEnvMulti(new[] { "./.env", "./.env2" }, LoadOptions.NoEnvVars())
                 .Build();
 
-            Assert.Equal("Other", this.configuration["NAME"]);
+            Assert.Equal("Other", configuration["NAME"]);
             Assert.Equal("overridden_2", configuration["ENVVAR_TEST"]);
         }
 
         [Fact]
         public void AddSourceToBuilderAndLoadMultiWithNoClobber()
         {
-            this.configuration = new ConfigurationBuilder()
+            configuration = new ConfigurationBuilder()
                 .AddDotNetEnvMulti(new[] { "./.env", "./.env2" }, LoadOptions.NoEnvVars().NoClobber())
                 .Build();
 
-            Assert.Equal("Toni", this.configuration["NAME"]);
+            Assert.Equal("Toni", configuration["NAME"]);
             Assert.Equal("ENV value", configuration["ENVVAR_TEST"]);
         }
 
         [Fact]
         public void AddSourceToBuilderAndFileDoesNotExist()
         {
-            this.configuration = new ConfigurationBuilder()
+            configuration = new ConfigurationBuilder()
                 .AddDotNetEnv("./.env_DNE", LoadOptions.NoEnvVars())
                 .Build();
 
-            Assert.Empty(this.configuration.AsEnumerable());
+            Assert.Empty(configuration.AsEnumerable());
         }
 
         [Fact]
         public void AddSourceToBuilderAndGetSection()
         {
-            this.configuration = new ConfigurationBuilder()
+            configuration = new ConfigurationBuilder()
                 .AddDotNetEnv("./.env_sections", LoadOptions.NoEnvVars())
                 .Build();
 
-            var section = this.configuration.GetSection("SECTION");
+            var section = configuration.GetSection("SECTION");
 
             Assert.Equal("value1", section["Key1"]);
             Assert.Equal("value2", section["Key2"]);
@@ -127,43 +126,43 @@ namespace DotNetEnv.Tests
             // Have to remove since it's recursive and can be set by the `EnvTests.cs`
             Environment.SetEnvironmentVariable("TEST4", null);
 
-            this.configuration = new ConfigurationBuilder()
+            configuration = new ConfigurationBuilder()
                 .AddDotNetEnv("./.env_embedded")
                 .Build();
 
-            Assert.Equal("test", this.configuration["TEST"]);
-            Assert.Equal("test1", this.configuration["TEST1"]);
-            Assert.Equal("test", this.configuration["TEST2"]);
-            Assert.Equal("testtest", this.configuration["TEST3"]);
-            Assert.Equal("testtest1", this.configuration["TEST4"]);
+            Assert.Equal("test", configuration["TEST"]);
+            Assert.Equal("test1", configuration["TEST1"]);
+            Assert.Equal("test", configuration["TEST2"]);
+            Assert.Equal("testtest", configuration["TEST3"]);
+            Assert.Equal("testtest1", configuration["TEST4"]);
 
-            Assert.Equal("test:testtest1 $$ '\" ® and test1", this.configuration["TEST5_DOUBLE"]);
-            Assert.Equal("$TEST:$TEST4 \\$\\$ \" \\uae and $TEST1", this.configuration["TEST5_SINGLE"]);
-            Assert.Equal("test:testtest1\\uaeandtest1", this.configuration["TEST5_UNQUOTED"]);
+            Assert.Equal("test:testtest1 $$ '\" ® and test1", configuration["TEST5_DOUBLE"]);
+            Assert.Equal("$TEST:$TEST4 \\$\\$ \" \\uae and $TEST1", configuration["TEST5_SINGLE"]);
+            Assert.Equal("test:testtest1\\uaeandtest1", configuration["TEST5_UNQUOTED"]);
 
-            Assert.Equal("value1", this.configuration["FIRST_KEY"]);
-            Assert.Equal("value2andvalue1", this.configuration["SECOND_KEY"]);
+            Assert.Equal("value1", configuration["FIRST_KEY"]);
+            Assert.Equal("value2andvalue1", configuration["SECOND_KEY"]);
             // EXISTING_ENVIRONMENT_VARIABLE already set to "value"
-            Assert.Equal("value;andvalue3", this.configuration["THIRD_KEY"]);
+            Assert.Equal("value;andvalue3", configuration["THIRD_KEY"]);
             // DNE_VAR does not exist (has no value)
-            Assert.Equal(";nope", this.configuration["FOURTH_KEY"]);
+            Assert.Equal(";nope", configuration["FOURTH_KEY"]);
 
-            Assert.Equal("^((?!Everyone).)*$", this.configuration["GROUP_FILTER_REGEX"]);
+            Assert.Equal("^((?!Everyone).)*$", configuration["GROUP_FILTER_REGEX"]);
 
-            Assert.Equal("value$", this.configuration["DOLLAR1_U"]);
-            Assert.Equal("valuevalue$$", this.configuration["DOLLAR2_U"]);
-            Assert.Equal("value$.$", this.configuration["DOLLAR3_U"]);
-            Assert.Equal("value$$", this.configuration["DOLLAR4_U"]);
+            Assert.Equal("value$", configuration["DOLLAR1_U"]);
+            Assert.Equal("valuevalue$$", configuration["DOLLAR2_U"]);
+            Assert.Equal("value$.$", configuration["DOLLAR3_U"]);
+            Assert.Equal("value$$", configuration["DOLLAR4_U"]);
 
-            Assert.Equal("value$", this.configuration["DOLLAR1_S"]);
-            Assert.Equal("value$DOLLAR1_S$", this.configuration["DOLLAR2_S"]);
-            Assert.Equal("value$.$", this.configuration["DOLLAR3_S"]);
-            Assert.Equal("value$$", this.configuration["DOLLAR4_S"]);
+            Assert.Equal("value$", configuration["DOLLAR1_S"]);
+            Assert.Equal("value$DOLLAR1_S$", configuration["DOLLAR2_S"]);
+            Assert.Equal("value$.$", configuration["DOLLAR3_S"]);
+            Assert.Equal("value$$", configuration["DOLLAR4_S"]);
 
-            Assert.Equal("value$", this.configuration["DOLLAR1_D"]);
-            Assert.Equal("valuevalue$$", this.configuration["DOLLAR2_D"]);
-            Assert.Equal("value$.$", this.configuration["DOLLAR3_D"]);
-            Assert.Equal("value$$", this.configuration["DOLLAR4_D"]);
+            Assert.Equal("value$", configuration["DOLLAR1_D"]);
+            Assert.Equal("valuevalue$$", configuration["DOLLAR2_D"]);
+            Assert.Equal("value$.$", configuration["DOLLAR3_D"]);
+            Assert.Equal("value$$", configuration["DOLLAR4_D"]);
         }
     }
 }

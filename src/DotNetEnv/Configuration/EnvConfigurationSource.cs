@@ -18,7 +18,7 @@ namespace DotNetEnv.Configuration
 
         public IConfigurationProvider Build(IConfigurationBuilder builder)
         {
-            return new EnvConfigurationProvider(this.paths, this.options);
+            return new EnvConfigurationProvider(paths, options);
         }
     }
 }
