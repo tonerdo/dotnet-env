@@ -18,7 +18,7 @@ namespace DotNetEnv.Tests
             DotNetEnv.Env.Load();
             Assert.Equal("Toni", Environment.GetEnvironmentVariable("NAME"));
             // unfortunately .NET removes empty env vars -- there can NEVER be an empty string env var value
-            // https://msdn.microsoft.com/en-us/library/z46c489x(v=vs.110).aspx#Remarks
+            //  https://msdn.microsoft.com/en-us/library/z46c489x(v=vs.110).aspx#Remarks
             Assert.Null(Environment.GetEnvironmentVariable("EMPTY"));
             Assert.Equal("'", Environment.GetEnvironmentVariable("QUOTE"));
             Assert.Equal("https://github.com/tonerdo", Environment.GetEnvironmentVariable("URL"));
@@ -163,56 +163,56 @@ namespace DotNetEnv.Tests
             Assert.Equal(IsWindows ? "lower" : null, Environment.GetEnvironmentVariable("CASING"));
         }
 
-        [Fact]
-        public void ParseInterpolatedTest()
-        {
-            System.Environment.SetEnvironmentVariable("EXISTING_ENVIRONMENT_VARIABLE", "value");
-            System.Environment.SetEnvironmentVariable("DNE_VAR", null);
-            DotNetEnv.Env.Load("./.env_embedded");
-            Assert.Equal("test", Environment.GetEnvironmentVariable("TEST"));
-            Assert.Equal("test1", Environment.GetEnvironmentVariable("TEST1"));
-            Assert.Equal("test", Environment.GetEnvironmentVariable("TEST2"));
-            Assert.Equal("testtest", Environment.GetEnvironmentVariable("TEST3"));
-            Assert.Equal("testtest1", Environment.GetEnvironmentVariable("TEST4"));
+		[Fact]
+		public void ParseInterpolatedTest()
+		{
+			System.Environment.SetEnvironmentVariable("EXISTING_ENVIRONMENT_VARIABLE", "value");
+			System.Environment.SetEnvironmentVariable("DNE_VAR", null);
+			DotNetEnv.Env.Load("./.env_embedded");
+			Assert.Equal("test", Environment.GetEnvironmentVariable("TEST"));
+			Assert.Equal("test1", Environment.GetEnvironmentVariable("TEST1"));
+			Assert.Equal("test", Environment.GetEnvironmentVariable("TEST2"));
+			Assert.Equal("testtest", Environment.GetEnvironmentVariable("TEST3"));
+			Assert.Equal("testtest1", Environment.GetEnvironmentVariable("TEST4"));
 
-            Assert.Equal("test:testtest1 $$ '\" ® and test1", Environment.GetEnvironmentVariable("TEST5_DOUBLE"));
-            Assert.Equal("$TEST:$TEST4 \\$\\$ \" \\uae and $TEST1", Environment.GetEnvironmentVariable("TEST5_SINGLE"));
-            Assert.Equal("test:testtest1\\uaeandtest1", Environment.GetEnvironmentVariable("TEST5_UNQUOTED"));
+			Assert.Equal("test:testtest1 $$ '\" ® and test1", Environment.GetEnvironmentVariable("TEST5_DOUBLE"));
+			Assert.Equal("$TEST:$TEST4 \\$\\$ \" \\uae and $TEST1", Environment.GetEnvironmentVariable("TEST5_SINGLE"));
+			Assert.Equal("test:testtest1\\uaeandtest1", Environment.GetEnvironmentVariable("TEST5_UNQUOTED"));
 
-            // note that interpolated values will keep whitespace! (as they should, esp if surrounding them with other values)
-            Assert.Equal(" surrounded by spaces ", Environment.GetEnvironmentVariable("TEST_UNQUOTED_WITH_INTERPOLATED_SURROUNDING_SPACES"));
+			// note that interpolated values will keep whitespace! (as they should, esp if surrounding them with other values)
+			Assert.Equal(" surrounded by spaces ", Environment.GetEnvironmentVariable("TEST_UNQUOTED_WITH_INTERPOLATED_SURROUNDING_SPACES"));
 
-            Assert.Equal("value1", System.Environment.GetEnvironmentVariable("FIRST_KEY"));
-            Assert.Equal("value2andvalue1", System.Environment.GetEnvironmentVariable("SECOND_KEY"));
-            // EXISTING_ENVIRONMENT_VARIABLE already set to "value"
-            Assert.Equal("value;andvalue3", System.Environment.GetEnvironmentVariable("THIRD_KEY"));
-            // DNE_VAR does not exist (has no value)
-            Assert.Equal(";nope", System.Environment.GetEnvironmentVariable("FOURTH_KEY"));
+			Assert.Equal("value1", System.Environment.GetEnvironmentVariable("FIRST_KEY"));
+			Assert.Equal("value2andvalue1", System.Environment.GetEnvironmentVariable("SECOND_KEY"));
+			// EXISTING_ENVIRONMENT_VARIABLE already set to "value"
+			Assert.Equal("value;andvalue3", System.Environment.GetEnvironmentVariable("THIRD_KEY"));
+			// DNE_VAR does not exist (has no value)
+			Assert.Equal(";nope", System.Environment.GetEnvironmentVariable("FOURTH_KEY"));
 
-            Assert.Equal("^((?!Everyone).)*$", Environment.GetEnvironmentVariable("GROUP_FILTER_REGEX"));
+			Assert.Equal("^((?!Everyone).)*$", Environment.GetEnvironmentVariable("GROUP_FILTER_REGEX"));
 
-            Assert.Equal("value$", Environment.GetEnvironmentVariable("DOLLAR1_U"));
-            Assert.Equal("valuevalue$$", Environment.GetEnvironmentVariable("DOLLAR2_U"));
-            Assert.Equal("value$.$", Environment.GetEnvironmentVariable("DOLLAR3_U"));
-            Assert.Equal("value$$", Environment.GetEnvironmentVariable("DOLLAR4_U"));
+			Assert.Equal("value$", Environment.GetEnvironmentVariable("DOLLAR1_U"));
+			Assert.Equal("valuevalue$$", Environment.GetEnvironmentVariable("DOLLAR2_U"));
+			Assert.Equal("value$.$", Environment.GetEnvironmentVariable("DOLLAR3_U"));
+			Assert.Equal("value$$", Environment.GetEnvironmentVariable("DOLLAR4_U"));
 
-            Assert.Equal("value$", Environment.GetEnvironmentVariable("DOLLAR1_S"));
-            Assert.Equal("value$DOLLAR1_S$", Environment.GetEnvironmentVariable("DOLLAR2_S"));
-            Assert.Equal("value$.$", Environment.GetEnvironmentVariable("DOLLAR3_S"));
-            Assert.Equal("value$$", Environment.GetEnvironmentVariable("DOLLAR4_S"));
+			Assert.Equal("value$", Environment.GetEnvironmentVariable("DOLLAR1_S"));
+			Assert.Equal("value$DOLLAR1_S$", Environment.GetEnvironmentVariable("DOLLAR2_S"));
+			Assert.Equal("value$.$", Environment.GetEnvironmentVariable("DOLLAR3_S"));
+			Assert.Equal("value$$", Environment.GetEnvironmentVariable("DOLLAR4_S"));
 
-            Assert.Equal("value$", Environment.GetEnvironmentVariable("DOLLAR1_D"));
-            Assert.Equal("valuevalue$$", Environment.GetEnvironmentVariable("DOLLAR2_D"));
-            Assert.Equal("value$.$", Environment.GetEnvironmentVariable("DOLLAR3_D"));
-            Assert.Equal("value$$", Environment.GetEnvironmentVariable("DOLLAR4_D"));
-        }
+			Assert.Equal("value$", Environment.GetEnvironmentVariable("DOLLAR1_D"));
+			Assert.Equal("valuevalue$$", Environment.GetEnvironmentVariable("DOLLAR2_D"));
+			Assert.Equal("value$.$", Environment.GetEnvironmentVariable("DOLLAR3_D"));
+			Assert.Equal("value$$", Environment.GetEnvironmentVariable("DOLLAR4_D"));
+		}
 
 		[Fact]
 		public void ParseInterpolatedNoEnvVarsTest()
 		{
-            Environment.SetEnvironmentVariable("TEST", string.Empty);
-            Environment.SetEnvironmentVariable("TEST2", string.Empty);
-            Environment.SetEnvironmentVariable("EXISTING_ENVIRONMENT_VARIABLE", "value");
+			Environment.SetEnvironmentVariable("TEST", string.Empty);
+			Environment.SetEnvironmentVariable("TEST2", string.Empty);
+			Environment.SetEnvironmentVariable("EXISTING_ENVIRONMENT_VARIABLE", "value");
 			Environment.SetEnvironmentVariable("DNE_VAR", null);
 			var environmentDictionary = DotNetEnv.Env.NoEnvVars().Load("./.env_embedded").ToDotEnvDictionary();
 			Assert.Equal("test", environmentDictionary["TEST"]);
@@ -252,39 +252,39 @@ namespace DotNetEnv.Tests
 			Assert.Equal("value$.$", environmentDictionary["DOLLAR3_D"]);
 			Assert.Equal("value$$", environmentDictionary["DOLLAR4_D"]);
 
-            // Validate that the environment is not loaded 
+			// Validate that the environment is not loaded 
 			Assert.Null(Environment.GetEnvironmentVariable("TEST"));
-            Assert.Null(Environment.GetEnvironmentVariable("TEST1"));
+			Assert.Null(Environment.GetEnvironmentVariable("TEST1"));
 			Assert.Null(Environment.GetEnvironmentVariable("TEST2"));
 			Assert.Null(Environment.GetEnvironmentVariable("TEST3"));
 			Assert.Null(Environment.GetEnvironmentVariable("TEST4"));
-                  
+
 			Assert.Null(Environment.GetEnvironmentVariable("TEST5_DOUBLE"));
 			Assert.Null(Environment.GetEnvironmentVariable("TEST5_SINGLE"));
 			Assert.Null(Environment.GetEnvironmentVariable("TEST5_UNQUOTED"));
-                  
+
 			// not.Null interpolated values will keep whitespace! (as they should, esp if surrounding them with other values)
 			Assert.Null(Environment.GetEnvironmentVariable("TEST_UNQUOTED_WITH_INTERPOLATED_SURROUNDING_SPACES"));
-                  
+
 			Assert.Null(Environment.GetEnvironmentVariable("FIRST_KEY"));
 			Assert.Null(Environment.GetEnvironmentVariable("SECOND_KEY"));
 			// EXI.NullENVIRONMENT_VARIABLE already set to "value"
 			Assert.Null(Environment.GetEnvironmentVariable("THIRD_KEY"));
 			// DNE.Nulloes not exist (has no value)
 			Assert.Null(Environment.GetEnvironmentVariable("FOURTH_KEY"));
-                  
+
 			Assert.Null(Environment.GetEnvironmentVariable("GROUP_FILTER_REGEX"));
-                  
+
 			Assert.Null(Environment.GetEnvironmentVariable("DOLLAR1_U"));
 			Assert.Null(Environment.GetEnvironmentVariable("DOLLAR2_U"));
 			Assert.Null(Environment.GetEnvironmentVariable("DOLLAR3_U"));
 			Assert.Null(Environment.GetEnvironmentVariable("DOLLAR4_U"));
-                  
+
 			Assert.Null(Environment.GetEnvironmentVariable("DOLLAR1_S"));
 			Assert.Null(Environment.GetEnvironmentVariable("DOLLAR2_S"));
 			Assert.Null(Environment.GetEnvironmentVariable("DOLLAR3_S"));
 			Assert.Null(Environment.GetEnvironmentVariable("DOLLAR4_S"));
-                  
+
 			Assert.Null(Environment.GetEnvironmentVariable("DOLLAR1_D"));
 			Assert.Null(Environment.GetEnvironmentVariable("DOLLAR2_D"));
 			Assert.Null(Environment.GetEnvironmentVariable("DOLLAR3_D"));
@@ -292,7 +292,7 @@ namespace DotNetEnv.Tests
 		}
 
 		[Fact]
-        public void QuotedHashTest()
+		public void QuotedHashTest()
         {
             DotNetEnv.Env.Load("./.env_quoted_hash");
             Assert.Equal("1234#not_comment", Environment.GetEnvironmentVariable("QTEST0"));
