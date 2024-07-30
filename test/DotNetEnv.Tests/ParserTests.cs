@@ -3,7 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Text;
 using Xunit;
-using Sprache;
+using Superpower;
 
 namespace DotNetEnv.Tests
 {

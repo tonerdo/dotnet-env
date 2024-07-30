@@ -4,7 +4,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using DotNetEnv.Extensions;
 using Xunit;
-using Sprache;
+using Superpower;
 
 namespace DotNetEnv.Tests
 {
