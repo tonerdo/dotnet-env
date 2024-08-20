@@ -3,8 +3,8 @@
     <Title>DotNetEnv</Title>
     <Description>A .NET library to load environment variables from .env files</Description>
     <AssemblyTitle>DotNetEnv</AssemblyTitle>
-    <AssemblyVersion>3.0.0</AssemblyVersion>
-    <PackageVersion>3.0.0</PackageVersion>
+    <AssemblyVersion>3.1.0</AssemblyVersion>
+    <PackageVersion>3.1.0</PackageVersion>
     <TargetFramework>netstandard1.3</TargetFramework>
     <AssemblyName>DotNetEnv</AssemblyName>
     <OutputType>Library</OutputType>
@@ -12,12 +12,14 @@
     <PackageTags>dotnet;env;dotfiles</PackageTags>
     <PackageProjectUrl>https://github.com/tonerdo/dotnet-env</PackageProjectUrl>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/tonerdo/dotnet-env</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
     <None Include="../../LICENSE" Pack="true" PackagePath="" />
+    <None Include="../../README.md" Pack="true" PackagePath="" />
   </ItemGroup>
 
   <ItemGroup>
