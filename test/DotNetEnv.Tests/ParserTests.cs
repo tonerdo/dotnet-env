@@ -442,7 +442,7 @@ namespace DotNetEnv.Tests
         {
             void TestParse(KeyValuePair<string, string>[] expecteds, string input)
             {
-                var outputs = Parsers.ParseDotenvFile(input, pair => pair).ToArray();
+                var outputs = Parsers.ParseDotenvFile(input).ToArray();
                 Assert.Equal(expecteds.Length, outputs.Length);
 
                 for (var i = 0; i < outputs.Length; i++)
@@ -472,7 +472,7 @@ namespace DotNetEnv.Tests
             TestParse(expecteds, contents);
 
             contents = "EV_DNE=0\n1";
-            Assert.Throws<ParseException>(() => Parsers.ParseDotenvFile(contents, Parsers.SetEnvVar));
+            Assert.Throws<ParseException>(() => Parsers.ParseDotenvFile(contents));
 
             contents = @"
 # this is a header
