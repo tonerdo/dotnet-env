@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Collections.Generic;
 using DotNetEnv.Superpower;
@@ -13,30 +14,19 @@ namespace DotNetEnv.Tests
     public class ParserTests : IDisposable
     {
         private const string EV_TEST = "ENVVAR_TEST";
-        private const string EV_DNE = "EV_DNE";
-        private const string EV_TEST_1 = "EV_TEST_1";
-        private const string EV_TEST_2 = "EV_TEST_2";
-
-        private readonly Dictionary<string,string> oldEnvvars = new();
-        private static readonly string[] ALL_EVS = { EV_TEST, EV_DNE, EV_TEST_1, EV_TEST_2 };
 
         public ParserTests ()
         {
-            foreach (var ev in ALL_EVS)
+            Env.EnvVarSnapshot = new ConcurrentDictionary<string, string>()
             {
-                oldEnvvars[ev] = Environment.GetEnvironmentVariable(ev);
-            }
-
-            Environment.SetEnvironmentVariable(EV_TEST, "ENV value");
+                [EV_TEST] = "ENV value"
+            };
             Environment.SetEnvironmentVariable("EV_TEST_EMPTY", "");
         }
 
         public void Dispose ()
         {
-            foreach (var ev in ALL_EVS)
-            {
-                Environment.SetEnvironmentVariable(ev, oldEnvvars[ev]);
-            }
+            Env.EnvVarSnapshot.Clear();
         }
 
         [Theory]
