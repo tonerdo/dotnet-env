@@ -42,11 +42,6 @@ namespace DotNetEnv.Configuration
             var dictionaryOption = options.ClobberExistingVars ? CreateDictionaryOption.TakeLast : CreateDictionaryOption.TakeFirst;
             var dotEnvDictionary = values.ToDotEnvDictionary(dictionaryOption);
 
-            if (!options.ClobberExistingVars)
-                foreach (string key in Environment.GetEnvironmentVariables().Keys)
-                    if (dotEnvDictionary.ContainsKey(key))
-                        dotEnvDictionary[key] = Environment.GetEnvironmentVariable(key);
-
             foreach (var value in dotEnvDictionary)
                 Data[NormalizeKey(value.Key)] = value.Value;
         }

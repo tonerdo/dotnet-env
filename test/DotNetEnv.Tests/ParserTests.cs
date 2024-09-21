@@ -21,7 +21,7 @@ namespace DotNetEnv.Tests
 
         public ParserTests ()
         {
-            Env.EnvVarSnapshot = new ConcurrentDictionary<string, string>()
+            Parsers.EnvVarSnapshot = new ConcurrentDictionary<string, string>()
             {
                 [EV_TEST] = "ENV value"
             };
@@ -29,7 +29,7 @@ namespace DotNetEnv.Tests
 
         public void Dispose ()
         {
-            Env.EnvVarSnapshot.Clear();
+            Parsers.EnvVarSnapshot.Clear();
         }
 
         [Fact]
@@ -366,7 +366,7 @@ namespace DotNetEnv.Tests
                 var kvp = Parsers.Assignment.AtEnd().Parse(input);
                 Assert.Equal(key, kvp.Key);
                 Assert.Equal(value, kvp.Value);
-                Env.EnvVarSnapshot.AddOrUpdate(key, _ => kvp.Key, (_, _) => kvp.Value);
+                Parsers.EnvVarSnapshot.AddOrUpdate(key, kvp.Key, (_, _) => kvp.Value);
             }
 
             TestParse("EV_DNE", "abc", "EV_DNE=abc");
