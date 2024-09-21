@@ -14,12 +14,13 @@ namespace DotNetEnv
         public static KeyValuePair<string, string> SetEnvVar (KeyValuePair<string, string> kvp)
         {
             Environment.SetEnvironmentVariable(kvp.Key, kvp.Value);
+            Env.EnvVarSnapshot.AddOrUpdate(kvp.Key, kvp.Value, (key, oldValue) =>  kvp.Value);
             return kvp;
         }
 
         public static KeyValuePair<string, string> DoNotSetEnvVar (KeyValuePair<string, string> kvp)
         {
-            Env.FakeEnvVars.AddOrUpdate(kvp.Key, kvp.Value, (_, v) => v);
+            Env.EnvVarSnapshot.AddOrUpdate(kvp.Key, kvp.Value, (key, oldValue) =>  kvp.Value);
             return kvp;
         }
 
@@ -28,6 +29,7 @@ namespace DotNetEnv
             if (Environment.GetEnvironmentVariable(kvp.Key) == null)
             {
                 Environment.SetEnvironmentVariable(kvp.Key, kvp.Value);
+                Env.EnvVarSnapshot.AddOrUpdate(kvp.Key, kvp.Value, (key, oldValue) =>  kvp.Value);
             }
             // not sure if maybe should return something different if avoided clobber... (current value?)
             // probably not since the point is to return what the dotenv file reported, but it's arguable

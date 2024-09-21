@@ -1,7 +1,5 @@
-using System;
 using System.Linq;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
 
 namespace DotNetEnv
 {
@@ -21,8 +19,7 @@ namespace DotNetEnv
 
         public string GetValue ()
         {
-            var val = Environment.GetEnvironmentVariable(_id);
-            return val ?? (Env.FakeEnvVars.TryGetValue(_id, out val) ? val : string.Empty);
+            return Env.EnvVarSnapshot.TryGetValue(_id, out var val) ? val : string.Empty;
         }
     }
 
