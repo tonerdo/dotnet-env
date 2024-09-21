@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Linq;
 using System.Collections.Generic;
@@ -11,7 +12,7 @@ namespace DotNetEnv
     {
         public const string DEFAULT_ENVFILENAME = ".env";
 
-        public static ConcurrentDictionary<string, string> FakeEnvVars = new ConcurrentDictionary<string, string>();
+        public static ConcurrentDictionary<string, string> EnvVarSnapshot = new ConcurrentDictionary<string, string>();
 
         public static IEnumerable<KeyValuePair<string, string>> LoadMulti (string[] paths, LoadOptions options = null)
         {
@@ -69,6 +70,10 @@ namespace DotNetEnv
         public static IEnumerable<KeyValuePair<string, string>> LoadContents (string contents, LoadOptions options = null)
         {
             if (options == null) options = LoadOptions.DEFAULT;
+
+            EnvVarSnapshot = new ConcurrentDictionary<string, string>(Environment.GetEnvironmentVariables()
+                .Cast<DictionaryEntry>()
+                .ToDictionary(kvp => kvp.Key.ToString(), kvp => kvp.Value.ToString()));
 
             if (options.SetEnvVars)
             {
