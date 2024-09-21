@@ -6,7 +6,7 @@ namespace DotNetEnv
     {
         public static string GetEnvironmentVariable(string key)
         {
-            return Env.EnvVarSnapshot.TryGetValue(key, out var fakeVal) ? fakeVal : null;
+            return Parsers.EnvVarSnapshot.TryGetValue(key, out var fakeVal) ? fakeVal : null;
         }
     }
 

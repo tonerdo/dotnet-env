@@ -12,8 +12,6 @@ namespace DotNetEnv
     {
         public const string DEFAULT_ENVFILENAME = ".env";
 
-        public static ConcurrentDictionary<string, string> EnvVarSnapshot = new ConcurrentDictionary<string, string>();
-
         public static IEnumerable<KeyValuePair<string, string>> LoadMulti (string[] paths, LoadOptions options = null)
         {
             return paths.Aggregate(
@@ -67,55 +65,48 @@ namespace DotNetEnv
             }
         }
 
-        public static IEnumerable<KeyValuePair<string, string>> LoadContents (string contents, LoadOptions options = null)
+        public static IEnumerable<KeyValuePair<string, string>> LoadContents(string contents,
+            LoadOptions options = null)
         {
             if (options == null) options = LoadOptions.DEFAULT;
 
-            EnvVarSnapshot = new ConcurrentDictionary<string, string>(Environment.GetEnvironmentVariables()
+            var envVarSnapshot = new Dictionary<string, string>(Environment.GetEnvironmentVariables()
                 .Cast<DictionaryEntry>()
                 .ToDictionary(kvp => kvp.Key.ToString(), kvp => kvp.Value.ToString()));
-            
-            return options.SetEnvVars
-                ? options.ClobberExistingVars
-                    ? Parsers.ParseDotenvFile(contents, AddToEnvSnapshot, SetEnvVars)
-                    : Parsers.ParseDotenvFile(contents, AddToEnvSnapshotNoClobber, SetEnvVarsNoClobber)
-                : Parsers.ParseDotenvFile(contents, AddToEnvSnapshot);
+            Parsers.EnvVarSnapshot = new ConcurrentDictionary<string, string>(envVarSnapshot);
+
+            var pairs = (options.SetEnvVars
+                    ? options.ClobberExistingVars
+                        ? Parsers.ParseDotenvFile(contents, SetEnvVars)
+                        : Parsers.ParseDotenvFile(contents, SetEnvVarsNoClobber)
+                    : Parsers.ParseDotenvFile(contents, clobberExistingVariables: false)
+                ).ToList();
+
+            if (options.ClobberExistingVars)
+                return pairs;
+
+            // prepend the pairs with all EnvVars with keys, which are present in pairs
+            // when taking first elements (noClobber) you get the EnvVars first, but all values from Env are still present in the result
+            // one could argue, that at this place we should return a dictionary instead; if someone needs "raw" values he can use ParseDotenvFile directly;
+            return pairs
+                .Join(envVarSnapshot
+                    , pair => pair.Key
+                    , envVar => envVar.Key
+                    , (pair, envVar) => envVar)
+                .Concat(pairs);
         }
 
-        private static KeyValuePair<string, string> AddToEnvSnapshot(KeyValuePair<string, string> kvp)
-        {
-            EnvVarSnapshot.AddOrUpdate(kvp.Key, kvp.Value, (key, oldValue) => kvp.Value);
-            return kvp;
-        }
-
-        private static KeyValuePair<string, string> AddToEnvSnapshotNoClobber(KeyValuePair<string, string> kvp)
-        {
-            if (EnvVarSnapshot.ContainsKey(kvp.Key))
-            {
-                // not sure if maybe should return something different if avoided clobber... (current value?)
-                // probably not since the point is to return what the dotenv file reported, but it's arguable
-                return kvp;
-            }
-
-            return AddToEnvSnapshot(kvp);
-        }
-
-        private static KeyValuePair<string, string> SetEnvVars(KeyValuePair<string, string> kvp)
+        private static void SetEnvVars(KeyValuePair<string, string> kvp)
         {
             Environment.SetEnvironmentVariable(kvp.Key, kvp.Value);
-            return kvp;
         }
 
-        private static KeyValuePair<string, string> SetEnvVarsNoClobber(KeyValuePair<string, string> kvp)
+        private static void SetEnvVarsNoClobber(KeyValuePair<string, string> kvp)
         {
             if (Environment.GetEnvironmentVariable(kvp.Key) == null)
             {
                 Environment.SetEnvironmentVariable(kvp.Key, kvp.Value);
             }
-
-            // not sure if maybe should return something different if avoided clobber... (current value?)
-            // probably not since the point is to return what the dotenv file reported, but it's arguable
-            return kvp;
         }
 
         public static string GetString (string key, string fallback = default(string)) =>

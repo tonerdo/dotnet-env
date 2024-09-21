@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -12,6 +13,8 @@ namespace DotNetEnv
 {
     class Parsers
     {
+        public static ConcurrentDictionary<string, string> EnvVarSnapshot = new ConcurrentDictionary<string, string>();
+
         // helpful blog I discovered only after digging through all the Sprache source myself:
         // https://justinpealing.me.uk/post/2020-03-11-sprache1-chars/
 
@@ -306,21 +309,25 @@ namespace DotNetEnv
 
         public static IEnumerable<KeyValuePair<string, string>> ParseDotenvFile (
             string contents,
-            params Func<KeyValuePair<string, string>, KeyValuePair<string, string>>[] transformations
+            Action<KeyValuePair<string, string>> valueAction = null,
+            bool clobberExistingVariables = true
         )
         {
             return Assignment
-                .Select(kvp => ExecuteTransformations(transformations, kvp))
+                .Select(pair =>
+                {
+                    if (clobberExistingVariables || !EnvVarSnapshot.ContainsKey(pair.Key))
+                        EnvVarSnapshot.AddOrUpdate(pair.Key, pair.Value, (key, oldValue) => pair.Value);
+
+                    valueAction?.Invoke(pair);
+
+                    return pair;
+                })
                 .Or(Empty)
                 .Many()
                 .AtEnd()
                 .Parse(contents)
                 .Where(kvp => kvp.Key != null);
         }
-
-        private static KeyValuePair<string, string> ExecuteTransformations(
-            Func<KeyValuePair<string, string>, KeyValuePair<string, string>>[] transformations,
-            KeyValuePair<string, string> kvp) =>
-            transformations.Aggregate(kvp, (current, transformation) => transformation(current));
     }
 }
