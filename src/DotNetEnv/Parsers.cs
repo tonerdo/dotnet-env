@@ -12,31 +12,6 @@ namespace DotNetEnv
 {
     class Parsers
     {
-        public static KeyValuePair<string, string> SetEnvVar (KeyValuePair<string, string> kvp)
-        {
-            Environment.SetEnvironmentVariable(kvp.Key, kvp.Value);
-            Env.EnvVarSnapshot.AddOrUpdate(kvp.Key, kvp.Value, (key, oldValue) =>  kvp.Value);
-            return kvp;
-        }
-
-        public static KeyValuePair<string, string> DoNotSetEnvVar (KeyValuePair<string, string> kvp)
-        {
-            Env.EnvVarSnapshot.AddOrUpdate(kvp.Key, kvp.Value, (key, oldValue) =>  kvp.Value);
-            return kvp;
-        }
-
-        public static KeyValuePair<string, string> NoClobberSetEnvVar (KeyValuePair<string, string> kvp)
-        {
-            if (Environment.GetEnvironmentVariable(kvp.Key) == null)
-            {
-                Environment.SetEnvironmentVariable(kvp.Key, kvp.Value);
-                Env.EnvVarSnapshot.AddOrUpdate(kvp.Key, kvp.Value, (key, oldValue) =>  kvp.Value);
-            }
-            // not sure if maybe should return something different if avoided clobber... (current value?)
-            // probably not since the point is to return what the dotenv file reported, but it's arguable
-            return kvp;
-        }
-
         // helpful blog I discovered only after digging through all the Sprache source myself:
         // https://justinpealing.me.uk/post/2020-03-11-sprache1-chars/
 
@@ -331,11 +306,21 @@ namespace DotNetEnv
 
         public static IEnumerable<KeyValuePair<string, string>> ParseDotenvFile (
             string contents,
-            Func<KeyValuePair<string, string>, KeyValuePair<string, string>> tranform
+            params Func<KeyValuePair<string, string>, KeyValuePair<string, string>>[] transformations
         )
         {
-            return Assignment.Select(tranform).Or(Empty).Many().AtEnd()
-                .Parse(contents).Where(kvp => kvp.Key != null);
+            return Assignment
+                .Select(kvp => ExecuteTransformations(transformations, kvp))
+                .Or(Empty)
+                .Many()
+                .AtEnd()
+                .Parse(contents)
+                .Where(kvp => kvp.Key != null);
         }
+
+        private static KeyValuePair<string, string> ExecuteTransformations(
+            Func<KeyValuePair<string, string>, KeyValuePair<string, string>>[] transformations,
+            KeyValuePair<string, string> kvp) =>
+            transformations.Aggregate(kvp, (current, transformation) => transformation(current));
     }
 }
