@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Collections.Generic;
 using System.Text;
@@ -17,29 +18,18 @@ namespace DotNetEnv.Tests
         private const string EXCEPT_CHARS = "'\"$";
 
         private const string EV_TEST = "ENVVAR_TEST";
-        private const string EV_DNE = "EV_DNE";
-        private const string EV_TEST_1 = "EV_TEST_1";
-        private const string EV_TEST_2 = "EV_TEST_2";
-
-        private readonly Dictionary<string,string> oldEnvvars = new();
-        private static readonly string[] ALL_EVS = { EV_TEST, EV_DNE, EV_TEST_1, EV_TEST_2 };
 
         public ParserTests ()
         {
-            foreach (var ev in ALL_EVS)
+            Env.EnvVarSnapshot = new ConcurrentDictionary<string, string>()
             {
-                oldEnvvars[ev] = Environment.GetEnvironmentVariable(ev);
-            }
-
-            Environment.SetEnvironmentVariable(EV_TEST, "ENV value");
+                [EV_TEST] = "ENV value"
+            };
         }
 
         public void Dispose ()
         {
-            foreach (var ev in ALL_EVS)
-            {
-                Environment.SetEnvironmentVariable(ev, oldEnvvars[ev]);
-            }
+            Env.EnvVarSnapshot.Clear();
         }
 
         [Fact]
@@ -371,28 +361,27 @@ namespace DotNetEnv.Tests
         [Fact]
         public void ParseAssignment ()
         {
-            Action<string, string, string> testParse = (key, value, input) =>
+            void TestParse(string key, string value, string input)
             {
                 var kvp = Parsers.Assignment.AtEnd().Parse(input);
                 Assert.Equal(key, kvp.Key);
                 Assert.Equal(value, kvp.Value);
-            };
+                Env.EnvVarSnapshot.AddOrUpdate(key, _ => kvp.Key, (_, _) => kvp.Value);
+            }
 
-            testParse("EV_DNE", "abc", "EV_DNE=abc");
-            testParse("EV_DNE", "a b c", "EV_DNE=a b c");
-            testParse("EV_DNE", "a b c", "EV_DNE='a b c'");
-            testParse("EV_DNE", "041", "EV_DNE=041 # comment");
+            TestParse("EV_DNE", "abc", "EV_DNE=abc");
+            TestParse("EV_DNE", "a b c", "EV_DNE=a b c");
+            TestParse("EV_DNE", "a b c", "EV_DNE='a b c'");
+            TestParse("EV_DNE", "041", "EV_DNE=041 # comment");
             // Note that there are no comments without whitespace in unquoted strings!
-            testParse("EV_DNE", "日本#c", "EV_DNE=日本#c");
+            TestParse("EV_DNE", "日本#c", "EV_DNE=日本#c");
 
-            testParse("EV_DNE", @"\xe6\x97\xa5 \xe6\x9c\xac", @"EV_DNE=\xe6\x97\xa5 \xe6\x9c\xac");
-            testParse("EV_DNE", @"\xE2\x98\xA0 \uae", @"EV_DNE=\xE2\x98\xA0 \uae");
+            TestParse("EV_DNE", @"\xe6\x97\xa5 \xe6\x9c\xac", @"EV_DNE=\xe6\x97\xa5 \xe6\x9c\xac");
+            TestParse("EV_DNE", @"\xE2\x98\xA0 \uae", @"EV_DNE=\xE2\x98\xA0 \uae");
 
             var kvp = Parsers.Assignment.AtEnd().Parse("EV_DNE=");
             Assert.Equal("EV_DNE", kvp.Key);
             Assert.Equal("", kvp.Value);
-            // Note that dotnet returns null if the env var is empty -- even if it was set to empty!
-            Assert.Null(Environment.GetEnvironmentVariable("EV_DNE"));
 
             // TODO: is it possible to get the system to recognize when a complete unicode char is present and start the next one then, without a space?
 //            Assert.Equal("EV_DNE=日本", Parsers.Assignment.AtEnd().Parse(@"EV_DNE=\xe6\x97\xa5\xe6\x9c\xac"));
@@ -400,49 +389,49 @@ namespace DotNetEnv.Tests
             Assert.Throws<ParseException>(() => Parsers.Assignment.AtEnd().Parse("EV_DNE='"));
             Assert.Throws<ParseException>(() => Parsers.Assignment.AtEnd().Parse("EV_DNE=0\n1"));
 
-            testParse("EV_DNE", "", "EV_DNE=");
-            testParse("EV_DNE", "EV_DNE=", "EV_DNE=EV_DNE=");
+            TestParse("EV_DNE", "", "EV_DNE=");
+            TestParse("EV_DNE", "EV_DNE=", "EV_DNE=EV_DNE=");
 
-            testParse("EV_DNE", "test", "EV_DNE= test #basic comment");
-            testParse("EV_DNE", "", "EV_DNE=#no value just comment");
-            testParse("EV_DNE", "", "EV_DNE= #no value just comment");
-            testParse("EV_DNE", "a#b#c", "EV_DNE=a#b#c #inner hashes are allowed in unquoted value");
-            testParse("EV_DNE", "test", "EV_DNE= test  #a'bc allow singleQuotes in comment");
-            testParse("EV_DNE", "test", "EV_DNE= test  #a\"bc allow doubleQuotes in comment");
-            testParse("EV_DNE", "test", "EV_DNE= test #a$bc allow dollarSign in comment");
-            testParse("EV_DNE", "a#b#c# not a comment", "EV_DNE=a#b#c# not a comment");
+            TestParse("EV_DNE", "test", "EV_DNE= test #basic comment");
+            TestParse("EV_DNE", "", "EV_DNE=#no value just comment");
+            TestParse("EV_DNE", "", "EV_DNE= #no value just comment");
+            TestParse("EV_DNE", "a#b#c", "EV_DNE=a#b#c #inner hashes are allowed in unquoted value");
+            TestParse("EV_DNE", "test", "EV_DNE= test  #a'bc allow singleQuotes in comment");
+            TestParse("EV_DNE", "test", "EV_DNE= test  #a\"bc allow doubleQuotes in comment");
+            TestParse("EV_DNE", "test", "EV_DNE= test #a$bc allow dollarSign in comment");
+            TestParse("EV_DNE", "a#b#c# not a comment", "EV_DNE=a#b#c# not a comment");
 
-            testParse("EV_DNE", "http://www.google.com/#anchor", "EV_DNE=http://www.google.com/#anchor #inner hash is part of value");
+            TestParse("EV_DNE", "http://www.google.com/#anchor", "EV_DNE=http://www.google.com/#anchor #inner hash is part of value");
 
-            testParse("EV_DNE", "abc", "EV_DNE='abc'");
-            testParse("EV_DNE", "a b c", "EV_DNE='a b c' # comment");
-            testParse("EV_DNE", "0\n1", "EV_DNE='0\n1'");
-            testParse("EV_DNE", @"\xe6\x97\xa5 \xe6\x9c\xac", @"set -x EV_DNE='\xe6\x97\xa5 \xe6\x9c\xac'#c");
-            testParse("EV_DNE", @"\xE2\x98\xA0 \uae", @"EV_DNE='\xE2\x98\xA0 \uae'#c");
+            TestParse("EV_DNE", "abc", "EV_DNE='abc'");
+            TestParse("EV_DNE", "a b c", "EV_DNE='a b c' # comment");
+            TestParse("EV_DNE", "0\n1", "EV_DNE='0\n1'");
+            TestParse("EV_DNE", @"\xe6\x97\xa5 \xe6\x9c\xac", @"set -x EV_DNE='\xe6\x97\xa5 \xe6\x9c\xac'#c");
+            TestParse("EV_DNE", @"\xE2\x98\xA0 \uae", @"EV_DNE='\xE2\x98\xA0 \uae'#c");
 
-            testParse("EV_DNE", "abc", "EV_DNE=\"abc\"");
-            testParse("EV_DNE", "a b c", "set EV_DNE=\"a b c\" # comment");
-            testParse("EV_DNE", "0\n1", "EV_DNE=\"0\n1\"");
-            testParse("EV_DNE", "日 本", "export EV_DNE=\"\\xe6\\x97\\xa5 \\xe6\\x9c\\xac\"#c");
-            testParse("EV_DNE", "☠ ®", "EV_DNE=\"\\xE2\\x98\\xA0 \\uae\"");
+            TestParse("EV_DNE", "abc", "EV_DNE=\"abc\"");
+            TestParse("EV_DNE", "a b c", "set EV_DNE=\"a b c\" # comment");
+            TestParse("EV_DNE", "0\n1", "EV_DNE=\"0\n1\"");
+            TestParse("EV_DNE", "日 本", "export EV_DNE=\"\\xe6\\x97\\xa5 \\xe6\\x9c\\xac\"#c");
+            TestParse("EV_DNE", "☠ ®", "EV_DNE=\"\\xE2\\x98\\xA0 \\uae\"");
 
-            testParse("EV_DNE", "日 ENV value 本", "export EV_DNE=\"\\xe6\\x97\\xa5 $ENVVAR_TEST 本\"#ccccc");
+            TestParse("EV_DNE", "日 ENV value 本", "export EV_DNE=\"\\xe6\\x97\\xa5 $ENVVAR_TEST 本\"#ccccc");
 
-            testParse("exportEV_DNE", "abc", "exportEV_DNE=\"abc\"");
+            TestParse("exportEV_DNE", "abc", "exportEV_DNE=\"abc\"");
 
-            testParse("EV_DNE", "a b c", "EV_DNE = 'a b c' # comment");
-            testParse("EV_DNE", "a b c", "EV_DNE= \"a b c\" # comment");
-            testParse("EV_DNE", "a b c", "EV_DNE ='a b c' # comment");
-            testParse("EV_DNE", "abc", "EV_DNE = abc # comment");
+            TestParse("EV_DNE", "a b c", "EV_DNE = 'a b c' # comment");
+            TestParse("EV_DNE", "a b c", "EV_DNE= \"a b c\" # comment");
+            TestParse("EV_DNE", "a b c", "EV_DNE ='a b c' # comment");
+            TestParse("EV_DNE", "abc", "EV_DNE = abc # comment");
 
-            testParse("EV_DNE", "a'b'' 'c' d", "EV_DNE=\"a'b'' 'c' d\" #allow singleQuotes in doubleQuoted values");
-            testParse("EV_DNE", "a\"b\"\" \"c\" d", "EV_DNE='a\"b\"\" \"c\" d' #allow doubleQuotes in singleQuoted values");
-            testParse("EV_DNE", "a\"b\"\" \"c\" d", "EV_DNE=\"a\\\"b\\\"\\\" \\\"c\\\" d\" #allow escaped doubleQuotes in doubleQuoted values");
+            TestParse("EV_DNE", "a'b'' 'c' d", "EV_DNE=\"a'b'' 'c' d\" #allow singleQuotes in doubleQuoted values");
+            TestParse("EV_DNE", "a\"b\"\" \"c\" d", "EV_DNE='a\"b\"\" \"c\" d' #allow doubleQuotes in singleQuoted values");
+            TestParse("EV_DNE", "a\"b\"\" \"c\" d", "EV_DNE=\"a\\\"b\\\"\\\" \\\"c\\\" d\" #allow escaped doubleQuotes in doubleQuoted values");
             Assert.Throws<ParseException>(() => Parsers.Assignment.Parse("EV_DNE='a'b'' 'c' d'"));  // no singleQuotes inside singleQuoted values
             Assert.Throws<ParseException>(() => Parsers.Assignment.Parse("EV_DNE=\"a\"b\""));  // no unescaped doubleQuotes inside doubleQuoted values
 
-            testParse("EV_DNE", "VAL UE", "EV_DNE=VAL UE");
-            testParse("EV_DNE", "VAL UE", "EV_DNE=VAL UE #comment");
+            TestParse("EV_DNE", "VAL UE", "EV_DNE=VAL UE");
+            TestParse("EV_DNE", "VAL UE", "EV_DNE=VAL UE #comment");
 
             Assert.Throws<ParseException>(() => Parsers.Assignment.AtEnd().Parse("EV_DNE='a b c'EV_TEST_1=more"));
             Assert.Throws<ParseException>(() => Parsers.Assignment.AtEnd().Parse("EV_DNE='a b c' EV_TEST_1=more"));
@@ -451,37 +440,36 @@ namespace DotNetEnv.Tests
         [Fact]
         public void ParseDotenvFile ()
         {
-            Action<KeyValuePair<string, string>[], string> testParse = (expecteds, input) =>
+            void TestParse(KeyValuePair<string, string>[] expecteds, string input)
             {
-                var outputs = Parsers.ParseDotenvFile(input, Parsers.SetEnvVar).ToArray();
+                var outputs = Parsers.ParseDotenvFile(input, pair => pair).ToArray();
                 Assert.Equal(expecteds.Length, outputs.Length);
 
                 for (var i = 0; i < outputs.Length; i++)
                 {
                     Assert.Equal(expecteds[i].Key, outputs[i].Key);
                     Assert.Equal(expecteds[i].Value, outputs[i].Value);
-                    Assert.Equal(expecteds[i].Value, Environment.GetEnvironmentVariable(outputs[i].Key));
                 }
-            };
+            }
 
             string contents;
             KeyValuePair<string, string>[] expecteds;
 
             contents = @"";
             expecteds = new KeyValuePair<string, string>[] {};
-            testParse(expecteds, contents);
+            TestParse(expecteds, contents);
 
             contents = @"EV_DNE=abc";
             expecteds = new[] {
                 new KeyValuePair<string, string>("EV_DNE", "abc"),
             };
-            testParse(expecteds, contents);
+            TestParse(expecteds, contents);
 
             contents = "SET EV_DNE=\"0\n1\"";
             expecteds = new[] {
                 new KeyValuePair<string, string>("EV_DNE", "0\n1"),
             };
-            testParse(expecteds, contents);
+            TestParse(expecteds, contents);
 
             contents = "EV_DNE=0\n1";
             Assert.Throws<ParseException>(() => Parsers.ParseDotenvFile(contents, Parsers.SetEnvVar));
@@ -494,25 +482,25 @@ export EV_DNE='a b c' #works!
             expecteds = new[] {
                 new KeyValuePair<string, string>("EV_DNE", "a b c"),
             };
-            testParse(expecteds, contents);
+            TestParse(expecteds, contents);
 
             contents = "# this is a header\nexport EV_DNE='d e f' #works!";
             expecteds = new[] {
                 new KeyValuePair<string, string>("EV_DNE", "d e f"),
             };
-            testParse(expecteds, contents);
+            TestParse(expecteds, contents);
 
             contents = "#\n# this is a header\n#\n\nexport EV_DNE='g h i' #yep still\n";
             expecteds = new[] {
                 new KeyValuePair<string, string>("EV_DNE", "g h i"),
             };
-            testParse(expecteds, contents);
+            TestParse(expecteds, contents);
 
             contents = "#\n# this is a header\n#\n\nexport EV_DNE=\"\\xe6\\x97\\xa5 $ENVVAR_TEST 本\" #yep still\n";
             expecteds = new[] {
                 new KeyValuePair<string, string>("EV_DNE", "日 ENV value 本"),
             };
-            testParse(expecteds, contents);
+            TestParse(expecteds, contents);
 
             contents = @"#
 # this is a header
@@ -534,7 +522,7 @@ ENVVAR_TEST = ' yahooooo '
                 new KeyValuePair<string, string>("EV_TEST_2", "☠\n®"),
                 new KeyValuePair<string, string>("ENVVAR_TEST", " yahooooo "),
             };
-            testParse(expecteds, contents);
+            TestParse(expecteds, contents);
         }
     }
 }
