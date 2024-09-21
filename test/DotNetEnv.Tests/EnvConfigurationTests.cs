@@ -117,8 +117,10 @@ namespace DotNetEnv.Tests
             Assert.Equal("value2", section["Key2"]);
         }
 
-        [Fact()]
-        public void AddSourceToBuilderAndParseInterpolatedTest()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void AddSourceToBuilderAndParseInterpolatedTest(bool setEnvVars)
         {
             Environment.SetEnvironmentVariable("EXISTING_ENVIRONMENT_VARIABLE", "value");
             Environment.SetEnvironmentVariable("DNE_VAR", null);
@@ -128,7 +130,7 @@ namespace DotNetEnv.Tests
             Env.FakeEnvVars.Clear();
 
             configuration = new ConfigurationBuilder()
-                .AddDotNetEnv("./.env_embedded")
+                .AddDotNetEnv("./.env_embedded", new LoadOptions(setEnvVars: setEnvVars))
                 .Build();
 
             Assert.Equal("test", configuration["TEST"]);
