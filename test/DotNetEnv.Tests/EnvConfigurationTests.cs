@@ -92,6 +92,21 @@ namespace DotNetEnv.Tests
 
             Assert.Equal("Toni", configuration["NAME"]);
             Assert.Equal("ENV value", configuration["ENVVAR_TEST"]);
+            Assert.Equal("ENV value", configuration["ClobberEnvVarTest"]); // should contain ENVVAR_TEST from EnvironmentVariable
+            Assert.Equal("https://github.com/tonerdo", configuration["UrlFromVariable"]); // should contain Url from .env
+        }
+
+        [Fact]
+        public void AddSourceToBuilderAndLoadMultiWithClobber()
+        {
+            configuration = new ConfigurationBuilder()
+                .AddDotNetEnvMulti(new[] { "./.env", "./.env2" }, LoadOptions.NoEnvVars())
+                .Build();
+
+            Assert.Equal("Other", configuration["NAME"]);
+            Assert.Equal("overridden_2", configuration["ENVVAR_TEST"]);
+            Assert.Equal("overridden_2", configuration["ClobberEnvVarTest"]); // should contain ENVVAR_TEST from .env
+            Assert.Equal("https://github.com/tonerdo", configuration["UrlFromPreviousEnv"]); // should contain Url from .env
         }
 
         [Fact]
