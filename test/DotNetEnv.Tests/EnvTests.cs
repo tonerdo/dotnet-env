@@ -148,6 +148,19 @@ namespace DotNetEnv.Tests
         }
 
         [Fact]
+        public void LoadMultiTestNoEnvVars()
+        {
+            var pairs = DotNetEnv.Env.NoEnvVars().LoadMulti(new[] { "./.env", "./.env2" });
+            Assert.Equal("Other", pairs.LastOrDefault(x => x.Key == "NAME").Value);
+            Environment.SetEnvironmentVariable("NAME", null);
+            pairs = DotNetEnv.Env.NoEnvVars().NoClobber().LoadMulti(new[] { "./.env", "./.env2" });
+            Assert.Equal("Toni", pairs.FirstOrDefault(x => x.Key == "NAME").Value);
+            Environment.SetEnvironmentVariable("NAME", "Person");
+            pairs = DotNetEnv.Env.NoEnvVars().NoClobber().LoadMulti(new[] { "./.env", "./.env2" });
+            Assert.Equal("Person", pairs.FirstOrDefault(x => x.Key == "NAME").Value);
+        }
+
+        [Fact]
         public void LoadNoClobberTest()
         {
             var expected = "totally the original value";
