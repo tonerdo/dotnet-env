@@ -13,17 +13,19 @@ namespace DotNetEnv
     {
         public const string DEFAULT_ENVFILENAME = ".env";
 
-        public static IEnumerable<KeyValuePair<string, string>> LoadMulti(string[] paths, LoadOptions options = null,
-            IEnumerable<KeyValuePair<string, string>> additionalValues = null)
+        public static IEnumerable<KeyValuePair<string, string>> LoadMulti(string[] paths, LoadOptions options = null)
         {
             return paths.Aggregate(
-                additionalValues?.ToArray() ?? Array.Empty<KeyValuePair<string, string>>(),
+                Array.Empty<KeyValuePair<string, string>>(),
                 (kvps, path) => kvps.Concat(Load(path, options, kvps)).ToArray()
             );
         }
 
-        public static IEnumerable<KeyValuePair<string, string>> Load(string path = null, LoadOptions options = null,
-            IEnumerable<KeyValuePair<string, string>> additionalValues = null)
+        public static IEnumerable<KeyValuePair<string, string>> Load(string path = null, LoadOptions options = null)
+            => Load(path, options, null);
+
+        private static IEnumerable<KeyValuePair<string, string>> Load(string path, LoadOptions options,
+            IEnumerable<KeyValuePair<string, string>> previousValues)
         {
             if (options == null) options = LoadOptions.DEFAULT;
 
@@ -59,24 +61,27 @@ namespace DotNetEnv
                 return Enumerable.Empty<KeyValuePair<string, string>>();
             }
 
-            return LoadContents(File.ReadAllText(path), options, additionalValues);
+            return LoadContents(File.ReadAllText(path), options, previousValues);
         }
 
-        public static IEnumerable<KeyValuePair<string, string>> Load(Stream file, LoadOptions options = null,
-            IEnumerable<KeyValuePair<string, string>> additionalValues = null)
+        public static IEnumerable<KeyValuePair<string, string>> Load(Stream file, LoadOptions options = null)
         {
             using (var reader = new StreamReader(file))
             {
-                return LoadContents(reader.ReadToEnd(), options, additionalValues);
+                return LoadContents(reader.ReadToEnd(), options);
             }
         }
 
         public static IEnumerable<KeyValuePair<string, string>> LoadContents(string contents,
-            LoadOptions options = null, IEnumerable<KeyValuePair<string, string>> additionalValues = null)
+            LoadOptions options = null)
+            => LoadContents(contents, options, null);
+
+        private static IEnumerable<KeyValuePair<string, string>> LoadContents(string contents,
+            LoadOptions options, IEnumerable<KeyValuePair<string, string>> previousValues)
         {
             if (options == null) options = LoadOptions.DEFAULT;
 
-            additionalValues = additionalValues?.ToArray() ?? Array.Empty<KeyValuePair<string, string>>();
+            previousValues = previousValues?.ToArray() ?? Array.Empty<KeyValuePair<string, string>>();
 
             var envVarSnapshot = Environment.GetEnvironmentVariables().Cast<DictionaryEntry>()
                 .Select(entry => new KeyValuePair<string, string>(entry.Key.ToString(), entry.Value.ToString()))
@@ -87,16 +92,16 @@ namespace DotNetEnv
                 : CreateDictionaryOption.TakeFirst;
 
             Parsers.EnvVarSnapshot =
-                new ConcurrentDictionary<string, string>(envVarSnapshot.Concat(additionalValues)
+                new ConcurrentDictionary<string, string>(envVarSnapshot.Concat(previousValues)
                     .ToDotEnvDictionary(dictionaryOption));
 
             var pairs = Parsers.ParseDotenvFile(contents, options.ClobberExistingVars);
 
-            // for NoClobber, remove pairs which are exactly contained in additionalValues or present in EnvironmentVariables
+            // for NoClobber, remove pairs which are exactly contained in previousValues or present in EnvironmentVariables
             var unClobberedPairs = (options.ClobberExistingVars
                     ? pairs
                     : pairs.Where(p =>
-                        additionalValues.All(pv => pv.Key != p.Key) &&
+                        previousValues.All(pv => pv.Key != p.Key) &&
                         Environment.GetEnvironmentVariable(p.Key) == null))
                 .ToArray();
 
