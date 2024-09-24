@@ -366,7 +366,6 @@ namespace DotNetEnv.Tests
                 var kvp = Parsers.Assignment.AtEnd().Parse(input);
                 Assert.Equal(key, kvp.Key);
                 Assert.Equal(value, kvp.Value);
-                Parsers.EnvVarSnapshot.AddOrUpdate(key, kvp.Key, (_, _) => kvp.Value);
             }
 
             TestParse("EV_DNE", "abc", "EV_DNE=abc");

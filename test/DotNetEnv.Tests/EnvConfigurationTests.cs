@@ -91,7 +91,7 @@ namespace DotNetEnv.Tests
                 .Build();
 
             Assert.Equal("Toni", configuration["NAME"]);
-            Assert.Equal("ENV value", configuration["ENVVAR_TEST"]);
+            Assert.Null(configuration["ENVVAR_TEST"]); // value from EnvironmentVariables is not contained for NoClobber
             Assert.Equal("ENV value", configuration["ClobberEnvVarTest"]); // should contain ENVVAR_TEST from EnvironmentVariable
             Assert.Equal("https://github.com/tonerdo", configuration["UrlFromVariable"]); // should contain Url from .env
         }
