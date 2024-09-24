@@ -5,6 +5,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using DotNetEnv.Extensions;
 
 namespace DotNetEnv
 {
@@ -12,15 +13,16 @@ namespace DotNetEnv
     {
         public const string DEFAULT_ENVFILENAME = ".env";
 
-        public static IEnumerable<KeyValuePair<string, string>> LoadMulti (string[] paths, LoadOptions options = null)
+        public static IEnumerable<KeyValuePair<string, string>> LoadMulti (string[] paths, LoadOptions options = null, IEnumerable<KeyValuePair<string, string>> additionalValues = null)
         {
             return paths.Aggregate(
-                Enumerable.Empty<KeyValuePair<string, string>>(),
-                (kvps, path) => kvps.Concat(Load(path, options))
+                additionalValues?.ToArray() ?? Array.Empty<KeyValuePair<string, string>>(),
+                (kvps, path) => kvps.Concat(Load(path, options, kvps)).ToArray()
             );
         }
 
-        public static IEnumerable<KeyValuePair<string, string>> Load (string path = null, LoadOptions options = null)
+        public static IEnumerable<KeyValuePair<string, string>> Load(string path = null, LoadOptions options = null,
+            IEnumerable<KeyValuePair<string, string>> additionalValues = null)
         {
             if (options == null) options = LoadOptions.DEFAULT;
 
@@ -44,6 +46,7 @@ namespace DotNetEnv
                         path = null;
                         break;
                     }
+
                     dir = parent.FullName;
                     path = Path.Combine(dir, file);
                 }
@@ -54,26 +57,33 @@ namespace DotNetEnv
             {
                 return Enumerable.Empty<KeyValuePair<string, string>>();
             }
-            return LoadContents(File.ReadAllText(path), options);
+
+            return LoadContents(File.ReadAllText(path), options, additionalValues);
         }
 
-        public static IEnumerable<KeyValuePair<string, string>> Load (Stream file, LoadOptions options = null)
+        public static IEnumerable<KeyValuePair<string, string>> Load(Stream file, LoadOptions options = null,
+            IEnumerable<KeyValuePair<string, string>> additionalValues = null)
         {
             using (var reader = new StreamReader(file))
             {
-                return LoadContents(reader.ReadToEnd(), options);
+                return LoadContents(reader.ReadToEnd(), options, additionalValues);
             }
         }
 
         public static IEnumerable<KeyValuePair<string, string>> LoadContents(string contents,
-            LoadOptions options = null)
+            LoadOptions options = null, IEnumerable<KeyValuePair<string, string>> additionalValues = null)
         {
             if (options == null) options = LoadOptions.DEFAULT;
 
-            var envVarSnapshot = new Dictionary<string, string>(Environment.GetEnvironmentVariables()
-                .Cast<DictionaryEntry>()
-                .ToDictionary(kvp => kvp.Key.ToString(), kvp => kvp.Value.ToString()));
-            Parsers.EnvVarSnapshot = new ConcurrentDictionary<string, string>(envVarSnapshot);
+            additionalValues = additionalValues?.ToArray() ?? Array.Empty<KeyValuePair<string, string>>();
+            var envVarSnapshot = Environment.GetEnvironmentVariables().Cast<DictionaryEntry>()
+                .Select(entry => new KeyValuePair<string, string>(entry.Key.ToString(), entry.Value.ToString()))
+                .ToArray();
+
+            var dictionaryOption = options.ClobberExistingVars ? CreateDictionaryOption.TakeLast : CreateDictionaryOption.TakeFirst;
+            Parsers.EnvVarSnapshot =
+                new ConcurrentDictionary<string, string>(envVarSnapshot.Concat(additionalValues)
+                    .ToDotEnvDictionary(dictionaryOption));
 
             var pairs = Parsers.ParseDotenvFile(contents, options.ClobberExistingVars).ToList();
 
@@ -81,7 +91,7 @@ namespace DotNetEnv
                 SetEnvVars(pairs, options.ClobberExistingVars);
 
             if (options.ClobberExistingVars)
-                return pairs;
+                return additionalValues.Concat(pairs);
 
             // prepend the pairs with all EnvVars with keys, which are present in pairs
             // when taking first elements (noClobber) you get the EnvVars first, but all values from Env are still present in the result
@@ -91,6 +101,7 @@ namespace DotNetEnv
                     , pair => pair.Key
                     , envVar => envVar.Key
                     , (pair, envVar) => envVar)
+                .Concat(additionalValues)
                 .Concat(pairs);
         }
 
