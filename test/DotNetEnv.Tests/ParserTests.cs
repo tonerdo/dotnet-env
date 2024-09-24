@@ -10,7 +10,7 @@ using Superpower.Parsers;
 
 namespace DotNetEnv.Tests
 {
-    public class ParserTests : IDisposable
+    public class ParserTests
     {
         // C# wow that you can't handle 32 bit unicode as chars. wow. strings for 4 byte chars.
         private static readonly string RocketChar = char.ConvertFromUtf32(0x1F680); // 🚀
@@ -18,18 +18,14 @@ namespace DotNetEnv.Tests
         private const string EXCEPT_CHARS = "'\"$";
 
         private const string EV_TEST = "ENVVAR_TEST";
-
-        public ParserTests ()
+        private readonly IDictionary<string, string> _actualValuesDictionary = new Dictionary<string, string>()
         {
-            Parsers.EnvVarSnapshot = new ConcurrentDictionary<string, string>()
-            {
-                [EV_TEST] = "ENV value"
-            };
-        }
+            [EV_TEST] = "ENV value"
+        };
 
-        public void Dispose ()
+        public ParserTests()
         {
-            Parsers.EnvVarSnapshot.Clear();
+            Parsers.ActualValuesSnapshot = new ConcurrentDictionary<string, string>(_actualValuesDictionary);
         }
 
         [Fact]
@@ -441,7 +437,7 @@ namespace DotNetEnv.Tests
         {
             void TestParse(KeyValuePair<string, string>[] expecteds, string input)
             {
-                var outputs = Parsers.ParseDotenvFile(input).ToArray();
+                var outputs = Parsers.ParseDotenvFile(input, actualValues: _actualValuesDictionary).ToArray();
                 Assert.Equal(expecteds.Length, outputs.Length);
 
                 for (var i = 0; i < outputs.Length; i++)

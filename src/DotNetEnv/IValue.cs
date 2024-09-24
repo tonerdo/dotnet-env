@@ -19,7 +19,7 @@ namespace DotNetEnv
 
         public string GetValue ()
         {
-            return Parsers.EnvVarSnapshot.TryGetValue(_id, out var val) ? val : string.Empty;
+            return Parsers.ActualValuesSnapshot.TryGetValue(_id, out var val) ? val : string.Empty;
         }
     }
 
