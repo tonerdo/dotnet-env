@@ -21,28 +21,11 @@ namespace DotNetEnv.Configuration
 
         public override void Load()
         {
-            IEnumerable<KeyValuePair<string, string>> values;
-            if (paths == null)
-            {
-                values = Env.Load(options: options);
-            }
-            else
-            {
-                if (paths.Length == 1)
-                {
-                    values = Env.Load(paths[0], options);
-                }
-                else
-                {
-                    values = Env.LoadMulti(paths, options);
-                }
-            }
+            var values = paths == null
+                ? Env.Load(options: options)
+                : Env.LoadMulti(paths, options);
 
-            // Since the Load method does not take care of clobberring, We have to check it here!
-            var dictionaryOption = options.ClobberExistingVars ? CreateDictionaryOption.TakeLast : CreateDictionaryOption.TakeFirst;
-            var dotEnvDictionary = values.ToDotEnvDictionary(dictionaryOption);
-
-            foreach (var value in dotEnvDictionary)
+            foreach (var value in values)
                 Data[NormalizeKey(value.Key)] = value.Value;
         }
 
