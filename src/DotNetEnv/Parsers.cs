@@ -309,25 +309,22 @@ namespace DotNetEnv
 
         public static IEnumerable<KeyValuePair<string, string>> ParseDotenvFile (
             string contents,
-            Action<KeyValuePair<string, string>> valueAction = null,
             bool clobberExistingVariables = true
         )
         {
-            return Assignment
-                .Select(pair =>
-                {
-                    if (clobberExistingVariables || !EnvVarSnapshot.ContainsKey(pair.Key))
-                        EnvVarSnapshot.AddOrUpdate(pair.Key, pair.Value, (key, oldValue) => pair.Value);
-
-                    valueAction?.Invoke(pair);
-
-                    return pair;
-                })
-                .Or(Empty)
+            return Assignment.Select(UpdateEnvVarSnapshot).Or(Empty)
                 .Many()
                 .AtEnd()
                 .Parse(contents)
                 .Where(kvp => kvp.Key != null);
+
+            KeyValuePair<string, string> UpdateEnvVarSnapshot(KeyValuePair<string, string> pair)
+            {
+                if (clobberExistingVariables || !EnvVarSnapshot.ContainsKey(pair.Key))
+                    EnvVarSnapshot.AddOrUpdate(pair.Key, pair.Value, (key, oldValue) => pair.Value);
+
+                return pair;
+            }
         }
     }
 }
