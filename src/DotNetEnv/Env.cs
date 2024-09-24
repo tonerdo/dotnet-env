@@ -75,12 +75,10 @@ namespace DotNetEnv
                 .ToDictionary(kvp => kvp.Key.ToString(), kvp => kvp.Value.ToString()));
             Parsers.EnvVarSnapshot = new ConcurrentDictionary<string, string>(envVarSnapshot);
 
-            var pairs = (options.SetEnvVars
-                    ? options.ClobberExistingVars
-                        ? Parsers.ParseDotenvFile(contents, SetEnvVars)
-                        : Parsers.ParseDotenvFile(contents, SetEnvVarsNoClobber)
-                    : Parsers.ParseDotenvFile(contents, clobberExistingVariables: false)
-                ).ToList();
+            var pairs = Parsers.ParseDotenvFile(contents, options.ClobberExistingVars).ToList();
+
+            if (options.SetEnvVars)
+                SetEnvVars(pairs, options.ClobberExistingVars);
 
             if (options.ClobberExistingVars)
                 return pairs;
@@ -96,17 +94,11 @@ namespace DotNetEnv
                 .Concat(pairs);
         }
 
-        private static void SetEnvVars(KeyValuePair<string, string> kvp)
+        private static void SetEnvVars(List<KeyValuePair<string, string>> pairs, bool clobberExistingVars)
         {
-            Environment.SetEnvironmentVariable(kvp.Key, kvp.Value);
-        }
-
-        private static void SetEnvVarsNoClobber(KeyValuePair<string, string> kvp)
-        {
-            if (Environment.GetEnvironmentVariable(kvp.Key) == null)
-            {
-                Environment.SetEnvironmentVariable(kvp.Key, kvp.Value);
-            }
+            foreach (var pair in pairs)
+                if (clobberExistingVars || Environment.GetEnvironmentVariable(pair.Key) == null)
+                    Environment.SetEnvironmentVariable(pair.Key, pair.Value);
         }
 
         public static string GetString (string key, string fallback = default(string)) =>
