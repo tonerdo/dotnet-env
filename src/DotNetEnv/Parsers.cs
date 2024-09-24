@@ -13,7 +13,7 @@ namespace DotNetEnv
 {
     class Parsers
     {
-        public static ConcurrentDictionary<string, string> EnvVarSnapshot = new ConcurrentDictionary<string, string>();
+        public static ConcurrentDictionary<string, string> ActualValuesSnapshot = new ConcurrentDictionary<string, string>();
 
         // helpful blog I discovered only after digging through all the Sprache source myself:
         // https://justinpealing.me.uk/post/2020-03-11-sprache1-chars/
@@ -307,11 +307,11 @@ namespace DotNetEnv
                 from _lt in LineTerminator
                 select new KeyValuePair<string, string>(null, null));
 
-        public static IEnumerable<KeyValuePair<string, string>> ParseDotenvFile (
-            string contents,
-            bool clobberExistingVariables = true
-        )
+        public static IEnumerable<KeyValuePair<string, string>> ParseDotenvFile(string contents,
+            bool clobberExistingVariables = true, IDictionary<string, string> actualValues = null)
         {
+            ActualValuesSnapshot = new ConcurrentDictionary<string, string>(actualValues ?? new Dictionary<string, string>());
+
             return Assignment.Select(UpdateEnvVarSnapshot).Or(Empty)
                 .Many()
                 .AtEnd()
@@ -320,8 +320,8 @@ namespace DotNetEnv
 
             KeyValuePair<string, string> UpdateEnvVarSnapshot(KeyValuePair<string, string> pair)
             {
-                if (clobberExistingVariables || !EnvVarSnapshot.ContainsKey(pair.Key))
-                    EnvVarSnapshot.AddOrUpdate(pair.Key, pair.Value, (key, oldValue) => pair.Value);
+                if (clobberExistingVariables || !ActualValuesSnapshot.ContainsKey(pair.Key))
+                    ActualValuesSnapshot.AddOrUpdate(pair.Key, pair.Value, (key, oldValue) => pair.Value);
 
                 return pair;
             }

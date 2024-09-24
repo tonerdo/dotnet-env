@@ -91,11 +91,10 @@ namespace DotNetEnv
                 ? CreateDictionaryOption.TakeLast
                 : CreateDictionaryOption.TakeFirst;
 
-            Parsers.EnvVarSnapshot =
-                new ConcurrentDictionary<string, string>(envVarSnapshot.Concat(previousValues)
-                    .ToDotEnvDictionary(dictionaryOption));
+            var actualValues = new ConcurrentDictionary<string, string>(envVarSnapshot.Concat(previousValues)
+                .ToDotEnvDictionary(dictionaryOption));
 
-            var pairs = Parsers.ParseDotenvFile(contents, options.ClobberExistingVars);
+            var pairs = Parsers.ParseDotenvFile(contents, options.ClobberExistingVars, actualValues);
 
             // for NoClobber, remove pairs which are exactly contained in previousValues or present in EnvironmentVariables
             var unClobberedPairs = (options.ClobberExistingVars

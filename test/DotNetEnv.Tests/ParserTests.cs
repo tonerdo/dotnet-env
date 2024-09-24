@@ -11,22 +11,17 @@ using Superpower.Parsers;
 
 namespace DotNetEnv.Tests
 {
-    public class ParserTests : IDisposable
+    public class ParserTests
     {
         private const string EV_TEST = "ENVVAR_TEST";
-
-        public ParserTests ()
+        private readonly IDictionary<string, string> _actualValuesDictionary = new Dictionary<string, string>()
         {
-            Parsers.EnvVarSnapshot = new ConcurrentDictionary<string, string>()
-            {
-                [EV_TEST] = "ENV value"
-            };
-            Environment.SetEnvironmentVariable("EV_TEST_EMPTY", "");
-        }
+            [EV_TEST] = "ENV value"
+        };
 
-        public void Dispose ()
+        public ParserTests()
         {
-            Parsers.EnvVarSnapshot.Clear();
+            Parsers.ActualValuesSnapshot = new ConcurrentDictionary<string, string>(_actualValuesDictionary);
         }
 
         [Theory]
@@ -514,7 +509,7 @@ ENVVAR_TEST = ' yahooooo '
         [MemberData(nameof(ParseDotEnvTests))]
         public void ParseDotenvFileShouldParseContents(string _, string contents, KeyValuePair<string, string>[] expectedPairs)
         {
-            var outputs = Parsers.ParseDotenvFile(contents).ToArray();
+            var outputs = Parsers.ParseDotenvFile(contents, actualValues: _actualValuesDictionary).ToArray();
             Assert.Equal(expectedPairs.Length, outputs.Length);
 
             foreach (var (output, expected) in outputs.Zip(expectedPairs))
