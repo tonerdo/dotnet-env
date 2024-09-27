@@ -3,10 +3,17 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Text;
 using Superpower;
+using Superpower.Model;
 using Superpower.Parsers;
 
 namespace DotNetEnv
 {
+    internal static class SuperPowerExtensions
+    {
+        public static TextParser<string> Text(this TextParser<char[]> @this)
+            => @this.Select(chars => new string(chars));
+    }
+    
     class Parsers
     {
         public static KeyValuePair<string, string> SetEnvVar (KeyValuePair<string, string> kvp)
@@ -35,6 +42,7 @@ namespace DotNetEnv
         // helpful blog I discovered only after digging through all the Sprache source myself:
         // https://justinpealing.me.uk/post/2020-03-11-sprache1-chars/
 
+        private static readonly TextParser<TextSpan> LineTerminator = Span.EqualTo("\r\n").Or(Span.EqualTo("\n"));
         private static readonly TextParser<char> DollarSign = Character.EqualTo('$');
         private static readonly TextParser<char> Backslash = Character.EqualTo('\\');
         private static readonly TextParser<char> Underscore = Character.EqualTo('_');
@@ -105,66 +113,65 @@ namespace DotNetEnv
             return Encoding.UTF32.GetString(StringToByteArray(hex, 8));
         }
 
-        private static readonly TextParser<char> Hex = Parse.Chars("0123456789abcdefABCDEF");
+        private static readonly TextParser<char> Hex = Character.In("0123456789abcdefABCDEF".ToCharArray());
 
         internal static readonly TextParser<byte> HexByte =
-            from start in Parse.String("\\x")
-            from value in Parse.Repeat(Hex, 1, 2).Text()
-            select ToHexByte(value);
+            from start in Span.EqualTo("\\x")
+            from value in Span.Regex("[0123456789abcdefABCDEF]{1,2}") // Parse.Repeat(Hex, 1, 2).Text()
+            select ToHexByte(value.ToStringValue());
 
         internal static readonly TextParser<byte> OctalByte =
             from _ in Backslash
-            from value in Parse.Repeat(Parse.Chars("01234567"), 1, 3).Text()
-            select ToOctalByte(value);
+            from value in Span.Regex("[01234567]{1,3}") // Parse.Repeat(Parse.Chars("01234567"), 1, 3).Text()
+            select ToOctalByte(value.ToStringValue());
 
         internal static readonly TextParser<string> OctalChar =
-            from value in Parse.Repeat(OctalByte, 1, 8)
+            from value in OctalByte.Repeat(8) // Parse.Repeat(OctalByte, 1, 8)
             select ToUtf8Char(value);
 
         internal static readonly TextParser<string> Utf8Char =
-            from value in Parse.Repeat(HexByte, 1, 4)
+            from value in HexByte.Repeat(4) // Parse.Repeat(HexByte, 1, 4)
             select ToUtf8Char(value);
 
         internal static readonly TextParser<string> Utf16Char =
-            from start in Parse.String("\\u")
-            from value in Parse.Repeat(Hex, 2, 4).Text()
+            from start in Span.EqualTo("\\u")
+            from value in Hex.Repeat(4).Text() // Parse.Repeat(Hex, 2, 4).Text()
             select ToUtf16Char(value);
 
         internal static readonly TextParser<string> Utf32Char =
-            from start in Parse.String("\\U")
-            from value in Parse.Repeat(Hex, 2, 8).Text()
+            from start in Span.EqualTo("\\U")
+            from value in Hex.Repeat(8).Text() // Parse.Repeat(Hex, 2, 8).Text()
             select ToUtf32Char(value);
 
         internal static TextParser<string> NotControlNorWhitespace (string exceptChars) =>
-            Parse.Char(
+            Character.Matching(
                 c => !char.IsControl(c) && !char.IsWhiteSpace(c) && !exceptChars.Contains(c),
                 $"not control nor whitespace nor {exceptChars}"
             ).AtLeastOnce().Text();
-
-
+        
         // officially *nix env vars can only be /[a-zA-Z_][a-zA-Z_0-9]*/
         // but because technically you can set env vars that are basically anything except equals signs, allow some flexibility
-        private static readonly TextParser<char> IdentifierSpecialChars = Parse.Chars(".-");
+        private static readonly TextParser<char> IdentifierSpecialChars = Character.In('.', '-');
         internal static readonly TextParser<string> Identifier =
-            from head in Parse.Letter.Or(Underscore)
-            from tail in Parse.LetterOrDigit.Or(Underscore).Or(IdentifierSpecialChars).Many().Text()
+            from head in Character.Letter.Or(Underscore)
+            from tail in Character.LetterOrDigit.Or(Underscore).Or(IdentifierSpecialChars).Many().Text()
             select head + tail;
 
         internal static readonly TextParser<IValue> InterpolatedEnvVar =
             from _d in DollarSign
             from id in Identifier
-            select new ValueInterpolated(id);
+            select new ValueInterpolated(id) as IValue;
 
         internal static readonly TextParser<IValue> InterpolatedBracesEnvVar =
             from _d in DollarSign
-            from _o in Parse.Char('{')
+            from _o in Character.EqualTo('{')
             from id in Identifier
-            from _c in Parse.Char('}')
-            select new ValueInterpolated(id);
+            from _c in Character.EqualTo('}')
+            select new ValueInterpolated(id) as IValue;
 
         internal static readonly TextParser<IValue> JustDollarValue =
             from d in DollarSign
-            select new ValueActual(d.ToString());
+            select new ValueActual(d.ToString()) as IValue;
 
         internal static readonly TextParser<IValue> InterpolatedValue =
             InterpolatedEnvVar.Or(InterpolatedBracesEnvVar).Or(JustDollarValue);
@@ -185,14 +192,14 @@ namespace DotNetEnv
         private static readonly TextParser<ValueCalculator> UnquotedValueContents =
             InterpolatedValue
                 .Or(from inlineWhitespaces in InlineWhitespace
-                    from _ in Parse.Char('#').Not() // "#" after a whitespace is the beginning of a comment --> not allowed
+                    from _ in Parse.Not(Character.EqualTo('#')) // "#" after a whitespace is the beginning of a comment --> not allowed
                     from partOfValue in NotControlNorWhitespace("$\"'") // quotes are not allowed in values, because in a shell they mean something different
-                    select new ValueActual(string.Concat(inlineWhitespaces, partOfValue)))
+                    select new ValueActual(string.Concat(inlineWhitespaces, partOfValue)) as IValue)
                 .Many()
                 .Select(vs => new ValueCalculator(vs));
 
         internal static readonly TextParser<ValueCalculator> UnquotedValue =
-            from _ in Parse.Chars(" \t\"'").Not()
+            from _ in Parse.Not(Character.In(" \t\"'".ToCharArray()))
             from value in UnquotedValueContents
             select value;
 
@@ -202,9 +209,9 @@ namespace DotNetEnv
             InterpolatedValue.Or(
                 SpecialChar
                 .Or(NotControlNorWhitespace("\"\\$"))
-                .Or(Parse.WhiteSpace.AtLeastOnce().Text())
+                .Or(Character.WhiteSpace.AtLeastOnce().Text())
                 .AtLeastOnce()
-                .Select(strs => new ValueActual(strs))
+                .Select(strs => new ValueActual(strs) as IValue)
             ).Many().Select(vs => new ValueCalculator(vs));
 
         // single quoted values can have whitespace,
@@ -213,7 +220,7 @@ namespace DotNetEnv
         // single quotes are for when you want truly raw values
         internal static readonly TextParser<ValueCalculator> SingleQuotedValueContents =
             NotControlNorWhitespace("'")
-                .Or(Parse.WhiteSpace.AtLeastOnce().Text())
+                .Or(Character.WhiteSpace.AtLeastOnce().Text())
                 .AtLeastOnce()
                 .Select(strs => new ValueActual(strs))
                 .Many()
@@ -223,58 +230,58 @@ namespace DotNetEnv
         // https://stackoverflow.com/questions/6697753/difference-between-single-and-double-quotes-in-bash/42082956#42082956
 
         internal static readonly TextParser<ValueCalculator> SingleQuotedValue =
-            from _o in Parse.Char('\'')
+            from _o in Character.EqualTo('\'')
             from value in SingleQuotedValueContents
-            from _c in Parse.Char('\'')
+            from _c in Character.EqualTo('\'')
             select value;
 
         internal static readonly TextParser<ValueCalculator> DoubleQuotedValue =
-            from _o in Parse.Char('"')
+            from _o in Character.EqualTo('"')
             from value in DoubleQuotedValueContents
-            from _c in Parse.Char('"')
+            from _c in Character.EqualTo('"')
             select value;
 
         internal static readonly TextParser<ValueCalculator> Value =
             SingleQuotedValue.Or(DoubleQuotedValue).Or(UnquotedValue);
 
         internal static readonly TextParser<string> Comment =
-            from _h in Parse.Char('#')
-            from comment in Parse.CharExcept("\r\n").Many().Text()
+            from _h in Character.EqualTo('#')
+            from comment in Character.ExceptIn('\r', '\n').Many().Text()
             select comment;
 
         private static readonly TextParser<string> ExportExpression =
-            from export in Parse.String("export")
-                .Or(Parse.String("set -x"))
-                .Or(Parse.String("set"))
-                .Or(Parse.String("SET"))
-                .Text()
+            from export in Span.EqualTo("export")
+                .Or(Span.EqualTo("set -x"))
+                .Or(Span.EqualTo("set"))
+                .Or(Span.EqualTo("SET"))
+                .Select(x => x.ToStringValue())
             from _ws in InlineWhitespaceChars.AtLeastOnce()
             select export;
 
         internal static readonly TextParser<KeyValuePair<string, string>> Assignment =
             from _ws_head in InlineWhitespace
-            from export in ExportExpression.Optional()
+            from export in ExportExpression.OptionalOrDefault()
             from name in Identifier
             from _ws_pre in InlineWhitespace
-            from _eq in Parse.Char('=')
+            from _eq in Character.EqualTo('=')
             from _ws_post in InlineWhitespace
             from value in Value
             from _ws_tail in InlineWhitespace
-            from _c in Comment.Optional()
-            from _lt in Parse.LineTerminator
+            from _c in Comment.OptionalOrDefault()
+            from _lt in LineTerminator
             select new KeyValuePair<string, string>(name, value.Value);
 
         internal static readonly TextParser<KeyValuePair<string, string>> Empty =
             from _ws in InlineWhitespace
-            from _c in Comment.Optional()
-            from _lt in Parse.LineTerminator
+            from _c in Comment.OptionalOrDefault()
+            from _lt in LineTerminator
             select new KeyValuePair<string, string>(null, null);
 
         public static IEnumerable<KeyValuePair<string, string>> ParseDotenvFile (
             string contents,
             Func<KeyValuePair<string, string>, KeyValuePair<string, string>> tranform
         ) {
-            return Assignment.Select(tranform).Or(Empty).AtLeastOnce().End()
+            return Assignment.Select(tranform).Or(Empty).AtLeastOnce().AtEnd()
                 .Parse(contents).Where(kvp => kvp.Key != null);
         }
     }
