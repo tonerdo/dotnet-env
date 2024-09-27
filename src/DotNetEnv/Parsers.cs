@@ -12,6 +12,31 @@ namespace DotNetEnv
     {
         public static TextParser<string> Text(this TextParser<char[]> @this)
             => @this.Select(chars => new string(chars));
+
+        public static TextParser<T[]> Repeat<T>(this TextParser<T> @this, int min, int max)
+        {
+            if(min < 0)
+                throw new ArgumentOutOfRangeException(nameof(min));
+            if (min > max)
+                throw new ArgumentOutOfRangeException(nameof(max));
+
+            return input =>
+            {
+                var objectList = new List<T>();
+                var textSpan = input;
+                for (var i = 0; i < max; i++)
+                {
+                    var result = @this(textSpan);
+                    if (!result.HasValue && i < min)
+                        return Result.CastEmpty<T, T[]>(result);
+                    if (!result.HasValue)
+                        break;
+                    objectList.Add(result.Value);
+                    textSpan = result.Remainder;
+                }
+                return Result.Value(objectList.ToArray(), input, textSpan);
+            };
+        }
     }
 
     internal static class ParseHelper
@@ -119,34 +144,35 @@ namespace DotNetEnv
             return Encoding.UTF32.GetString(StringToByteArray(hex, 8));
         }
 
+        private static readonly TextParser<char> Octal = Character.In("01234567".ToCharArray());
         private static readonly TextParser<char> Hex = Character.In("0123456789abcdefABCDEF".ToCharArray());
 
         internal static readonly TextParser<byte> HexByte =
             from start in Span.EqualTo("\\x")
-            from value in Span.Regex("[0123456789abcdefABCDEF]{1,2}") // Parse.Repeat(Hex, 1, 2).Text()
-            select ToHexByte(value.ToStringValue());
+            from value in Hex.Repeat(1, 2).Text()
+            select ToHexByte(value);
 
         internal static readonly TextParser<byte> OctalByte =
             from _ in Backslash
-            from value in Span.Regex("[01234567]{1,3}") // Parse.Repeat(Parse.Chars("01234567"), 1, 3).Text()
-            select ToOctalByte(value.ToStringValue());
+            from value in Octal.Repeat(1, 3).Text()
+            select ToOctalByte(value);
 
         internal static readonly TextParser<string> OctalChar =
-            from value in OctalByte.Repeat(8) // Parse.Repeat(OctalByte, 1, 8)
+            from value in OctalByte.Repeat(1, 8)
             select ToUtf8Char(value);
 
         internal static readonly TextParser<string> Utf8Char =
-            from value in HexByte.Repeat(4) // Parse.Repeat(HexByte, 1, 4)
+            from value in HexByte.Repeat(1, 4)
             select ToUtf8Char(value);
 
         internal static readonly TextParser<string> Utf16Char =
             from start in Span.EqualTo("\\u")
-            from value in Hex.Repeat(4).Text() // Parse.Repeat(Hex, 2, 4).Text()
+            from value in Hex.Repeat(2, 4).Text()
             select ToUtf16Char(value);
 
         internal static readonly TextParser<string> Utf32Char =
             from start in Span.EqualTo("\\U")
-            from value in Hex.Repeat(8).Text() // Parse.Repeat(Hex, 2, 8).Text()
+            from value in Hex.Repeat(2, 8).Text()
             select ToUtf32Char(value);
 
         internal static TextParser<string> NotControlNorWhitespace (string exceptChars) =>
