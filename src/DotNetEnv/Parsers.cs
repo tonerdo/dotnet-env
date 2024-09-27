@@ -2,49 +2,13 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Text;
+using DotNetEnv.Superpower;
 using Superpower;
 using Superpower.Model;
 using Superpower.Parsers;
 
 namespace DotNetEnv
 {
-    internal static class SuperPowerExtensions
-    {
-        public static TextParser<string> Text(this TextParser<char[]> @this)
-            => @this.Select(chars => new string(chars));
-
-        public static TextParser<T[]> Repeat<T>(this TextParser<T> @this, int min, int max)
-        {
-            if(min < 0)
-                throw new ArgumentOutOfRangeException(nameof(min));
-            if (min > max)
-                throw new ArgumentOutOfRangeException(nameof(max));
-
-            return input =>
-            {
-                var objectList = new List<T>();
-                var textSpan = input;
-                for (var i = 0; i < max; i++)
-                {
-                    var result = @this(textSpan);
-                    if (!result.HasValue && i < min)
-                        return Result.CastEmpty<T, T[]>(result);
-                    if (!result.HasValue)
-                        break;
-                    objectList.Add(result.Value);
-                    textSpan = result.Remainder;
-                }
-                return Result.Value(objectList.ToArray(), input, textSpan);
-            };
-        }
-    }
-
-    internal static class ParseHelper
-    {
-        public static TextParser<T> IsAtEnd<T>()
-            => input => input.IsAtEnd ? Result.Value(default(T), input, input) : Result.Empty<T>(input, "Expected end of input");
-    }
-
     class Parsers
     {
         public static KeyValuePair<string, string> SetEnvVar (KeyValuePair<string, string> kvp)

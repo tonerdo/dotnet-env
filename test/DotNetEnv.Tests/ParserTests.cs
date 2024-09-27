@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Text;
+using DotNetEnv.Superpower;
 using Xunit;
 using Superpower;
 using Superpower.Parsers;
