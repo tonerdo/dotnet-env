@@ -318,6 +318,16 @@ namespace DotNetEnv.Tests
         }
 
         [Fact]
+        public void TestExportExpression()
+        {
+            Assert.Throws<ParseException>(() => Parsers.ExportExpression.AtEnd().Parse("identifier "));
+            Assert.Equal("export", Parsers.ExportExpression.AtEnd().Parse("export "));
+            Assert.Equal("set -x", Parsers.ExportExpression.AtEnd().Parse("set -x "));
+            Assert.Equal("set", Parsers.ExportExpression.AtEnd().Parse("set "));
+            Assert.Equal("SET", Parsers.ExportExpression.AtEnd().Parse("SET "));
+        }
+
+        [Fact]
         public void ParseValue ()
         {
             Assert.Equal("abc", Parsers.Value.AtEnd().Parse("abc").Value);
