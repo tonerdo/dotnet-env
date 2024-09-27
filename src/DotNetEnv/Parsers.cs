@@ -13,7 +13,13 @@ namespace DotNetEnv
         public static TextParser<string> Text(this TextParser<char[]> @this)
             => @this.Select(chars => new string(chars));
     }
-    
+
+    internal static class ParseHelper
+    {
+        public static TextParser<T> IsAtEnd<T>()
+            => input => input.IsAtEnd ? Result.Value(default(T), input, input) : Result.Empty<T>(input, "Expected end of input");
+    }
+
     class Parsers
     {
         public static KeyValuePair<string, string> SetEnvVar (KeyValuePair<string, string> kvp)
@@ -42,7 +48,7 @@ namespace DotNetEnv
         // helpful blog I discovered only after digging through all the Sprache source myself:
         // https://justinpealing.me.uk/post/2020-03-11-sprache1-chars/
 
-        private static readonly TextParser<TextSpan> LineTerminator = Span.EqualTo("\r\n").Or(Span.EqualTo("\n"));
+        private static readonly TextParser<TextSpan> LineTerminator = Span.EqualTo("\r\n").Or(Span.EqualTo("\n")).Or(ParseHelper.IsAtEnd<TextSpan>());
         private static readonly TextParser<char> DollarSign = Character.EqualTo('$');
         private static readonly TextParser<char> Backslash = Character.EqualTo('\\');
         private static readonly TextParser<char> Underscore = Character.EqualTo('_');
