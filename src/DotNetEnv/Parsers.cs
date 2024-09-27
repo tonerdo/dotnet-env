@@ -310,16 +310,18 @@ namespace DotNetEnv
                 select new KeyValuePair<string, string>(name, value.Value)).Try();
 
         internal static readonly TextParser<KeyValuePair<string, string>> Empty =
-            from _ws in InlineWhitespace
-            from _c in Comment.OptionalOrDefault()
-            from _lt in LineTerminator
-            select new KeyValuePair<string, string>(null, null);
+            Parse.Not(ParseHelper.IsAtEnd<KeyValuePair<string, string>>()).Then(_ =>
+                from _ws in InlineWhitespace
+                from _c in Comment.OptionalOrDefault()
+                from _lt in LineTerminator
+                select new KeyValuePair<string, string>(null, null));
 
         public static IEnumerable<KeyValuePair<string, string>> ParseDotenvFile (
             string contents,
             Func<KeyValuePair<string, string>, KeyValuePair<string, string>> tranform
-        ) {
-            return Assignment.Select(tranform).Or(Empty).AtLeastOnce().AtEnd()
+        )
+        {
+            return Assignment.Select(tranform).Or(Empty).Many().AtEnd()
                 .Parse(contents).Where(kvp => kvp.Key != null);
         }
     }

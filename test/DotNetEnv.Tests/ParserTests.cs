@@ -216,11 +216,12 @@ namespace DotNetEnv.Tests
         {
             var kvp = new KeyValuePair<string, string>(null, null);
 
+            Assert.Throws<ParseException>(() => Parsers.Empty.AtEnd().Parse(""));
+
             Assert.Equal(kvp, Parsers.Empty.AtEnd().Parse("# comment 1"));
             Assert.Equal(kvp, Parsers.Empty.AtEnd().Parse("# comment 2\r\n"));
             Assert.Equal(kvp, Parsers.Empty.AtEnd().Parse("# comment 3\n"));
 
-            Assert.Equal(kvp, Parsers.Empty.AtEnd().Parse(""));
             Assert.Equal(kvp, Parsers.Empty.AtEnd().Parse("\r\n"));
             Assert.Equal(kvp, Parsers.Empty.AtEnd().Parse("\n"));
 
