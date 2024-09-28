@@ -125,9 +125,13 @@ namespace DotNetEnv
             (from value in OctalByte.Repeat(1, 8)
             select ToUtf8Char(value)).Try();
 
+        // https://en.wikipedia.org/wiki/UTF-8#Description
         internal static readonly TextParser<string> Utf8Char =
-            (from value in HexByte.Repeat(1, 4)
-            select ToUtf8Char(value)).Try();
+            (from value in HexByte.Repeat(1).Where(b => b[0] < '\x80')
+                    .Or(HexByte.Repeat(2).Where(bytes => bytes[0] < '\xE0'))
+                    .Or(HexByte.Repeat(3).Where(bytes => bytes[0] < '\xF0'))
+                    .Or(HexByte.Repeat(4))
+                select ToUtf8Char(value)).Try();
 
         internal static readonly TextParser<string> Utf16Char =
             (from start in Span.EqualTo("\\u")
