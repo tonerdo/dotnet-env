@@ -42,26 +42,29 @@ namespace DotNetEnv.Tests
             }
         }
 
-        [Fact]
-        public void ParseIdentifier ()
-        {
-            Assert.Equal("name", Parsers.Identifier.AtEnd().Parse("name"));
-            Assert.Equal("_n", Parsers.Identifier.AtEnd().Parse("_n"));
-            Assert.Equal("__", Parsers.Identifier.AtEnd().Parse("__"));
-            Assert.Equal("_0", Parsers.Identifier.AtEnd().Parse("_0"));
-            Assert.Equal("a_b", Parsers.Identifier.AtEnd().Parse("a_b"));
-            Assert.Equal("_a_b", Parsers.Identifier.AtEnd().Parse("_a_b"));
-            Assert.Equal("a.b", Parsers.Identifier.AtEnd().Parse("a.b"));
-            Assert.Equal("a-b", Parsers.Identifier.AtEnd().Parse("a-b"));
-            Assert.Throws<ParseException>(() => Parsers.Identifier.AtEnd().Parse("\"name"));
-            Assert.Throws<ParseException>(() => Parsers.Identifier.AtEnd().Parse("0name"));
-            Assert.Throws<ParseException>(() => Parsers.Identifier.AtEnd().Parse(".a.b"));
-            Assert.Throws<ParseException>(() => Parsers.Identifier.AtEnd().Parse("-a.b"));
-            Assert.Throws<ParseException>(() => Parsers.Identifier.AtEnd().Parse("a!b"));
-            Assert.Throws<ParseException>(() => Parsers.Identifier.AtEnd().Parse("a?b"));
-            Assert.Throws<ParseException>(() => Parsers.Identifier.AtEnd().Parse("a*b"));
-            Assert.Throws<ParseException>(() => Parsers.Identifier.AtEnd().Parse("a:b"));
-        }
+        [Theory]
+        [InlineData("name")]
+        [InlineData("_n")]
+        [InlineData("__")]
+        [InlineData("_0")]
+        [InlineData("a_b")]
+        [InlineData("_a_b")]
+        [InlineData("a.b")]
+        [InlineData("a-b")]
+        public void IdentifierShouldParseUntilEnd(string identifier) =>
+            Assert.Equal(identifier, Parsers.Identifier.AtEnd().Parse(identifier));
+
+        [Theory]
+        [InlineData("\"name")]
+        [InlineData("0name")]
+        [InlineData(".a.b")]
+        [InlineData("-a.b")]
+        [InlineData("a!b")]
+        [InlineData("a?b")]
+        [InlineData("a*b")]
+        [InlineData("a:b")]
+        public void IdentifierShouldThrowOnParseUntilEnd(string invalidIdentifier) =>
+            Assert.Throws<ParseException>(() => Parsers.Identifier.AtEnd().Parse(invalidIdentifier));
 
         [Fact]
         public void ParseOctalByte ()
