@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Collections.Generic;
 using System.Text;
@@ -11,28 +12,7 @@ namespace DotNetEnv
 {
     class Parsers
     {
-        public static KeyValuePair<string, string> SetEnvVar (KeyValuePair<string, string> kvp)
-        {
-            Environment.SetEnvironmentVariable(kvp.Key, kvp.Value);
-            return kvp;
-        }
-
-        public static KeyValuePair<string, string> DoNotSetEnvVar (KeyValuePair<string, string> kvp)
-        {
-            Env.FakeEnvVars.AddOrUpdate(kvp.Key, kvp.Value, (_, v) => v);
-            return kvp;
-        }
-
-        public static KeyValuePair<string, string> NoClobberSetEnvVar (KeyValuePair<string, string> kvp)
-        {
-            if (Environment.GetEnvironmentVariable(kvp.Key) == null)
-            {
-                Environment.SetEnvironmentVariable(kvp.Key, kvp.Value);
-            }
-            // not sure if maybe should return something different if avoided clobber... (current value?)
-            // probably not since the point is to return what the dotenv file reported, but it's arguable
-            return kvp;
-        }
+        public static ConcurrentDictionary<string, string> ActualValuesSnapshot = new ConcurrentDictionary<string, string>();
 
         // helpful blog I discovered only after digging through all the Sprache source myself:
         // https://justinpealing.me.uk/post/2020-03-11-sprache1-chars/
@@ -280,13 +260,24 @@ namespace DotNetEnv
                 from _lt in LineTerminator
                 select new KeyValuePair<string, string>(null, null));
 
-        public static IEnumerable<KeyValuePair<string, string>> ParseDotenvFile (
-            string contents,
-            Func<KeyValuePair<string, string>, KeyValuePair<string, string>> tranform
-        )
+        public static IEnumerable<KeyValuePair<string, string>> ParseDotenvFile(string contents,
+            bool clobberExistingVariables = true, IDictionary<string, string> actualValues = null)
         {
-            return Assignment.Select(tranform).Or(Empty).Many().AtEnd()
-                .Parse(contents).Where(kvp => kvp.Key != null);
+            ActualValuesSnapshot = new ConcurrentDictionary<string, string>(actualValues ?? new Dictionary<string, string>());
+
+            return Assignment.Select(UpdateEnvVarSnapshot).Or(Empty)
+                .Many()
+                .AtEnd()
+                .Parse(contents)
+                .Where(kvp => kvp.Key != null);
+
+            KeyValuePair<string, string> UpdateEnvVarSnapshot(KeyValuePair<string, string> pair)
+            {
+                if (clobberExistingVariables || !ActualValuesSnapshot.ContainsKey(pair.Key))
+                    ActualValuesSnapshot.AddOrUpdate(pair.Key, pair.Value, (key, oldValue) => pair.Value);
+
+                return pair;
+            }
         }
     }
 }
