@@ -317,7 +317,7 @@ Or some more specific test examples:
 
 `src/DotNetEnvEnv/Env.cs` is the entry point for all behavior.
 
-`src/DotNetEnvEnv/Parsers.cs` defines all the [Sprache](https://github.com/sprache/Sprache) parsers.
+`src/DotNetEnvEnv/Parsers.cs` defines all the [Superpower](https://github.com/datalust/superpower) parsers.
 
 The `DotNetEnvTraverse.Tests` project tests loading `.env` files in parent (or higher) directories from the executable.
 

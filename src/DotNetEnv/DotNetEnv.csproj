@@ -3,9 +3,9 @@
     <Title>DotNetEnv</Title>
     <Description>A .NET library to load environment variables from .env files</Description>
     <AssemblyTitle>DotNetEnv</AssemblyTitle>
-    <AssemblyVersion>3.1.1</AssemblyVersion>
-    <PackageVersion>3.1.1</PackageVersion>
-    <TargetFramework>netstandard1.3</TargetFramework>
+    <AssemblyVersion>3.2.0</AssemblyVersion>
+    <PackageVersion>3.2.0</PackageVersion>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>DotNetEnv</AssemblyName>
     <OutputType>Library</OutputType>
     <PackageId>DotNetEnv</PackageId>
@@ -25,10 +25,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="1.1.2" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="1.1.2" />
-    <PackageReference Include="Sprache" Version="2.3.1" />
-    <!-- Http + RegEx versions are manually updated to address sprache having a vulnerable, out of date library -->
-    <!-- https://github.com/tonerdo/dotnet-env/issues/68 -->
-    <PackageReference Include="System.Net.Http" Version="4.3.4" />
-    <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
+    <PackageReference Include="Superpower" Version="3.0.0" />
   </ItemGroup>
 </Project>
