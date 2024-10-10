@@ -137,13 +137,10 @@ namespace DotNetEnv
         /// <returns>the byte-count of a UTF-8 char.</returns>
         /// <remarks>https://en.wikipedia.org/wiki/UTF-8#Description</remarks>
         private static int GetUtf8CharByteCount(byte firstByte)
-            => firstByte switch
-            {
-                < (byte)'\x80' => 1,
-                < (byte)'\xE0' => 2,
-                < (byte)'\xF0' => 3,
-                _ => 4,
-            };
+            => firstByte < (byte)'\x80' ? 1
+                : firstByte < (byte)'\xE0' ? 2
+                : firstByte < (byte)'\xF0' ? 3
+                : 4;
 
         internal static readonly TextParser<string> Utf16Char =
             (from start in Span.EqualTo("\\u")

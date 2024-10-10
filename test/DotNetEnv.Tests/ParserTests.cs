@@ -344,7 +344,7 @@ namespace DotNetEnv.Tests
 
             Assert.Equal(@"\xe6\x97\xa5\xe6\x9c\xac", Parsers.Value.AtEnd().Parse(@"\xe6\x97\xa5\xe6\x9c\xac").Value);
             Assert.Equal(@"\xe6\x97\xa5\xe6\x9c\xac", Parsers.Value.AtEnd().Parse(@"'\xe6\x97\xa5\xe6\x9c\xac'").Value);
-            Assert.Equal("日本", Parsers.Value.AtEnd().Parse(@"""\xe6\x97\xa5\xe6\x9c\xac""").Value);
+            Assert.Equal("日本", Parsers.Value.AtEnd().Parse("\"\\xe6\\x97\\xa5\\xe6\\x9c\\xac\"").Value);
 
             Assert.Throws<ParseException>(() => Parsers.Value.AtEnd().Parse("0\n1"));
             Assert.Throws<ParseException>(() => Parsers.Value.Parse(" "));
