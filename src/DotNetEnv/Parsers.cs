@@ -126,8 +126,21 @@ namespace DotNetEnv
             select ToUtf8Char(value)).Try();
 
         internal static readonly TextParser<string> Utf8Char =
-            (from value in HexByte.Repeat(1, 4)
-            select ToUtf8Char(value)).Try();
+            (from firstByte in HexByte
+                from nextBytes in HexByte.Repeat(GetUtf8CharByteCount(firstByte) - 1)
+                select ToUtf8Char(new[] { firstByte }.Concat(nextBytes))).Try();
+
+        /// <summary>
+        /// Returns byte-count of a UTF-8 character by its first byte.
+        /// </summary>
+        /// <param name="firstByte">The first byte of the UTF-8 char</param>
+        /// <returns>the byte-count of a UTF-8 char.</returns>
+        /// <remarks>https://en.wikipedia.org/wiki/UTF-8#Description</remarks>
+        private static int GetUtf8CharByteCount(byte firstByte)
+            => firstByte < (byte)'\x80' ? 1
+                : firstByte < (byte)'\xE0' ? 2
+                : firstByte < (byte)'\xF0' ? 3
+                : 4;
 
         internal static readonly TextParser<string> Utf16Char =
             (from start in Span.EqualTo("\\u")

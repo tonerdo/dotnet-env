@@ -238,8 +238,6 @@ namespace DotNetEnv.Tests
             Assert.Equal("a b c", Parsers.UnquotedValue.AtEnd().Parse("a b c").Value);
             Assert.Equal("041", Parsers.UnquotedValue.AtEnd().Parse("041").Value);
             Assert.Equal("日本", Parsers.UnquotedValue.AtEnd().Parse("日本").Value);
-            // TODO: is it possible to get the system to recognize when a complete unicode char is present and start the next one then, without a space?
-//            Assert.Equal("日本", Parsers.UnquotedValue.Parse(@"\xe6\x97\xa5\xe6\x9c\xac"));
 
             Assert.Throws<ParseException>(() => Parsers.UnquotedValue.AtEnd().Parse("0\n1"));
             Assert.Throws<ParseException>(() => Parsers.UnquotedValue.AtEnd().Parse("'"));
@@ -275,6 +273,11 @@ namespace DotNetEnv.Tests
             Assert.Equal("☠ ®", Parsers.DoubleQuotedValueContents.AtEnd().Parse(@"\xE2\x98\xA0 \uae").Value);
 
             Assert.Equal("日 ENV value 本", Parsers.DoubleQuotedValueContents.AtEnd().Parse("\\xe6\\x97\\xa5 $ENVVAR_TEST 本").Value);
+
+            Assert.Equal("日", Parsers.DoubleQuotedValueContents.AtEnd().Parse(@"\xe6\x97\xa5").Value);
+            Assert.Equal("本", Parsers.DoubleQuotedValueContents.AtEnd().Parse(@"\xe6\x9c\xac").Value);
+            Assert.Equal("日 本", Parsers.DoubleQuotedValueContents.AtEnd().Parse(@"\xe6\x97\xa5 \xe6\x9c\xac").Value);
+            Assert.Equal("日本", Parsers.DoubleQuotedValueContents.AtEnd().Parse(@"\xe6\x97\xa5\xe6\x9c\xac").Value);
 
             Assert.Equal("a\"b c", Parsers.DoubleQuotedValueContents.AtEnd().Parse("a\\\"b c").Value);
             Assert.Equal("a'b c", Parsers.DoubleQuotedValueContents.AtEnd().Parse("a'b c").Value);
@@ -338,8 +341,10 @@ namespace DotNetEnv.Tests
             Assert.Equal("a#b#c", Parsers.Value.AtEnd().Parse("a#b#c").Value);
             Assert.Equal("041", Parsers.Value.AtEnd().Parse("041").Value);
             Assert.Equal("日本", Parsers.Value.AtEnd().Parse("日本").Value);
-            // TODO: is it possible to get the system to recognize when a complete unicode char is present and start the next one then, without a space?
-//            Assert.Equal("日本", Parsers.Value.AtEnd().Parse(@"\xe6\x97\xa5\xe6\x9c\xac"));
+
+            Assert.Equal(@"\xe6\x97\xa5\xe6\x9c\xac", Parsers.Value.AtEnd().Parse(@"\xe6\x97\xa5\xe6\x9c\xac").Value);
+            Assert.Equal(@"\xe6\x97\xa5\xe6\x9c\xac", Parsers.Value.AtEnd().Parse(@"'\xe6\x97\xa5\xe6\x9c\xac'").Value);
+            Assert.Equal("日本", Parsers.Value.AtEnd().Parse("\"\\xe6\\x97\\xa5\\xe6\\x9c\\xac\"").Value);
 
             Assert.Throws<ParseException>(() => Parsers.Value.AtEnd().Parse("0\n1"));
             Assert.Throws<ParseException>(() => Parsers.Value.Parse(" "));
