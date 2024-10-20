@@ -1,21 +1,13 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
-using System.Text;
-using DotNetEnv.Superpower;
 using Xunit;
 using Superpower;
-using Superpower.Parsers;
 
 namespace DotNetEnv.Tests
 {
     public class ParserTests : IDisposable
     {
-        // C# wow that you can't handle 32 bit unicode as chars. wow. strings for 4 byte chars.
-        private static readonly string RocketChar = char.ConvertFromUtf32(0x1F680); // 🚀
-
-        private const string EXCEPT_CHARS = "'\"$";
-
         private const string EV_TEST = "ENVVAR_TEST";
         private const string EV_DNE = "EV_DNE";
         private const string EV_TEST_1 = "EV_TEST_1";
