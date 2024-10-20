@@ -110,14 +110,16 @@ namespace DotNetEnv.Tests
         public void Utf32CharShouldParseUntilEnd(string expected, string input) =>
             Assert.Equal(expected, Parsers.Utf32Char.AtEnd().Parse(input));
 
-        [Fact]
-        public void ParseEscapedChar ()
-        {
-            Assert.Equal("\b", Parsers.EscapedChar.AtEnd().Parse("\\b"));
-            Assert.Equal("'", Parsers.EscapedChar.AtEnd().Parse("\\'"));
-            Assert.Equal("\"", Parsers.EscapedChar.AtEnd().Parse("\\\""));
-            Assert.Throws<ParseException>(() => Parsers.EscapedChar.AtEnd().Parse("\n"));
-        }
+        [InlineData("\b", "\\b")]
+        [InlineData("'", "\\'")]
+        [InlineData("\"", "\\\"")]
+        public void EscapedCharShouldParseUntilEnd(string expected, string input) =>
+            Assert.Equal(expected, Parsers.EscapedChar.AtEnd().Parse(input));
+
+        [Theory]
+        [InlineData("\n")]
+        public void EscapedCharShouldThrowOnParseUntilEnd(string invalidInput) =>
+            Assert.Throws<ParseException>(() => Parsers.EscapedChar.AtEnd().Parse(invalidInput));
 
         [Fact]
         public void ParseInterpolatedEnvVar ()
