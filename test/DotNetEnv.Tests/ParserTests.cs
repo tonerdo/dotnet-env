@@ -83,12 +83,10 @@ namespace DotNetEnv.Tests
         public void OctalCharShouldParseUntilEnd(string expected, string input) =>
             Assert.Equal(expected, Parsers.OctalChar.AtEnd().Parse(input));
 
-
-        [Fact]
-        public void ParseHexByte ()
-        {
-            Assert.Equal(90, Parsers.HexByte.AtEnd().Parse(@"\x5a"));
-        }
+        [Theory]
+        [InlineData(90, @"\x5a")]
+        public void HexByteShouldParseUntilEnd(byte expected, string input) =>
+            Assert.Equal(expected, Parsers.HexByte.AtEnd().Parse(input));
 
         [Fact]
         public void ParseUtf8Char ()
