@@ -192,24 +192,27 @@ namespace DotNetEnv.Tests
         public void CommentShouldParseUntilEnd(string expected, string input) =>
             Assert.Equal(expected, Parsers.Comment.AtEnd().Parse(input));
 
-        [Fact]
-        public void ParseEmpty ()
+        [Theory]
+        [InlineData("# comment 1")]
+        [InlineData("# comment 2\r\n")]
+        [InlineData("# comment 3\n")]
+        [InlineData("\r\n")]
+        [InlineData("\n")]
+        [InlineData("   # comment 1")]
+        [InlineData("    \r\n")]
+        [InlineData("#export EV_DNE=\"\\xe6\\x97\\xa5 $ENVVAR_TEST 本\"#ccccc\n")]
+        public void EmptyShouldParseUntilEnd(string input)
         {
-            var kvp = new KeyValuePair<string, string>(null, null);
+            var expected = new KeyValuePair<string, string>(null, null);
 
-            Assert.Throws<ParseException>(() => Parsers.Empty.AtEnd().Parse(""));
-
-            Assert.Equal(kvp, Parsers.Empty.AtEnd().Parse("# comment 1"));
-            Assert.Equal(kvp, Parsers.Empty.AtEnd().Parse("# comment 2\r\n"));
-            Assert.Equal(kvp, Parsers.Empty.AtEnd().Parse("# comment 3\n"));
-
-            Assert.Equal(kvp, Parsers.Empty.AtEnd().Parse("\r\n"));
-            Assert.Equal(kvp, Parsers.Empty.AtEnd().Parse("\n"));
-
-            Assert.Equal(kvp, Parsers.Empty.AtEnd().Parse("   # comment 1"));
-            Assert.Equal(kvp, Parsers.Empty.AtEnd().Parse("    \r\n"));
-            Assert.Equal(kvp, Parsers.Empty.AtEnd().Parse("#export EV_DNE=\"\\xe6\\x97\\xa5 $ENVVAR_TEST 本\"#ccccc\n"));
+            Assert.Equal(expected, Parsers.Empty.AtEnd().Parse(input));
         }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData("that's not empty")]
+        public void EmptyShouldThrowOnParseUntilEnd(string input) =>
+            Assert.Throws<ParseException>(() => Parsers.Empty.AtEnd().Parse(input));
 
         [Fact]
         public void ParseUnquotedValue ()
