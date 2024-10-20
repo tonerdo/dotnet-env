@@ -88,24 +88,15 @@ namespace DotNetEnv.Tests
         public void HexByteShouldParseUntilEnd(byte expected, string input) =>
             Assert.Equal(expected, Parsers.HexByte.AtEnd().Parse(input));
 
-        [Fact]
-        public void ParseUtf8Char ()
-        {
-            // https://stackoverflow.com/questions/602912/how-do-you-echo-a-4-digit-unicode-character-in-bash
-            // printf '\xE2\x98\xA0'
-            // printf ☠ | hexdump  # hexdump has bytes flipped per word (2 bytes, 4 hex)
-
-            Assert.Equal("Z", Parsers.Utf8Char.AtEnd().Parse(@"\x5A"));
-            Assert.Equal("®", Parsers.Utf8Char.AtEnd().Parse(@"\xc2\xae"));
-            Assert.Equal("☠", Parsers.Utf8Char.AtEnd().Parse(@"\xE2\x98\xA0"));
-            Assert.Equal(RocketChar, Parsers.Utf8Char.AtEnd().Parse(@"\xF0\x9F\x9A\x80"));
-
-            Assert.Equal(
-                "日本",
-                Parsers.Utf8Char.AtEnd().Parse(@"\xe6\x97\xa5")
-                    + Parsers.Utf8Char.AtEnd().Parse(@"\xe6\x9c\xac")
-            );
-        }
+        [Theory]
+        [InlineData("Z", @"\x5a")]
+        [InlineData("®", @"\xc2\xae")]
+        [InlineData("☠", @"\xE2\x98\xA0")]
+        [InlineData("日", @"\xe6\x97\xa5")]
+        [InlineData("本", @"\xe6\x9c\xac")]
+        [InlineData(UnicodeChars.Rocket, @"\xF0\x9F\x9A\x80")]
+        public void Utf8CharShouldParseUntilEnd(string expected, string input) =>
+            Assert.Equal(expected, Parsers.Utf8Char.AtEnd().Parse(input));
 
         [Fact]
         public void ParseUtf16Char ()
@@ -535,6 +526,16 @@ ENVVAR_TEST = ' yahooooo '
                 new KeyValuePair<string, string>("ENVVAR_TEST", " yahooooo "),
             };
             testParse(expecteds, contents);
+        }
+
+        // C# wow that you can't handle 32 bit unicode as chars. wow. strings for 4 byte chars.
+        private struct UnicodeChars
+        {
+            // https://stackoverflow.com/questions/602912/how-do-you-echo-a-4-digit-unicode-character-in-bash
+            // printf '\xE2\x98\xA0'
+            // printf ☠ | hexdump  # hexdump has bytes flipped per word (2 bytes, 4 hex)
+
+            public const string Rocket = "\ud83d\ude80"; // 🚀
         }
     }
 }
