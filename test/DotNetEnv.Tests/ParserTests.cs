@@ -185,13 +185,12 @@ namespace DotNetEnv.Tests
         public void SpecialCharShouldThrowOnParseUntilEnd(string invalidInput) =>
             Assert.Throws<ParseException>(() => Parsers.SpecialChar.AtEnd().Parse(invalidInput));
 
-        [Fact]
-        public void ParseComment ()
-        {
-            Assert.Equal(" comment 1", Parsers.Comment.AtEnd().Parse("# comment 1"));
-            Assert.Equal("", Parsers.Comment.AtEnd().Parse("#"));
-            Assert.Equal(" ", Parsers.Comment.AtEnd().Parse("# "));
-        }
+        [Theory]
+        [InlineData(" comment 1", "# comment 1")]
+        [InlineData("", "#")]
+        [InlineData(" ", "# ")]
+        public void CommentShouldParseUntilEnd(string expected, string input) =>
+            Assert.Equal(expected, Parsers.Comment.AtEnd().Parse(input));
 
         [Fact]
         public void ParseEmpty ()
