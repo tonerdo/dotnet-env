@@ -214,37 +214,37 @@ namespace DotNetEnv.Tests
         public void EmptyShouldThrowOnParseUntilEnd(string input) =>
             Assert.Throws<ParseException>(() => Parsers.Empty.AtEnd().Parse(input));
 
-        [Fact]
-        public void ParseUnquotedValue ()
-        {
-            Assert.Equal("abc", Parsers.UnquotedValue.AtEnd().Parse("abc").Value);
-            Assert.Equal("a b c", Parsers.UnquotedValue.AtEnd().Parse("a b c").Value);
-            Assert.Equal("041", Parsers.UnquotedValue.AtEnd().Parse("041").Value);
-            Assert.Equal("日本", Parsers.UnquotedValue.AtEnd().Parse("日本").Value);
+        [Theory]
+        [InlineData("abc", "abc")]
+        [InlineData("a b c", "a b c")]
+        [InlineData("041", "041")]
+        [InlineData("日本", "日本")]
+        [InlineData("a\\?b", "a\\?b")]
+        [InlineData(@"\xe6\x97\xa5ENV value本", "\\xe6\\x97\\xa5${ENVVAR_TEST}本")]
+        public void UnquotedValueShouldParseUntilEnd(string expected, string input) =>
+            Assert.Equal(expected, Parsers.UnquotedValue.AtEnd().Parse(input).Value);
 
-            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.AtEnd().Parse("0\n1"));
-            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.AtEnd().Parse("'"));
+        [Theory]
+        [InlineData("0", "0\n1")] // value ends on linebreak
+        [InlineData("", "#")] // no value, empty comment
+        [InlineData("", "#commentOnly")]
+        public void UnquotedValueShouldParse(string expected, string input) =>
+            Assert.Equal(expected, Parsers.UnquotedValue.Parse(input).Value);
 
-            Assert.Equal("0", Parsers.UnquotedValue.Parse("0\n1").Value);   // value ends on linebreak
-
-            // leading singlequotes/doublequotes/whitespaces/tabs are not allowed
-            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.Parse("'"));
-            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.Parse("\""));
-            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.Parse(" "));
-            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.Parse("\t"));
-
-            Assert.Equal("", Parsers.UnquotedValue.Parse("#").Value); // no value, empty comment
-            Assert.Equal("", Parsers.UnquotedValue.Parse("#commentOnly").Value);
-
-            // prevent quotationChars inside unquoted values
-            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.AtEnd().Parse("a'b'c"));
-            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.AtEnd().Parse("a\"b\"c"));
-            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.AtEnd().Parse("a 'b' c"));
-            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.AtEnd().Parse("a \"b\" c"));
-
-            Assert.Equal("a\\?b", Parsers.UnquotedValue.AtEnd().Parse("a\\?b").Value);
-            Assert.Equal(@"\xe6\x97\xa5ENV value本", Parsers.UnquotedValue.AtEnd().Parse("\\xe6\\x97\\xa5${ENVVAR_TEST}本").Value);
-        }
+        [Theory]
+        [InlineData("0\n1")] // linebreak within value
+        [InlineData("'")] // single quote only
+        [InlineData("\"")] // double quote only
+        [InlineData("'value")] // leading single quote
+        [InlineData("\"value")] // leading double quote
+        [InlineData(" value")] // leading whitespace
+        [InlineData("\tvalue")] // leading tab
+        [InlineData("a'b'c")] // inline single quote
+        [InlineData("a\"b\"c")] // inline double quote
+        [InlineData("a 'b' c")] // inline single quotes surrounded with whitespaces 
+        [InlineData("a \"b\" c")] // inline double quotes surrounded with whitespaces
+        public void UnquotedValueShouldThrowOnParseUntilEnd(string invalidInput) =>
+            Assert.Throws<ParseException>(() => Parsers.UnquotedValue.AtEnd().Parse(invalidInput));
 
         [Fact]
         public void ParseDoubleQuotedValueContents ()
