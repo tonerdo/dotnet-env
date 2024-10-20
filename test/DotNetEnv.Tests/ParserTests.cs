@@ -272,18 +272,19 @@ namespace DotNetEnv.Tests
         public void SingleQuotedValueContentsShouldParseUntilEnd(string expected, string input) =>
             Assert.Equal(expected, Parsers.SingleQuotedValueContents.AtEnd().Parse(input).Value);
 
-        [Fact]
-        public void ParseSingleQuotedValue ()
-        {
-            Assert.Equal("abc", Parsers.SingleQuotedValue.AtEnd().Parse("'abc'").Value);
-            Assert.Equal("a b c", Parsers.SingleQuotedValue.AtEnd().Parse("'a b c'").Value);
-            Assert.Equal("0\n1", Parsers.SingleQuotedValue.AtEnd().Parse("'0\n1'").Value);
-            Assert.Equal("a\"bc", Parsers.SingleQuotedValue.AtEnd().Parse("'a\"bc'").Value);
+        [Theory]
+        [InlineData("abc", "'abc'")]
+        [InlineData("a b c", "'a b c'")]
+        [InlineData("0\n1", "'0\n1'")]
+        [InlineData("a\"bc", "'a\"bc'")]
+        [InlineData(@"\xe6\x97\xa5 $ENVVAR_TEST 本", @"'\xe6\x97\xa5 $ENVVAR_TEST 本'")]
+        public void SingleQuotedValueShouldParseUntilEnd(string expected, string input) =>
+            Assert.Equal(expected, Parsers.SingleQuotedValue.AtEnd().Parse(input).Value);
 
-            Assert.Equal("\\xe6\\x97\\xa5 $ENVVAR_TEST 本", Parsers.SingleQuotedValue.AtEnd().Parse("'\\xe6\\x97\\xa5 $ENVVAR_TEST 本'").Value);
-
-            Assert.Throws<ParseException>(() => Parsers.SingleQuotedValue.AtEnd().Parse("'a\\'b c'").Value);
-        }
+        [Theory]
+        [InlineData("'a\\'b c'")]
+        public void SingleQuotedValueShouldThrowOnParseUntilEnd(string invalidInput) =>
+            Assert.Throws<ParseException>(() => Parsers.SingleQuotedValue.AtEnd().Parse(invalidInput).Value);
 
         [Fact]
         public void ParseDoubleQuotedValue ()
