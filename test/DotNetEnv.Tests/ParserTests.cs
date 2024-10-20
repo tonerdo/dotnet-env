@@ -131,12 +131,12 @@ namespace DotNetEnv.Tests
         public void InterpolatedBracesEnvVarShouldParseUntilEnd(string expected, string input) =>
             Assert.Equal(expected, Parsers.InterpolatedBracesEnvVar.AtEnd().Parse(input).GetValue());
 
-        public void ParseInterpolated ()
-        {
-            Assert.Equal("ENV value", Parsers.InterpolatedValue.AtEnd().Parse("$ENVVAR_TEST").GetValue());
-            Assert.Equal("ENV value", Parsers.InterpolatedValue.AtEnd().Parse("${ENVVAR_TEST}").GetValue());
-            Assert.Equal("", Parsers.InterpolatedValue.AtEnd().Parse("${ENVVAR_TEST_DNE}").GetValue());
-        }
+        [Theory]
+        [InlineData("ENV value", "$ENVVAR_TEST")]
+        [InlineData("ENV value", "${ENVVAR_TEST}")]
+        [InlineData("", "${ENVVAR_TEST_DNE}")]
+        public void InterpolatedValueShouldParseUntilEnd(string expected, string input) =>
+            Assert.Equal(expected, Parsers.InterpolatedValue.AtEnd().Parse(input).GetValue());
 
         [Fact]
         public void ParseNotControlNorWhitespace ()
