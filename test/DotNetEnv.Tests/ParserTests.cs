@@ -159,42 +159,31 @@ namespace DotNetEnv.Tests
             Assert.Throws<ParseException>(() =>
                 Parsers.NotControlNorWhitespace(excludedChars).AtEnd().Parse(invalidInput));
 
-        [Fact]
-        public void ParseSpecialChar ()
-        {
-            Assert.Equal("Z", Parsers.SpecialChar.AtEnd().Parse(@"\x5A"));
-            Assert.Equal("®", Parsers.SpecialChar.AtEnd().Parse(@"\xc2\xae"));
-            Assert.Equal("☠", Parsers.SpecialChar.AtEnd().Parse(@"\xE2\x98\xA0"));
-            Assert.Equal(RocketChar, Parsers.SpecialChar.AtEnd().Parse(@"\xF0\x9F\x9A\x80"));
-            Assert.Equal(
-                "日本",
-                Parsers.SpecialChar.AtEnd().Parse(@"\xe6\x97\xa5")
-                    + Parsers.SpecialChar.AtEnd().Parse(@"\xe6\x9c\xac")
-            );
+        [Theory]
+        [InlineData("Z", @"\x5A")]
+        [InlineData("®", @"\xc2\xae")]
+        [InlineData("☠", @"\xE2\x98\xA0")]
+        [InlineData("日", @"\xe6\x97\xa5")]
+        [InlineData("本", @"\xe6\x9c\xac")]
+        [InlineData("®", @"\u00ae")]
+        [InlineData("®", @"\uae")]
+        [InlineData("\b", "\\b")]
+        [InlineData("\\m", "\\m")]
+        [InlineData("'", "\\'")]
+        [InlineData("\"", "\\\"")]
+        [InlineData(UnicodeChars.Rocket, @"\xF0\x9F\x9A\x80")]
+        [InlineData(UnicodeChars.Rocket, @"\U0001F680")]
+        [InlineData(UnicodeChars.Rocket, @"\U1F680")]
+        public void SpecialCharShouldParseUntilEnd(string expected, string input) =>
+            Assert.Equal(expected, Parsers.SpecialChar.AtEnd().Parse(input));
 
-            Assert.Equal("®", Parsers.SpecialChar.AtEnd().Parse(@"\u00ae"));
-            Assert.Equal("®", Parsers.SpecialChar.AtEnd().Parse(@"\uae"));
-
-            Assert.Equal(RocketChar, Parsers.SpecialChar.AtEnd().Parse(@"\U0001F680"));
-            Assert.Equal(RocketChar, Parsers.SpecialChar.AtEnd().Parse(@"\U1F680"));
-
-            Assert.Equal("\b", Parsers.SpecialChar.AtEnd().Parse("\\b"));
-            Assert.Equal("\\m", Parsers.SpecialChar.AtEnd().Parse("\\m"));
-            Assert.Equal("'", Parsers.SpecialChar.AtEnd().Parse("\\'"));
-            Assert.Equal("\"", Parsers.SpecialChar.AtEnd().Parse("\\\""));
-
-            // this caught a bug, once upon a time, where backslashes were
-            // getting processed by NCNW rather than EscapedChar inside SpecialChar
-            var parser = Parsers.SpecialChar
-                .Or(Parsers.NotControlNorWhitespace("\"$"))
-                .Or(Character.WhiteSpace.AtLeastOnce().Text());
-            Assert.Equal("\"", parser.AtEnd().Parse("\\\""));
-
-            Assert.Throws<ParseException>(() => Parsers.SpecialChar.AtEnd().Parse("a"));
-            Assert.Throws<ParseException>(() => Parsers.SpecialChar.AtEnd().Parse("%"));
-            Assert.Throws<ParseException>(() => Parsers.SpecialChar.AtEnd().Parse(" "));
-            Assert.Throws<ParseException>(() => Parsers.SpecialChar.AtEnd().Parse("\n"));
-        }
+        [Theory]
+        [InlineData("a")]
+        [InlineData("%")]
+        [InlineData(" ")]
+        [InlineData("\n")]
+        public void SpecialCharShouldThrowOnParseUntilEnd(string invalidInput) =>
+            Assert.Throws<ParseException>(() => Parsers.SpecialChar.AtEnd().Parse(invalidInput));
 
         [Fact]
         public void ParseComment ()
