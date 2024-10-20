@@ -74,18 +74,15 @@ namespace DotNetEnv.Tests
         public void OctalByteShouldParseUntilEnd(byte expected, string input) =>
             Assert.Equal(expected, Parsers.OctalByte.AtEnd().Parse(input));
 
+        [Theory]
+        [InlineData("!", @"\41")]
+        [InlineData("!", @"\041")]
+        [InlineData("Z", @"\132")]
+        //[InlineData(???, @"\412")] // as above with ShouldParseOctalByte() for values outside of ASCII range
+        // TODO: tests for octal combinations to utf8?
+        public void OctalCharShouldParseUntilEnd(string expected, string input) =>
+            Assert.Equal(expected, Parsers.OctalChar.AtEnd().Parse(input));
 
-        [Fact]
-        public void ParseOctalChar ()
-        {
-            Assert.Equal("!", Parsers.OctalChar.AtEnd().Parse(@"\41"));
-            Assert.Equal("!", Parsers.OctalChar.AtEnd().Parse(@"\041"));
-            Assert.Equal("Z", Parsers.OctalChar.AtEnd().Parse(@"\132"));
-
-            // as above for values outside of ASCII range
-
-            // TODO: tests for octal combinations to utf8?
-        }
 
         [Fact]
         public void ParseHexByte ()
