@@ -98,14 +98,12 @@ namespace DotNetEnv.Tests
         public void Utf8CharShouldParseUntilEnd(string expected, string input) =>
             Assert.Equal(expected, Parsers.Utf8Char.AtEnd().Parse(input));
 
-        [Fact]
-        public void ParseUtf16Char ()
-        {
-            Assert.Equal("®", Parsers.Utf16Char.AtEnd().Parse(@"\u00ae"));
-            Assert.Equal("®", Parsers.Utf16Char.AtEnd().Parse(@"\uae"));
+        [Theory]
+        [InlineData("®", @"\u00ae")]
+        [InlineData("®", @"\uae")]
+        public void Utf16CharShouldParseUntilEnd(string expected, string input) =>
+            Assert.Equal(expected, Parsers.Utf16Char.AtEnd().Parse(input));
 
-            Assert.Equal("®", Encoding.Unicode.GetString(new byte[] { 0xae, 0x00 }));
-        }
 
         [Fact]
         public void ParseUtf32Char ()
