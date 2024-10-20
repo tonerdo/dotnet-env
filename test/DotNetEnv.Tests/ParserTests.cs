@@ -121,14 +121,16 @@ namespace DotNetEnv.Tests
         public void EscapedCharShouldThrowOnParseUntilEnd(string invalidInput) =>
             Assert.Throws<ParseException>(() => Parsers.EscapedChar.AtEnd().Parse(invalidInput));
 
-        [Fact]
-        public void ParseInterpolatedEnvVar ()
-        {
-            Assert.Equal("ENV value", Parsers.InterpolatedEnvVar.AtEnd().Parse("$ENVVAR_TEST").GetValue());
-            Assert.Equal("ENV value", Parsers.InterpolatedBracesEnvVar.AtEnd().Parse("${ENVVAR_TEST}").GetValue());
-        }
+        [Theory]
+        [InlineData("ENV value", "$ENVVAR_TEST")]
+        public void InterpolatedEnvVarShouldParseUntilEnd(string expected, string input) =>
+            Assert.Equal(expected, Parsers.InterpolatedEnvVar.AtEnd().Parse(input).GetValue());
 
-        [Fact]
+        [Theory]
+        [InlineData("ENV value", "${ENVVAR_TEST}")]
+        public void InterpolatedBracesEnvVarShouldParseUntilEnd(string expected, string input) =>
+            Assert.Equal(expected, Parsers.InterpolatedBracesEnvVar.AtEnd().Parse(input).GetValue());
+
         public void ParseInterpolated ()
         {
             Assert.Equal("ENV value", Parsers.InterpolatedValue.AtEnd().Parse("$ENVVAR_TEST").GetValue());
