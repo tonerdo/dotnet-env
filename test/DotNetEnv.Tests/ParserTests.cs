@@ -66,17 +66,14 @@ namespace DotNetEnv.Tests
         public void IdentifierShouldThrowOnParseUntilEnd(string invalidIdentifier) =>
             Assert.Throws<ParseException>(() => Parsers.Identifier.AtEnd().Parse(invalidIdentifier));
 
-        [Fact]
-        public void ParseOctalByte ()
-        {
-            Assert.Equal(33, Parsers.OctalByte.AtEnd().Parse(@"\41"));
-            Assert.Equal(33, Parsers.OctalByte.AtEnd().Parse(@"\041"));
-            Assert.Equal(90, Parsers.OctalByte.AtEnd().Parse(@"\132"));
+        [Theory]
+        [InlineData(33, @"\41")]
+        [InlineData(33, @"\041")]
+        [InlineData(90, @"\132")]
+        //[InlineData(???, @"\412")] // bash accepts values outside of ASCII range? check printf "\412"
+        public void OctalByteShouldParseUntilEnd(byte expected, string input) =>
+            Assert.Equal(expected, Parsers.OctalByte.AtEnd().Parse(input));
 
-            // NOTE that bash accepts values outside of ASCII range?
-            // printf "\412"
-            //Assert.Equal(???, Parsers.OctalChar.AtEnd().Parse(@"\412"));
-        }
 
         [Fact]
         public void ParseOctalChar ()
