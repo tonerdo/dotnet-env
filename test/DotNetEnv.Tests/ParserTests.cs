@@ -138,17 +138,26 @@ namespace DotNetEnv.Tests
         public void InterpolatedValueShouldParseUntilEnd(string expected, string input) =>
             Assert.Equal(expected, Parsers.InterpolatedValue.AtEnd().Parse(input).GetValue());
 
-        [Fact]
-        public void ParseNotControlNorWhitespace ()
-        {
-            Assert.Equal("a", Parsers.NotControlNorWhitespace(EXCEPT_CHARS).AtEnd().Parse("a"));
-            Assert.Equal("%", Parsers.NotControlNorWhitespace(EXCEPT_CHARS).AtEnd().Parse("%"));
-            Assert.Throws<ParseException>(() => Parsers.NotControlNorWhitespace(EXCEPT_CHARS).AtEnd().Parse(" "));
-            Assert.Throws<ParseException>(() => Parsers.NotControlNorWhitespace(EXCEPT_CHARS).AtEnd().Parse("\n"));
-            Assert.Throws<ParseException>(() => Parsers.NotControlNorWhitespace(EXCEPT_CHARS).AtEnd().Parse("'"));
-            Assert.Throws<ParseException>(() => Parsers.NotControlNorWhitespace(EXCEPT_CHARS).AtEnd().Parse("\""));
-            Assert.Throws<ParseException>(() => Parsers.NotControlNorWhitespace(EXCEPT_CHARS).AtEnd().Parse("$"));
-        }
+        [Theory]
+        [InlineData("a", "a", "")]
+        [InlineData("%", "%", "")]
+        [InlineData("\"", "\"", "1")]
+        [InlineData("$","$", "1")]
+        [InlineData("a","a", "1")]
+        public void NotControlNorWhitespaceShouldParseUntilEnd(string expected, string input, string excludedChars) =>
+            Assert.Equal(expected, Parsers.NotControlNorWhitespace(excludedChars).AtEnd().Parse(input));
+
+        [Theory]
+        [InlineData(" ", "")]
+        [InlineData(" ", "1234")]
+        [InlineData("\n", "")]
+        [InlineData("'", "'")]
+        [InlineData("\"", "\"")]
+        [InlineData("$", "$")]
+        [InlineData("a", "a")]
+        public void NotControlNorWhitespaceShouldThrowOnParseUntilEnd(string invalidInput, string excludedChars) =>
+            Assert.Throws<ParseException>(() =>
+                Parsers.NotControlNorWhitespace(excludedChars).AtEnd().Parse(invalidInput));
 
         [Fact]
         public void ParseSpecialChar ()
