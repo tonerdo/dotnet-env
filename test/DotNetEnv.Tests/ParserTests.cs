@@ -104,16 +104,11 @@ namespace DotNetEnv.Tests
         public void Utf16CharShouldParseUntilEnd(string expected, string input) =>
             Assert.Equal(expected, Parsers.Utf16Char.AtEnd().Parse(input));
 
-
-        [Fact]
-        public void ParseUtf32Char ()
-        {
-            Assert.Equal(RocketChar, Parsers.Utf32Char.AtEnd().Parse(@"\U0001F680"));
-            Assert.Equal(RocketChar, Parsers.Utf32Char.AtEnd().Parse(@"\U1F680"));
-
-            Assert.Equal(RocketChar, Encoding.UTF32.GetString(new byte[] { 0x80, 0xf6, 0x01, 0x00 }));
-            Assert.Equal(RocketChar, Encoding.UTF32.GetString(new byte[] { 0x80, 0xf6, 0x1, 0x0 }));
-        }
+        [Theory]
+        [InlineData(UnicodeChars.Rocket, @"\U0001F680")]
+        [InlineData(UnicodeChars.Rocket, @"\U1F680")]
+        public void Utf32CharShouldParseUntilEnd(string expected, string input) =>
+            Assert.Equal(expected, Parsers.Utf32Char.AtEnd().Parse(input));
 
         [Fact]
         public void ParseEscapedChar ()
