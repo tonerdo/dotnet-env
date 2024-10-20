@@ -261,19 +261,16 @@ namespace DotNetEnv.Tests
         public void DoubleQuotedValueContentsShouldParseUntilEnd(string expected, string input) =>
             Assert.Equal(expected, Parsers.DoubleQuotedValueContents.AtEnd().Parse(input).Value);
 
-        [Fact]
-        public void ParseSingleQuotedValueContents ()
-        {
-            Assert.Equal("abc", Parsers.SingleQuotedValueContents.AtEnd().Parse("abc").Value);
-            Assert.Equal("a b c", Parsers.SingleQuotedValueContents.AtEnd().Parse("a b c").Value);
-            Assert.Equal("0\n1", Parsers.SingleQuotedValueContents.AtEnd().Parse("0\n1").Value);
-            Assert.Equal(@"\xe6\x97\xa5 \xe6\x9c\xac", Parsers.SingleQuotedValueContents.AtEnd().Parse(@"\xe6\x97\xa5 \xe6\x9c\xac").Value);
-            Assert.Equal(@"\xE2\x98\xA0 \uae", Parsers.SingleQuotedValueContents.AtEnd().Parse(@"\xE2\x98\xA0 \uae").Value);
-
-            Assert.Equal("\\xe6\\x97\\xa5 $ENVVAR_TEST 本", Parsers.SingleQuotedValueContents.AtEnd().Parse("\\xe6\\x97\\xa5 $ENVVAR_TEST 本").Value);
-
-            Assert.Equal("a\"b c", Parsers.SingleQuotedValueContents.AtEnd().Parse("a\"b c").Value);
-        }
+        [Theory]
+        [InlineData("abc", "abc")]
+        [InlineData("a b c", "a b c")]
+        [InlineData("0\n1", "0\n1")]
+        [InlineData(@"\xe6\x97\xa5 \xe6\x9c\xac", @"\xe6\x97\xa5 \xe6\x9c\xac")]
+        [InlineData(@"\xE2\x98\xA0 \uae", @"\xE2\x98\xA0 \uae")]
+        [InlineData(@"\xe6\x97\xa5 $ENVVAR_TEST 本", @"\xe6\x97\xa5 $ENVVAR_TEST 本")]
+        [InlineData("a\"b c", "a\"b c")]
+        public void SingleQuotedValueContentsShouldParseUntilEnd(string expected, string input) =>
+            Assert.Equal(expected, Parsers.SingleQuotedValueContents.AtEnd().Parse(input).Value);
 
         [Fact]
         public void ParseSingleQuotedValue ()
