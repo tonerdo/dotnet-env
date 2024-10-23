@@ -301,46 +301,47 @@ namespace DotNetEnv.Tests
         public void ExportExpressionShouldThrowOnParseUntilEnd(string invalidInput) =>
             Assert.Throws<ParseException>(() => Parsers.ExportExpression.AtEnd().Parse(invalidInput));
 
-        [Fact]
-        public void ParseValue ()
-        {
-            Assert.Equal("abc", Parsers.Value.AtEnd().Parse("abc").Value);
-            Assert.Equal("a b c", Parsers.Value.AtEnd().Parse("a b c").Value);
-            Assert.Equal("a b c", Parsers.Value.AtEnd().Parse("'a b c'").Value);
-            Assert.Equal("a#b#c", Parsers.Value.AtEnd().Parse("a#b#c").Value);
-            Assert.Equal("041", Parsers.Value.AtEnd().Parse("041").Value);
-            Assert.Equal("日本", Parsers.Value.AtEnd().Parse("日本").Value);
+        [Theory]
+        [InlineData("abc", "abc")]
+        [InlineData("abc", "'abc'")]
+        [InlineData("abc", "\"abc\"")]
+        [InlineData("a b c", "a b c")]
+        [InlineData("a b c", "'a b c'")]
+        [InlineData("a b c", "\"a b c\"")]
+        [InlineData("a#b#c", "a#b#c")]
+        [InlineData("041", "041")]
+        [InlineData("日本", "日本")]
+        [InlineData(@"\xe6\x97\xa5\xe6\x9c\xac", @"\xe6\x97\xa5\xe6\x9c\xac")]
+        [InlineData(@"\xe6\x97\xa5\xe6\x9c\xac", @"'\xe6\x97\xa5\xe6\x9c\xac'")]
+        [InlineData(@"\xe6\x97\xa5 \xe6\x9c\xac", @"'\xe6\x97\xa5 \xe6\x9c\xac'")]
+        [InlineData("日本", "\"\\xe6\\x97\\xa5\\xe6\\x9c\\xac\"")]
+        [InlineData("日 本", "\"\\xe6\\x97\\xa5 \\xe6\\x9c\\xac\"")]
+        [InlineData(@"\xe6\x97\xa5", @"\xe6\x97\xa5")]
+        [InlineData(@"\xE2\x98\xA0", @"\xE2\x98\xA0")]
+        [InlineData("0\n1", "'0\n1'")]
+        [InlineData("0\n1", "\"0\n1\"")]
+        [InlineData(@"\xE2\x98\xA0 \uae", @"'\xE2\x98\xA0 \uae'")]
+        [InlineData("☠ ®", "\"\\xE2\\x98\\xA0 \\uae\"")]
+        [InlineData("日 ENV value 本", "\"\\xe6\\x97\\xa5 $ENVVAR_TEST 本\"")]
+        public void ParseShouldParseUntilEnd(string expected, string input) =>
+            Assert.Equal(expected, Parsers.Value.AtEnd().Parse(input).Value);
 
-            Assert.Equal(@"\xe6\x97\xa5\xe6\x9c\xac", Parsers.Value.AtEnd().Parse(@"\xe6\x97\xa5\xe6\x9c\xac").Value);
-            Assert.Equal(@"\xe6\x97\xa5\xe6\x9c\xac", Parsers.Value.AtEnd().Parse(@"'\xe6\x97\xa5\xe6\x9c\xac'").Value);
-            Assert.Equal("日本", Parsers.Value.AtEnd().Parse("\"\\xe6\\x97\\xa5\\xe6\\x9c\\xac\"").Value);
+        [Theory]
+        [InlineData("0", "0\n1")] // value ends at linebreak
+        public void ParseShouldParse(string expected, string input) =>
+            Assert.Equal(expected, Parsers.Value.Parse(input).Value);
 
-            Assert.Throws<ParseException>(() => Parsers.Value.AtEnd().Parse("0\n1"));
-            Assert.Throws<ParseException>(() => Parsers.Value.Parse(" "));
+        [Theory]
+        [InlineData("0\n1")]
+        public void ParseShouldThrowOnParseUntilEnd(string invalidInput) =>
+            Assert.Throws<ParseException>(() => Parsers.Value.AtEnd().Parse(invalidInput));
 
-            Assert.Equal("0", Parsers.Value.Parse("0\n1").Value);   // value ends on linebreak
-
-            // throw on unmatched quotes
-            Assert.Throws<ParseException>(() => Parsers.Value.Parse("'"));
-            Assert.Throws<ParseException>(() => Parsers.Value.Parse("\""));
-
-            Assert.Equal(@"\xe6\x97\xa5", Parsers.Value.AtEnd().Parse(@"\xe6\x97\xa5").Value);
-            Assert.Equal(@"\xE2\x98\xA0", Parsers.Value.AtEnd().Parse(@"\xE2\x98\xA0").Value);
-
-            Assert.Equal("abc", Parsers.Value.AtEnd().Parse("'abc'").Value);
-            Assert.Equal("a b c", Parsers.Value.AtEnd().Parse("'a b c'").Value);
-            Assert.Equal("0\n1", Parsers.Value.AtEnd().Parse("'0\n1'").Value);
-            Assert.Equal(@"\xe6\x97\xa5 \xe6\x9c\xac", Parsers.Value.AtEnd().Parse(@"'\xe6\x97\xa5 \xe6\x9c\xac'").Value);
-            Assert.Equal(@"\xE2\x98\xA0 \uae", Parsers.Value.AtEnd().Parse(@"'\xE2\x98\xA0 \uae'").Value);
-
-            Assert.Equal("abc", Parsers.Value.AtEnd().Parse("\"abc\"").Value);
-            Assert.Equal("a b c", Parsers.Value.AtEnd().Parse("\"a b c\"").Value);
-            Assert.Equal("0\n1", Parsers.Value.AtEnd().Parse("\"0\n1\"").Value);
-            Assert.Equal("日 本", Parsers.Value.AtEnd().Parse("\"\\xe6\\x97\\xa5 \\xe6\\x9c\\xac\"").Value);
-            Assert.Equal("☠ ®", Parsers.Value.AtEnd().Parse("\"\\xE2\\x98\\xA0 \\uae\"").Value);
-
-            Assert.Equal("日 ENV value 本", Parsers.Value.AtEnd().Parse("\"\\xe6\\x97\\xa5 $ENVVAR_TEST 本\"").Value);
-        }
+        [Theory]
+        [InlineData(" ")]
+        [InlineData("'")] // unmatched quote
+        [InlineData("\"")] // unmatched quote
+        public void ParseShouldThrowOnParse(string invalidInput) =>
+            Assert.Throws<ParseException>(() => Parsers.Value.Parse(invalidInput));
 
         [Fact]
         public void ParseAssignment ()
