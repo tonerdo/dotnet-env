@@ -404,73 +404,25 @@ namespace DotNetEnv.Tests
         public void AssignmentShouldThrowOnParse(string invalidInput) =>
             Assert.Throws<ParseException>(() => Parsers.Assignment.Parse(invalidInput));
 
-        [Fact]
-        public void ParseDotenvFile ()
-        {
-            Action<KeyValuePair<string, string>[], string> testParse = (expecteds, input) =>
+        private static readonly IDictionary<string, (string Contents, KeyValuePair<string, string>[] ExpectedPairs)>
+            ParseDotEnvTests = new Dictionary<string, (string, KeyValuePair<string, string>[])>
             {
-                var outputs = Parsers.ParseDotenvFile(input, Parsers.SetEnvVar).ToArray();
-                Assert.Equal(expecteds.Length, outputs.Length);
-
-                for (var i = 0; i < outputs.Length; i++)
-                {
-                    Assert.Equal(expecteds[i].Key, outputs[i].Key);
-                    Assert.Equal(expecteds[i].Value, outputs[i].Value);
-                    Assert.Equal(expecteds[i].Value, Environment.GetEnvironmentVariable(outputs[i].Key));
-                }
-            };
-
-            string contents;
-            KeyValuePair<string, string>[] expecteds;
-
-            contents = @"";
-            expecteds = new KeyValuePair<string, string>[] {};
-            testParse(expecteds, contents);
-
-            contents = @"EV_DNE=abc";
-            expecteds = new[] {
-                new KeyValuePair<string, string>("EV_DNE", "abc"),
-            };
-            testParse(expecteds, contents);
-
-            contents = "SET EV_DNE=\"0\n1\"";
-            expecteds = new[] {
-                new KeyValuePair<string, string>("EV_DNE", "0\n1"),
-            };
-            testParse(expecteds, contents);
-
-            contents = "EV_DNE=0\n1";
-            Assert.Throws<ParseException>(() => Parsers.ParseDotenvFile(contents, Parsers.SetEnvVar));
-
-            contents = @"
+                ["1"] = ("", Array.Empty<KeyValuePair<string, string>>()),
+                ["2"] = ("EV_DNE=abc", new[] { new KeyValuePair<string, string>("EV_DNE", "abc") }),
+                ["3"] = ("SET EV_DNE=\"0\n1\"", new[] { new KeyValuePair<string, string>("EV_DNE", "0\n1") }),
+                ["4"] = (@"
 # this is a header
 
 export EV_DNE='a b c' #works!
-";
-            expecteds = new[] {
-                new KeyValuePair<string, string>("EV_DNE", "a b c"),
-            };
-            testParse(expecteds, contents);
-
-            contents = "# this is a header\nexport EV_DNE='d e f' #works!";
-            expecteds = new[] {
-                new KeyValuePair<string, string>("EV_DNE", "d e f"),
-            };
-            testParse(expecteds, contents);
-
-            contents = "#\n# this is a header\n#\n\nexport EV_DNE='g h i' #yep still\n";
-            expecteds = new[] {
-                new KeyValuePair<string, string>("EV_DNE", "g h i"),
-            };
-            testParse(expecteds, contents);
-
-            contents = "#\n# this is a header\n#\n\nexport EV_DNE=\"\\xe6\\x97\\xa5 $ENVVAR_TEST 本\" #yep still\n";
-            expecteds = new[] {
-                new KeyValuePair<string, string>("EV_DNE", "日 ENV value 本"),
-            };
-            testParse(expecteds, contents);
-
-            contents = @"#
+"
+                    , new[] { new KeyValuePair<string, string>("EV_DNE", "a b c") }),
+                ["5"] = ("# this is a header\nexport EV_DNE='d e f' #works!",
+                    new[] { new KeyValuePair<string, string>("EV_DNE", "d e f") }),
+                ["6"] = ("#\n# this is a header\n#\n\nexport EV_DNE='g h i' #yep still\n",
+                    new[] { new KeyValuePair<string, string>("EV_DNE", "g h i") }),
+                ["7"] = ("#\n# this is a header\n#\n\nexport EV_DNE=\"\\xe6\\x97\\xa5 $ENVVAR_TEST 本\" #yep still\n",
+                    new[] { new KeyValuePair<string, string>("EV_DNE", "日 ENV value 本") }),
+                ["8"] = (@"#
 # this is a header
 #
 
@@ -483,15 +435,42 @@ SET EV_TEST_2='☠
 ®'#c
 
 ENVVAR_TEST = ' yahooooo '
-";
-            expecteds = new[] {
-                new KeyValuePair<string, string>("EV_DNE", "x y z"),
-                new KeyValuePair<string, string>("EV_TEST_1", "日 $ENVVAR_TEST 本"),
-                new KeyValuePair<string, string>("EV_TEST_2", "☠\n®"),
-                new KeyValuePair<string, string>("ENVVAR_TEST", " yahooooo "),
+",
+                    new[]
+                    {
+                        new KeyValuePair<string, string>("EV_DNE", "x y z"),
+                        new KeyValuePair<string, string>("EV_TEST_1", "日 $ENVVAR_TEST 本"),
+                        new KeyValuePair<string, string>("EV_TEST_2", "☠\n®"),
+                        new KeyValuePair<string, string>("ENVVAR_TEST", " yahooooo "),
+                    }),
             };
-            testParse(expecteds, contents);
+        [Theory]
+        [InlineData("1")]
+        [InlineData("2")]
+        [InlineData("3")]
+        [InlineData("4")]
+        [InlineData("5")]
+        [InlineData("6")]
+        [InlineData("7")]
+        [InlineData("8")]
+        public void ParseDotenvFileShouldParseContents(string testKey)
+        {
+            var (contents, expectedPairs) = ParseDotEnvTests[testKey];
+
+            var outputs = Parsers.ParseDotenvFile(contents, Parsers.SetEnvVar).ToArray();
+            Assert.Equal(expectedPairs.Length, outputs.Length);
+
+            foreach (var (output, expected) in outputs.Zip(expectedPairs))
+            {
+                Assert.Equal(expected, output);
+                Assert.Equal(expected.Value, Environment.GetEnvironmentVariable(output.Key));
+            }
         }
+
+        [Theory]
+        [InlineData("EV_DNE=0\n1")]
+        public void ParseDotenvFileShouldThrowOnContents(string invalidContents) =>
+            Assert.Throws<ParseException>(() => Parsers.ParseDotenvFile(invalidContents, Parsers.SetEnvVar));
 
         // C# wow that you can't handle 32 bit unicode as chars. wow. strings for 4 byte chars.
         private struct UnicodeChars
