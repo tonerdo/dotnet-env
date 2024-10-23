@@ -288,15 +288,18 @@ namespace DotNetEnv.Tests
         public void DoubleQuotedValueShouldParseUntilEnd(string expected, string input) =>
             Assert.Equal(expected, Parsers.DoubleQuotedValue.AtEnd().Parse(input).Value);
 
-        [Fact]
-        public void TestExportExpression()
-        {
-            Assert.Throws<ParseException>(() => Parsers.ExportExpression.AtEnd().Parse("identifier "));
-            Assert.Equal("export", Parsers.ExportExpression.AtEnd().Parse("export "));
-            Assert.Equal("set -x", Parsers.ExportExpression.AtEnd().Parse("set -x "));
-            Assert.Equal("set", Parsers.ExportExpression.AtEnd().Parse("set "));
-            Assert.Equal("SET", Parsers.ExportExpression.AtEnd().Parse("SET "));
-        }
+        [Theory]
+        [InlineData("export", "export ")]
+        [InlineData("set -x", "set -x ")]
+        [InlineData("set", "set ")]
+        [InlineData("SET", "SET ")]
+        public void TestExportExpression(string expected, string input) => 
+            Assert.Equal(expected, Parsers.ExportExpression.AtEnd().Parse(input));
+
+        [Theory]
+        [InlineData("identifier ")]
+        public void ExportExpressionShouldThrowOnParseUntilEnd(string invalidInput) =>
+            Assert.Throws<ParseException>(() => Parsers.ExportExpression.AtEnd().Parse(invalidInput));
 
         [Fact]
         public void ParseValue ()
