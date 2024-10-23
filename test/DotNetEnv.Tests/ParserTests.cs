@@ -278,17 +278,15 @@ namespace DotNetEnv.Tests
         public void SingleQuotedValueShouldThrowOnParseUntilEnd(string invalidInput) =>
             Assert.Throws<ParseException>(() => Parsers.SingleQuotedValue.AtEnd().Parse(invalidInput).Value);
 
-        [Fact]
-        public void ParseDoubleQuotedValue ()
-        {
-            Assert.Equal("abc", Parsers.DoubleQuotedValue.AtEnd().Parse("\"abc\"").Value);
-            Assert.Equal("a b c", Parsers.DoubleQuotedValue.AtEnd().Parse("\"a b c\"").Value);
-            Assert.Equal("0\n1", Parsers.DoubleQuotedValue.AtEnd().Parse("\"0\n1\"").Value);
-            Assert.Equal("a'bc", Parsers.DoubleQuotedValue.AtEnd().Parse("\"a'bc\"").Value);
-            Assert.Equal("a\"bc", Parsers.DoubleQuotedValue.AtEnd().Parse("\"a\\\"bc\"").Value);
-
-            Assert.Equal("日 ENV value 本", Parsers.DoubleQuotedValue.AtEnd().Parse("\"\\xe6\\x97\\xa5 $ENVVAR_TEST 本\"").Value);
-        }
+        [Theory]
+        [InlineData("abc", "\"abc\"")]
+        [InlineData("a b c", "\"a b c\"")]
+        [InlineData("0\n1", "\"0\n1\"")]
+        [InlineData("a'bc", "\"a'bc\"")]
+        [InlineData("a\"bc", "\"a\\\"bc\"")]
+        [InlineData("日 ENV value 本", "\"\\xe6\\x97\\xa5 $ENVVAR_TEST 本\"")]
+        public void DoubleQuotedValueShouldParseUntilEnd(string expected, string input) =>
+            Assert.Equal(expected, Parsers.DoubleQuotedValue.AtEnd().Parse(input).Value);
 
         [Fact]
         public void TestExportExpression()
