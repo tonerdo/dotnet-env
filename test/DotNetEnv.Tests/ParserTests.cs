@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using DotNetEnv.Tests.XUnit;
 using Xunit;
 using Superpower;
 
@@ -404,7 +405,7 @@ namespace DotNetEnv.Tests
         public void AssignmentShouldThrowOnParse(string invalidInput) =>
             Assert.Throws<ParseException>(() => Parsers.Assignment.Parse(invalidInput));
 
-        public static readonly TheoryData<(string Contents, KeyValuePair<string, string>[] Expecteds)>
+        public static readonly IndexedTheoryData<(string Contents, KeyValuePair<string, string>[] Expecteds)>
             ParseDotEnvTests = new()
             {
                 ("", Array.Empty<KeyValuePair<string, string>>()),
@@ -446,7 +447,7 @@ ENVVAR_TEST = ' yahooooo '
             };
         [Theory]
         [MemberData(nameof(ParseDotEnvTests))]
-        public void ParseDotenvFileShouldParseContents((string Contents, KeyValuePair<string, string>[] Expecteds) testData)
+        public void ParseDotenvFileShouldParseContents(string _, (string Contents, KeyValuePair<string, string>[] Expecteds) testData)
         {
             var (contents, expectedPairs) = testData;
 
