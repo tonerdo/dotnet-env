@@ -404,25 +404,25 @@ namespace DotNetEnv.Tests
         public void AssignmentShouldThrowOnParse(string invalidInput) =>
             Assert.Throws<ParseException>(() => Parsers.Assignment.Parse(invalidInput));
 
-        private static readonly IDictionary<string, (string Contents, KeyValuePair<string, string>[] ExpectedPairs)>
-            ParseDotEnvTests = new Dictionary<string, (string, KeyValuePair<string, string>[])>
+        public static readonly TheoryData<(string Contents, KeyValuePair<string, string>[] Expecteds)>
+            ParseDotEnvTests = new()
             {
-                ["1"] = ("", Array.Empty<KeyValuePair<string, string>>()),
-                ["2"] = ("EV_DNE=abc", new[] { new KeyValuePair<string, string>("EV_DNE", "abc") }),
-                ["3"] = ("SET EV_DNE=\"0\n1\"", new[] { new KeyValuePair<string, string>("EV_DNE", "0\n1") }),
-                ["4"] = (@"
+                ("", Array.Empty<KeyValuePair<string, string>>()),
+                ("EV_DNE=abc", new[] { new KeyValuePair<string, string>("EV_DNE", "abc") }),
+                ("SET EV_DNE=\"0\n1\"", new[] { new KeyValuePair<string, string>("EV_DNE", "0\n1") }),
+                (@"
 # this is a header
 
 export EV_DNE='a b c' #works!
 "
                     , new[] { new KeyValuePair<string, string>("EV_DNE", "a b c") }),
-                ["5"] = ("# this is a header\nexport EV_DNE='d e f' #works!",
+                ("# this is a header\nexport EV_DNE='d e f' #works!",
                     new[] { new KeyValuePair<string, string>("EV_DNE", "d e f") }),
-                ["6"] = ("#\n# this is a header\n#\n\nexport EV_DNE='g h i' #yep still\n",
+                ("#\n# this is a header\n#\n\nexport EV_DNE='g h i' #yep still\n",
                     new[] { new KeyValuePair<string, string>("EV_DNE", "g h i") }),
-                ["7"] = ("#\n# this is a header\n#\n\nexport EV_DNE=\"\\xe6\\x97\\xa5 $ENVVAR_TEST 本\" #yep still\n",
+                ("#\n# this is a header\n#\n\nexport EV_DNE=\"\\xe6\\x97\\xa5 $ENVVAR_TEST 本\" #yep still\n",
                     new[] { new KeyValuePair<string, string>("EV_DNE", "日 ENV value 本") }),
-                ["8"] = (@"#
+                (@"#
 # this is a header
 #
 
@@ -445,17 +445,10 @@ ENVVAR_TEST = ' yahooooo '
                     }),
             };
         [Theory]
-        [InlineData("1")]
-        [InlineData("2")]
-        [InlineData("3")]
-        [InlineData("4")]
-        [InlineData("5")]
-        [InlineData("6")]
-        [InlineData("7")]
-        [InlineData("8")]
-        public void ParseDotenvFileShouldParseContents(string testKey)
+        [MemberData(nameof(ParseDotEnvTests))]
+        public void ParseDotenvFileShouldParseContents((string Contents, KeyValuePair<string, string>[] Expecteds) testData)
         {
-            var (contents, expectedPairs) = ParseDotEnvTests[testKey];
+            var (contents, expectedPairs) = testData;
 
             var outputs = Parsers.ParseDotenvFile(contents, Parsers.SetEnvVar).ToArray();
             Assert.Equal(expectedPairs.Length, outputs.Length);
