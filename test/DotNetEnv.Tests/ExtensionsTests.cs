@@ -1,42 +1,59 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using DotNetEnv.Extensions;
+using DotNetEnv.Tests.XUnit;
 using Xunit;
 
 namespace DotNetEnv.Tests;
 
 public class ExtensionsTests
 {
-    [Fact]
-    public void ToDotEnvDictionaryTest()
+    private static readonly KeyValuePair<string, string> FirstValuePair = new("key", "value");
+    private static readonly KeyValuePair<string, string> FirstValuePairDupe = new("key", "dupe");
+    private static readonly KeyValuePair<string, string> SecondValuePair = new("key2", "value2");
+
+    private static readonly KeyValuePair<string, string>[] KvpSetNoDupe = { FirstValuePair, SecondValuePair };
+    private static readonly KeyValuePair<string, string>[] KvpSetWithDupe = { FirstValuePair, FirstValuePairDupe };
+
+    public static readonly IndexedTheoryData<KeyValuePair<string, string>[],
+        CreateDictionaryOption,
+        KeyValuePair<string, string>[]> ToDotEnvDictionaryTestData =
+        new()
+        {
+            { KvpSetNoDupe, CreateDictionaryOption.Throw, KvpSetNoDupe },
+            { KvpSetWithDupe, CreateDictionaryOption.TakeFirst, new[] { FirstValuePair } },
+            { KvpSetNoDupe, CreateDictionaryOption.TakeFirst, KvpSetNoDupe },
+            { KvpSetWithDupe, CreateDictionaryOption.TakeLast, new[] { FirstValuePairDupe } },
+            { KvpSetNoDupe, CreateDictionaryOption.TakeLast, KvpSetNoDupe },
+        };
+
+    [Theory]
+    [MemberData(nameof(ToDotEnvDictionaryTestData))]
+    public void ToDotEnvDictionaryWithKvpSetNoDupeShouldContainValues(string _,
+        KeyValuePair<string, string>[] input,
+        CreateDictionaryOption dictionaryOption,
+        KeyValuePair<string, string>[] expectedValues)
     {
-        var kvpSetNoDupe = new List<KeyValuePair<string, string>>()
-        {
-            new("key", "value"),
-            new("key2", "value2"),
-        };
+        var dotEnvDictionary = input.ToDotEnvDictionary(dictionaryOption);
 
-        var kvpSetWithDupe = new List<KeyValuePair<string, string>>()
-        {
-            new("key", "value"),
-            new("key", "value2"),
-        };
-
-        Assert.Throws<ArgumentException>(() => kvpSetWithDupe.ToDotEnvDictionary(CreateDictionaryOption.Throw));
-        var noDupeAndThrowOption = kvpSetNoDupe.ToDotEnvDictionary(CreateDictionaryOption.Throw);
-        Assert.Equal("value", noDupeAndThrowOption["key"]);
-        Assert.Equal("value2", noDupeAndThrowOption["key2"]);
-
-        var withDupeAndTakeFirstOption = kvpSetWithDupe.ToDotEnvDictionary(CreateDictionaryOption.TakeFirst);
-        Assert.Equal("value", withDupeAndTakeFirstOption["key"]);
-        var noDupeAndTakeFirstOption = kvpSetNoDupe.ToDotEnvDictionary(CreateDictionaryOption.TakeFirst);
-        Assert.Equal("value", noDupeAndTakeFirstOption["key"]);
-        Assert.Equal("value2", noDupeAndTakeFirstOption["key2"]);
-
-        var withDupeAndTakeLastOption = kvpSetWithDupe.ToDotEnvDictionary();
-        Assert.Equal("value2", withDupeAndTakeLastOption["key"]);
-        var noDupeAndTakeLastOption = kvpSetNoDupe.ToDotEnvDictionary();
-        Assert.Equal("value", noDupeAndTakeLastOption["key"]);
-        Assert.Equal("value2", noDupeAndTakeLastOption["key2"]);
+        foreach (var expectedValue in expectedValues)
+            Assert.Equal(expectedValue.Value, dotEnvDictionary[expectedValue.Key]);
     }
+
+    [Theory]
+    [MemberData(nameof(ToDotEnvDictionaryTestData))]
+    public void ToDotEnvDictionaryWithKvpSetNoDupeShouldHaveCorrectNumberOfEntries(string _,
+        KeyValuePair<string, string>[] input,
+        CreateDictionaryOption dictionaryOption,
+        KeyValuePair<string, string>[] expectedValues)
+    {
+        var dotEnvDictionary = input.ToDotEnvDictionary(dictionaryOption);
+
+        Assert.Equal(expectedValues.Length, dotEnvDictionary.Count);
+    }
+
+    [Fact]
+    public void ToDotEnvDictionaryWithThrowOptionShouldThrowOnDupes() =>
+        Assert.Throws<ArgumentException>(() => KvpSetWithDupe.ToDotEnvDictionary(CreateDictionaryOption.Throw));
 }
