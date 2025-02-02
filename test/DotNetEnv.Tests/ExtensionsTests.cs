@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using DotNetEnv.Extensions;
 using DotNetEnv.Tests.XUnit;
 using Xunit;
@@ -16,17 +15,18 @@ public class ExtensionsTests
     private static readonly KeyValuePair<string, string>[] KvpSetNoDupe = { FirstValuePair, SecondValuePair };
     private static readonly KeyValuePair<string, string>[] KvpSetWithDupe = { FirstValuePair, FirstValuePairDupe };
 
-    public static readonly IndexedTheoryData<KeyValuePair<string, string>[],
-        CreateDictionaryOption,
-        KeyValuePair<string, string>[]> ToDotEnvDictionaryTestData =
-        new()
-        {
-            { KvpSetNoDupe, CreateDictionaryOption.Throw, KvpSetNoDupe },
-            { KvpSetWithDupe, CreateDictionaryOption.TakeFirst, new[] { FirstValuePair } },
-            { KvpSetNoDupe, CreateDictionaryOption.TakeFirst, KvpSetNoDupe },
-            { KvpSetWithDupe, CreateDictionaryOption.TakeLast, new[] { FirstValuePairDupe } },
-            { KvpSetNoDupe, CreateDictionaryOption.TakeLast, KvpSetNoDupe },
-        };
+    public static readonly TheoryData<
+            string, KeyValuePair<string, string>[], CreateDictionaryOption, KeyValuePair<string, string>[]>
+        ToDotEnvDictionaryTestData =
+            new IndexedTheoryData<
+                KeyValuePair<string, string>[], CreateDictionaryOption, KeyValuePair<string, string>[]>
+            {
+                { KvpSetNoDupe, CreateDictionaryOption.Throw, KvpSetNoDupe },
+                { KvpSetWithDupe, CreateDictionaryOption.TakeFirst, new[] { FirstValuePair } },
+                { KvpSetNoDupe, CreateDictionaryOption.TakeFirst, KvpSetNoDupe },
+                { KvpSetWithDupe, CreateDictionaryOption.TakeLast, new[] { FirstValuePairDupe } },
+                { KvpSetNoDupe, CreateDictionaryOption.TakeLast, KvpSetNoDupe },
+            };
 
     [Theory]
     [MemberData(nameof(ToDotEnvDictionaryTestData))]

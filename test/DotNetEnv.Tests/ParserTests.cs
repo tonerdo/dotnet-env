@@ -405,33 +405,34 @@ namespace DotNetEnv.Tests
         public void AssignmentShouldThrowOnParse(string invalidInput) =>
             Assert.Throws<ParseException>(() => Parsers.Assignment.Parse(invalidInput));
 
-        public static readonly IndexedTheoryData<string, KeyValuePair<string, string>[]> ParseDotEnvTests = new()
-        {
-            { "", Array.Empty<KeyValuePair<string, string>>() },
-            { "EV_DNE=abc", new[] { new KeyValuePair<string, string>("EV_DNE", "abc") } },
-            { "SET EV_DNE=\"0\n1\"", new[] { new KeyValuePair<string, string>("EV_DNE", "0\n1") } },
+        public static readonly TheoryData<string, string, KeyValuePair<string, string>[]> ParseDotEnvTests =
+            new IndexedTheoryData<string, KeyValuePair<string, string>[]>()
             {
-                @"
+                { "", Array.Empty<KeyValuePair<string, string>>() },
+                { "EV_DNE=abc", new[] { new KeyValuePair<string, string>("EV_DNE", "abc") } },
+                { "SET EV_DNE=\"0\n1\"", new[] { new KeyValuePair<string, string>("EV_DNE", "0\n1") } },
+                {
+                    @"
 # this is a header
 
 export EV_DNE='a b c' #works!
 ",
-                new[] { new KeyValuePair<string, string>("EV_DNE", "a b c") }
-            },
-            {
-                "# this is a header\nexport EV_DNE='d e f' #works!",
-                new[] { new KeyValuePair<string, string>("EV_DNE", "d e f") }
-            },
-            {
-                "#\n# this is a header\n#\n\nexport EV_DNE='g h i' #yep still\n",
-                new[] { new KeyValuePair<string, string>("EV_DNE", "g h i") }
-            },
-            {
-                "#\n# this is a header\n#\n\nexport EV_DNE=\"\\xe6\\x97\\xa5 $ENVVAR_TEST 本\" #yep still\n",
-                new[] { new KeyValuePair<string, string>("EV_DNE", "日 ENV value 本") }
-            },
-            {
-                @"#
+                    new[] { new KeyValuePair<string, string>("EV_DNE", "a b c") }
+                },
+                {
+                    "# this is a header\nexport EV_DNE='d e f' #works!",
+                    new[] { new KeyValuePair<string, string>("EV_DNE", "d e f") }
+                },
+                {
+                    "#\n# this is a header\n#\n\nexport EV_DNE='g h i' #yep still\n",
+                    new[] { new KeyValuePair<string, string>("EV_DNE", "g h i") }
+                },
+                {
+                    "#\n# this is a header\n#\n\nexport EV_DNE=\"\\xe6\\x97\\xa5 $ENVVAR_TEST 本\" #yep still\n",
+                    new[] { new KeyValuePair<string, string>("EV_DNE", "日 ENV value 本") }
+                },
+                {
+                    @"#
 # this is a header
 #
 
@@ -445,15 +446,15 @@ SET EV_TEST_2='☠
 
 ENVVAR_TEST = ' yahooooo '
 ",
-                new[]
-                {
-                    new KeyValuePair<string, string>("EV_DNE", "x y z"),
-                    new KeyValuePair<string, string>("EV_TEST_1", "日 $ENVVAR_TEST 本"),
-                    new KeyValuePair<string, string>("EV_TEST_2", "☠\n®"),
-                    new KeyValuePair<string, string>("ENVVAR_TEST", " yahooooo "),
-                }
-            },
-        };
+                    new[]
+                    {
+                        new KeyValuePair<string, string>("EV_DNE", "x y z"),
+                        new KeyValuePair<string, string>("EV_TEST_1", "日 $ENVVAR_TEST 本"),
+                        new KeyValuePair<string, string>("EV_TEST_2", "☠\n®"),
+                        new KeyValuePair<string, string>("ENVVAR_TEST", " yahooooo "),
+                    }
+                },
+            };
 
         [Theory]
         [MemberData(nameof(ParseDotEnvTests))]

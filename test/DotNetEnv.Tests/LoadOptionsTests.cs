@@ -1,3 +1,4 @@
+using System;
 using DotNetEnv.Tests.XUnit;
 using Xunit;
 
@@ -5,9 +6,9 @@ namespace DotNetEnv.Tests
 {
     public class LoadOptionsTests
     {
-        public static readonly IndexedTheoryData<LoadOptions,
+        public static readonly TheoryData<string, LoadOptions,
                 (bool ExpectedSetEnvVars, bool ExpectedClobberExistingVars, bool ExpectedOnlyExactPath)>
-            LoadOptionTestCombinations = new()
+            LoadOptionTestCombinations = new IndexedTheoryData<LoadOptions, (bool ExpectedSetEnvVars, bool ExpectedClobberExistingVars, bool ExpectedOnlyExactPath)>()
             {
                 { Env.NoEnvVars(), (false, true, true) },
                 { Env.NoClobber(), (true, false, true) },
