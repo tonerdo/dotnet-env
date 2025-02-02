@@ -29,3 +29,12 @@ public class IndexedTheoryData<T1, T2, T3> : TheoryData<string, T1, T2, T3>
         AddRow($"{_index++,4}; {callerMemberName}:{callerLineNumber}", p1, p2, p3);
     }
 }
+
+public class IndexedTheoryData<T1, T2, T3, T4> : TheoryData<string, T1, T2, T3, T4>
+{
+    private int _index = 0;
+    public void Add(T1 p1, T2 p2, T3 p3, T4 p4, [CallerMemberName]string callerMemberName = null, [CallerLineNumber]int callerLineNumber = 0)
+    {
+        AddRow($"{_index++,4}; {callerMemberName}:{callerLineNumber}", p1, p2, p3, p4);
+    }
+}

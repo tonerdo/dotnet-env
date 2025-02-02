@@ -15,37 +15,40 @@ public class ExtensionsTests
     private static readonly KeyValuePair<string, string>[] KvpSetNoDupe = { FirstValuePair, SecondValuePair };
     private static readonly KeyValuePair<string, string>[] KvpSetWithDupe = { FirstValuePair, FirstValuePairDupe };
 
+    /// <summary>
+    /// Data: _, dictionaryOption, input, expectedValue
+    /// </summary>
     public static readonly TheoryData<
-            string, KeyValuePair<string, string>[], CreateDictionaryOption, KeyValuePair<string, string>[]>
+            string, CreateDictionaryOption, KeyValuePair<string, string>[], KeyValuePair<string, string>[]>
         ToDotEnvDictionaryTestData =
             new IndexedTheoryData<
-                KeyValuePair<string, string>[], CreateDictionaryOption, KeyValuePair<string, string>[]>
+                CreateDictionaryOption, KeyValuePair<string, string>[], KeyValuePair<string, string>[]>
             {
-                { KvpSetNoDupe, CreateDictionaryOption.Throw, KvpSetNoDupe },
-                { KvpSetWithDupe, CreateDictionaryOption.TakeFirst, new[] { FirstValuePair } },
-                { KvpSetNoDupe, CreateDictionaryOption.TakeFirst, KvpSetNoDupe },
-                { KvpSetWithDupe, CreateDictionaryOption.TakeLast, new[] { FirstValuePairDupe } },
-                { KvpSetNoDupe, CreateDictionaryOption.TakeLast, KvpSetNoDupe },
+                { CreateDictionaryOption.Throw, KvpSetNoDupe, KvpSetNoDupe },
+                { CreateDictionaryOption.TakeFirst, KvpSetWithDupe, new[] { FirstValuePair } },
+                { CreateDictionaryOption.TakeFirst, KvpSetNoDupe, KvpSetNoDupe },
+                { CreateDictionaryOption.TakeLast, KvpSetWithDupe, new[] { FirstValuePairDupe } },
+                { CreateDictionaryOption.TakeLast, KvpSetNoDupe, KvpSetNoDupe },
             };
 
     [Theory]
     [MemberData(nameof(ToDotEnvDictionaryTestData))]
     public void ToDotEnvDictionaryWithKvpSetNoDupeShouldContainValues(string _,
-        KeyValuePair<string, string>[] input,
         CreateDictionaryOption dictionaryOption,
-        KeyValuePair<string, string>[] expectedValues)
+        KeyValuePair<string, string>[] input,
+        KeyValuePair<string, string>[] expected)
     {
         var dotEnvDictionary = input.ToDotEnvDictionary(dictionaryOption);
 
-        foreach (var expectedValue in expectedValues)
-            Assert.Equal(expectedValue.Value, dotEnvDictionary[expectedValue.Key]);
+        foreach (var (key, value) in expected)
+            Assert.Equal(value, dotEnvDictionary[key]);
     }
 
     [Theory]
     [MemberData(nameof(ToDotEnvDictionaryTestData))]
     public void ToDotEnvDictionaryWithKvpSetNoDupeShouldHaveCorrectNumberOfEntries(string _,
-        KeyValuePair<string, string>[] input,
         CreateDictionaryOption dictionaryOption,
+        KeyValuePair<string, string>[] input,
         KeyValuePair<string, string>[] expectedValues)
     {
         var dotEnvDictionary = input.ToDotEnvDictionary(dictionaryOption);

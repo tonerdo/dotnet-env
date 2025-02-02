@@ -405,6 +405,9 @@ namespace DotNetEnv.Tests
         public void AssignmentShouldThrowOnParse(string invalidInput) =>
             Assert.Throws<ParseException>(() => Parsers.Assignment.Parse(invalidInput));
 
+        /// <summary>
+        /// Data: _, contents, expectedPairs
+        /// </summary>
         public static readonly TheoryData<string, string, KeyValuePair<string, string>[]> ParseDotEnvTests =
             new IndexedTheoryData<string, KeyValuePair<string, string>[]>()
             {
