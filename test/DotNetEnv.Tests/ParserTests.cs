@@ -1,9 +1,12 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using DotNetEnv.Superpower;
+using DotNetEnv.Tests.Helper;
 using DotNetEnv.Tests.XUnit;
 using Xunit;
 using Superpower;
+using Superpower.Parsers;
 
 namespace DotNetEnv.Tests
 {
@@ -177,6 +180,20 @@ namespace DotNetEnv.Tests
         [InlineData("\n")]
         public void SpecialCharShouldThrowOnParseUntilEnd(string invalidInput) =>
             Assert.Throws<ParseException>(() => Parsers.SpecialChar.AtEnd().Parse(invalidInput));
+
+        /// <summary>
+        /// this caught a bug, once upon a time, where backslashes were
+        /// processed by NCNW rather than EscapedChar inside SpecialChar
+        /// </summary>
+        [Fact]
+        public void SpecialCharShouldParseEscapedChars()
+        {
+            var parser = Parsers.SpecialChar
+                .Or(Parsers.NotControlNorWhitespace("\"$"))
+                .Or(Character.WhiteSpace.AtLeastOnce().Text());
+
+            Assert.Equal("\"", parser.AtEnd().Parse("\\\""));
+        }
 
         [Theory]
         [InlineData(" comment 1", "# comment 1")]
@@ -479,13 +496,5 @@ ENVVAR_TEST = ' yahooooo '
             Assert.Throws<ParseException>(() => Parsers.ParseDotenvFile(invalidContents, Parsers.SetEnvVar));
 
         // C# wow that you can't handle 32 bit unicode as chars. wow. strings for 4 byte chars.
-        private struct UnicodeChars
-        {
-            // https://stackoverflow.com/questions/602912/how-do-you-echo-a-4-digit-unicode-character-in-bash
-            // printf '\xE2\x98\xA0'
-            // printf ☠ | hexdump  # hexdump has bytes flipped per word (2 bytes, 4 hex)
-
-            public const string Rocket = "\ud83d\ude80"; // 🚀
-        }
     }
 }
