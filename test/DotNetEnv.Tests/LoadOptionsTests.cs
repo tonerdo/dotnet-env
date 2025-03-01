@@ -1,101 +1,41 @@
+using System;
+using DotNetEnv.Tests.XUnit;
 using Xunit;
 
 namespace DotNetEnv.Tests
 {
     public class LoadOptionsTests
     {
-        [Fact]
-        public void StaticEnvTest()
+        /// <summary>
+        /// Data: _, optionsUnderTest, expectedSetEnvVars, expectedClobberExistingVars, expectedOnlyExactPath
+        /// </summary>
+        public static readonly TheoryData<string, LoadOptions, bool , bool, bool>
+            LoadOptionTestCombinations = new IndexedTheoryData<LoadOptions, bool, bool, bool>()
+            {
+                { Env.NoEnvVars(), false, true, true },
+                { Env.NoClobber(), true, false, true },
+                { Env.TraversePath(), true, true, false },
+                { LoadOptions.NoEnvVars(), false, true, true },
+                { LoadOptions.NoClobber(), true, false, true },
+                { LoadOptions.TraversePath(), true, true, false },
+                { new LoadOptions(), true, true, true },
+                { new LoadOptions().NoEnvVars(), false, true, true },
+                { new LoadOptions().NoClobber(), true, false, true },
+                { new LoadOptions().TraversePath(), true, true, false },
+                { Env.NoEnvVars().NoClobber().TraversePath(), false, false, false },
+                { Env.NoClobber().TraversePath(), true, false, false },
+                { Env.NoEnvVars().NoClobber(), false, false, true },
+                { Env.NoEnvVars().TraversePath(), false, true, false },
+            };
+
+        [Theory]
+        [MemberData(nameof(LoadOptionTestCombinations))]
+        public void LoadOptionsShouldHaveCorrectPropertiesSet(string _, LoadOptions optionsUnderTest,
+            bool expectedSetEnvVars, bool expectedClobberExistingVars, bool expectedOnlyExactPath)
         {
-            LoadOptions options;
-
-            options = DotNetEnv.Env.NoEnvVars();
-            Assert.False(options.SetEnvVars);
-            Assert.True(options.ClobberExistingVars);
-            Assert.True(options.OnlyExactPath);
-
-            options = DotNetEnv.Env.NoClobber();
-            Assert.True(options.SetEnvVars);
-            Assert.False(options.ClobberExistingVars);
-            Assert.True(options.OnlyExactPath);
-
-            options = DotNetEnv.Env.TraversePath();
-            Assert.True(options.SetEnvVars);
-            Assert.True(options.ClobberExistingVars);
-            Assert.False(options.OnlyExactPath);
-        }
-
-        [Fact]
-        public void StaticOptionsTest()
-        {
-            LoadOptions options;
-
-            options = DotNetEnv.LoadOptions.NoEnvVars();
-            Assert.False(options.SetEnvVars);
-            Assert.True(options.ClobberExistingVars);
-            Assert.True(options.OnlyExactPath);
-
-            options = DotNetEnv.LoadOptions.NoClobber();
-            Assert.True(options.SetEnvVars);
-            Assert.False(options.ClobberExistingVars);
-            Assert.True(options.OnlyExactPath);
-
-            options = DotNetEnv.LoadOptions.TraversePath();
-            Assert.True(options.SetEnvVars);
-            Assert.True(options.ClobberExistingVars);
-            Assert.False(options.OnlyExactPath);
-        }
-
-        [Fact]
-        public void InstanceTest()
-        {
-            LoadOptions options;
-
-            options = new DotNetEnv.LoadOptions();
-            Assert.True(options.SetEnvVars);
-            Assert.True(options.ClobberExistingVars);
-            Assert.True(options.OnlyExactPath);
-
-            options = new DotNetEnv.LoadOptions().NoEnvVars();
-            Assert.False(options.SetEnvVars);
-            Assert.True(options.ClobberExistingVars);
-            Assert.True(options.OnlyExactPath);
-
-            options = new DotNetEnv.LoadOptions().NoClobber();
-            Assert.True(options.SetEnvVars);
-            Assert.False(options.ClobberExistingVars);
-            Assert.True(options.OnlyExactPath);
-
-            options = new DotNetEnv.LoadOptions().TraversePath();
-            Assert.True(options.SetEnvVars);
-            Assert.True(options.ClobberExistingVars);
-            Assert.False(options.OnlyExactPath);
-        }
-
-        [Fact]
-        public void ComboTest()
-        {
-            LoadOptions options;
-
-            options = DotNetEnv.Env.NoEnvVars().NoClobber().TraversePath();
-            Assert.False(options.SetEnvVars);
-            Assert.False(options.ClobberExistingVars);
-            Assert.False(options.OnlyExactPath);
-
-            options = DotNetEnv.Env.NoClobber().TraversePath();
-            Assert.True(options.SetEnvVars);
-            Assert.False(options.ClobberExistingVars);
-            Assert.False(options.OnlyExactPath);
-
-            options = DotNetEnv.Env.NoEnvVars().NoClobber();
-            Assert.False(options.SetEnvVars);
-            Assert.False(options.ClobberExistingVars);
-            Assert.True(options.OnlyExactPath);
-
-            options = DotNetEnv.Env.NoEnvVars().TraversePath();
-            Assert.False(options.SetEnvVars);
-            Assert.True(options.ClobberExistingVars);
-            Assert.False(options.OnlyExactPath);
+            Assert.Equal(expectedSetEnvVars, optionsUnderTest.SetEnvVars);
+            Assert.Equal(expectedClobberExistingVars, optionsUnderTest.ClobberExistingVars);
+            Assert.Equal(expectedOnlyExactPath, optionsUnderTest.OnlyExactPath);
         }
     }
 }
