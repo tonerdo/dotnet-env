@@ -1,5 +1,7 @@
 namespace DotNetEnv.Tests.Helper;
 
+
+// C# wow that you can't handle 32 bit unicode as chars. wow. strings for 4 byte chars.
 public struct UnicodeChars
 {
     // https://stackoverflow.com/questions/602912/how-do-you-echo-a-4-digit-unicode-character-in-bash
