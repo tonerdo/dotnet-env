@@ -92,6 +92,7 @@ namespace DotNetEnv.Tests
         public void Utf32CharShouldParseUntilEnd(string expected, string input) =>
             Assert.Equal(expected, Parsers.Utf32Char.AtEnd().Parse(input));
 
+        [Theory]
         [InlineData("\b", "\\b")]
         [InlineData("'", "\\'")]
         [InlineData("\"", "\\\"")]
@@ -477,7 +478,5 @@ ENVVAR_TEST = ' yahooooo '
         [InlineData("EV_DNE=0\n1")]
         public void ParseDotenvFileShouldThrowOnContents(string invalidContents) =>
             Assert.Throws<ParseException>(() => Parsers.ParseDotenvFile(invalidContents));
-
-        // C# wow that you can't handle 32 bit unicode as chars. wow. strings for 4 byte chars.
     }
 }
