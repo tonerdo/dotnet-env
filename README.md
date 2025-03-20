@@ -229,18 +229,6 @@ The options for the export keyword are:
 This allows the `.env` file itself to be `source`-d like `. .env`
  to load the env vars into a terminal session directly.
 
-Interpolation (also known as variable expansion) is supported and applied for unquoted
- and double-quoted values. Both braced (${VAR}) and unbraced ($VAR) expressions are supported.
-
-Direct interpolation
-${VAR} -> value of VAR
-Default value
-${VAR:-default} -> value of VAR if set and non-empty, otherwise default
-${VAR-default} -> value of VAR if set, otherwise default
-Alternative value
-${VAR:-alternate} -> value of alternate if VAR is set and non-empty, otherwise empty ''
-${VAR-alternate} -> value of alternate if VAR is set and non-empty, otherwise empty ''
-
 The options for quoting values are:
 
 1. `""` double: can have everything: interpolated variables, plus whitespace, escaped chars, and byte code chars
