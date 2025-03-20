@@ -192,7 +192,8 @@ namespace DotNetEnv
         internal static readonly TextParser<IInterpolationHandler> RequiredInterpolatedValue =
             (from _c in Colon.Optional()
                 from _d in Character.EqualTo('?')
-                from _ in Span.EqualTo("error").Or(Span.EqualTo("err"))
+                from _p in Span.EqualTo("err")
+                from _s in Span.EqualTo("or").Optional()
                 select new RequiredInterpolationHandler() as IInterpolationHandler).Try();
 
         internal static readonly TextParser<IInterpolationHandler> AlternativeInterpolatedValue =

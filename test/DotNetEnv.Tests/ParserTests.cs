@@ -136,6 +136,49 @@ namespace DotNetEnv.Tests
             Assert.Equal(expected, Parsers.InterpolatedValue.AtEnd().Parse(input).GetValue());
 
         [Theory]
+        [InlineData("ENV value", "${ENVVAR_TEST:-default}")]
+        [InlineData("ENV value", "${ENVVAR_TEST-default}")]
+        [InlineData("default", "${EV_TEST_EMPTY:-default}")]
+        [InlineData("default", "${EV_TEST_EMPTY-default}")]
+        [InlineData("default", "${EV_TEST_UNSET:-default}")]
+        [InlineData("default", "${EV_TEST_UNSET-default}")]
+        public void InterpolatedValueWithDefaultValueShouldParseUntilEnd(string expected, string input) =>
+            Assert.Equal(expected, Parsers.InterpolatedBracesEnvVar.AtEnd().Parse(input).GetValue());
+
+        [Theory]
+        [InlineData("ENV value", "${ENVVAR_TEST:?error}")]
+        [InlineData("ENV value", "${ENVVAR_TEST?error}")]
+        [InlineData("ENV value", "${ENVVAR_TEST:?err}")]
+        [InlineData("ENV value", "${ENVVAR_TEST?err}")]
+        public void InterpolatedValueWithErrorShouldParseUntilEnd(string expected, string input) =>
+            Assert.Equal(expected, Parsers.InterpolatedValue.AtEnd().Parse(input).GetValue());
+
+        [Theory]
+        [InlineData("${EV_TEST_EMPTY:?error}")]
+        [InlineData("${EV_TEST_EMPTY?error}")]
+        [InlineData("${EV_TEST_EMPTY:?err}")]
+        [InlineData("${EV_TEST_EMPTY?err}")]
+        public void InterpolatedValueWithErrorShouldThrow(string input) =>
+            Assert.Throws<Exception>(() => Parsers.InterpolatedBracesEnvVar.AtEnd().Parse(input).GetValue());
+
+        [Theory]
+        [InlineData("replacement", "${ENVVAR_TEST:+replacement}")]
+        [InlineData("replacement", "${ENVVAR_TEST+replacement}")]
+        [InlineData("", "${EV_TEST_EMPTY:+replacement}")]
+        [InlineData("", "${EV_TEST_EMPTY+replacement}")]
+        [InlineData("", "${EV_TEST_UNSET:+replacement}")]
+        [InlineData("", "${EV_TEST_UNSET+replacement}")]
+        public void InterpolatedValueWithReplacementValueShouldParseUntilEnd(string expected, string input) =>
+            Assert.Equal(expected, Parsers.InterpolatedBracesEnvVar.AtEnd().Parse(input).GetValue());
+
+        [Theory]
+        [InlineData("ENV value", "${ENVVAR_EMPTY:-$ENVVAR_TEST}")]
+        [InlineData("ENV value", "${ENVVAR_UNSET:-${ENVVAR_TEST}}")]
+        [InlineData("default", "${ENVVAR_UNSET_1:-${ENVVAR_UNSET_1:-default}}")]
+        public void NestedInterpolatedValuesShouldParseUntilEnd(string expected, string input) =>
+            Assert.Equal(expected, Parsers.InterpolatedBracesEnvVar.AtEnd().Parse(input).GetValue());
+
+        [Theory]
         [InlineData("a", "a", "")]
         [InlineData("%", "%", "")]
         [InlineData("\"", "\"", "1")]
@@ -252,7 +295,7 @@ namespace DotNetEnv.Tests
         [InlineData("\tvalue")] // leading tab
         [InlineData("a'b'c")] // inline single quote
         [InlineData("a\"b\"c")] // inline double quote
-        [InlineData("a 'b' c")] // inline single quotes surrounded with whitespaces 
+        [InlineData("a 'b' c")] // inline single quotes surrounded with whitespaces
         [InlineData("a \"b\" c")] // inline double quotes surrounded with whitespaces
         public void UnquotedValueShouldThrowOnParseUntilEnd(string invalidInput) =>
             Assert.Throws<ParseException>(() => Parsers.UnquotedValue.AtEnd().Parse(invalidInput));
@@ -312,7 +355,7 @@ namespace DotNetEnv.Tests
         [InlineData("set -x", "set -x ")]
         [InlineData("set", "set ")]
         [InlineData("SET", "SET ")]
-        public void TestExportExpression(string expected, string input) => 
+        public void TestExportExpression(string expected, string input) =>
             Assert.Equal(expected, Parsers.ExportExpression.AtEnd().Parse(input));
 
         [Theory]
@@ -416,7 +459,7 @@ namespace DotNetEnv.Tests
         [InlineData("EV_DNE='a b c' EV_TEST_1=more")]
         public void AssignmentShouldThrowOnParseUntilEnd(string invalidInput) =>
             Assert.Throws<ParseException>(() => Parsers.Assignment.AtEnd().Parse(invalidInput));
-        
+
         [Theory]
         [InlineData("EV_DNE='a'b'' 'c' d'")] // no singleQuotes inside singleQuoted values
         [InlineData("EV_DNE=\"a\"b\"")] // no unescaped doubleQuotes inside doubleQuoted values
