@@ -1,7 +1,5 @@
-using System;
 using System.Linq;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
 
 namespace DotNetEnv
 {
@@ -13,16 +11,17 @@ namespace DotNetEnv
     public class ValueInterpolated : IValue
     {
         private readonly string _id;
+        private readonly IInterpolationHandler _interpolationHandler;
 
-        public ValueInterpolated (string id)
+        public ValueInterpolated (string id, IInterpolationHandler interpolationHandler)
         {
             _id = id;
+            _interpolationHandler = interpolationHandler;
         }
 
         public string GetValue ()
         {
-            var val = Environment.GetEnvironmentVariable(_id);
-            return val ?? (Env.FakeEnvVars.TryGetValue(_id, out val) ? val : string.Empty);
+            return _interpolationHandler.Handle(_id);
         }
     }
 

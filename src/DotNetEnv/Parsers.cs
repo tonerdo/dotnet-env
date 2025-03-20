@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Text;
 using DotNetEnv.Superpower;
 using Superpower;
@@ -157,7 +158,7 @@ namespace DotNetEnv
                 c => !char.IsControl(c) && !char.IsWhiteSpace(c) && !exceptChars.Contains(c),
                 $"not control nor whitespace nor {exceptChars}"
             ).AtLeastOnce().Text();
-        
+
         // officially *nix env vars can only be /[a-zA-Z_][a-zA-Z_0-9]*/
         // but because technically you can set env vars that are basically anything except equals signs, allow some flexibility
         private static readonly TextParser<char> IdentifierSpecialChars = Character.In('.', '-');
@@ -166,17 +167,50 @@ namespace DotNetEnv
             from tail in Character.LetterOrDigit.Or(Underscore).Or(IdentifierSpecialChars).Many().Text()
             select head + tail;
 
+        // env vars with hyphens conflict with the interpolation syntax, so we can't allow them in identifiers for interpolation
+        internal static readonly TextParser<string> InterpolationIdentifier =
+            from head in Character.Letter.Or(Underscore)
+            from tail in Character.LetterOrDigit.Or(Underscore).Many().Text()
+            select head + tail;
+
         internal static readonly TextParser<IValue> InterpolatedEnvVar =
             (from _d in DollarSign
                 from id in Identifier
-                select new ValueInterpolated(id) as IValue).Try();
+                select new ValueInterpolated(id, new DirectSubstitutionInterpolationHandler()) as IValue).Try();
+
+        // The Colon denotes that the environment variable is allowed to have an empty value.
+        // C# doesn't support this behavior, but we'll support the syntax for compatibility.
+        // https://learn.microsoft.com/en-us/dotnet/core/compatibility/core-libraries/9.0/empty-env-variable
+        private static readonly TextParser<char> Colon = Character.EqualTo(':');
+
+        internal static readonly TextParser<IInterpolationHandler> DefaultInterpolatedValue =
+            (from _c in Colon.Optional()
+                from _d in Character.EqualTo('-')
+                from defaultValue in UnquotedValueContents("}") // Closing brace is normally okay, but not in this instance since we're inside braces already
+                select new DefaultInterpolationHandler(defaultValue.Value) as IInterpolationHandler).Try();
+
+        internal static readonly TextParser<IInterpolationHandler> RequiredInterpolatedValue =
+            (from _c in Colon.Optional()
+                from _d in Character.EqualTo('?')
+                from _ in Span.EqualTo("error").Or(Span.EqualTo("err"))
+                select new RequiredInterpolationHandler() as IInterpolationHandler).Try();
+
+        internal static readonly TextParser<IInterpolationHandler> AlternativeInterpolatedValue =
+            (from _c in Colon.Optional()
+                from _d in Character.EqualTo('+')
+                from alternativeValue in UnquotedValueContents("}") // Closing brace is normally okay, but not in this instance since we're inside braces already
+                select new ReplacementInterpolationHandler(alternativeValue.Value) as IInterpolationHandler).Try();
+
+        internal static readonly TextParser<IInterpolationHandler> InterpolationHandler =
+            DefaultInterpolatedValue.Or(RequiredInterpolatedValue).Or(AlternativeInterpolatedValue);
 
         internal static readonly TextParser<IValue> InterpolatedBracesEnvVar =
             (from _d in DollarSign
                 from _o in Character.EqualTo('{')
-                from id in Identifier
+                from id in InterpolationIdentifier
+                from handler in InterpolationHandler.OptionalOrDefault(new DirectSubstitutionInterpolationHandler())
                 from _c in Character.EqualTo('}')
-                select new ValueInterpolated(id) as IValue).Try();
+                select new ValueInterpolated(id, handler) as IValue).Try();
 
         internal static readonly TextParser<IValue> JustDollarValue =
             (from d in DollarSign
@@ -198,22 +232,21 @@ namespace DotNetEnv
         // unquoted values can have interpolated variables,
         // but only inline whitespace -- until a comment,
         // and no escaped chars, nor byte code chars
-        private static readonly TextParser<ValueCalculator> UnquotedValueContents =
+        private static TextParser<ValueCalculator> UnquotedValueContents(string exceptChars = "") =>
             InterpolatedValue
                 .Or((from inlineWhitespaces in InlineWhitespace
                     from _ in
                         Parse.Not(Character
                             .EqualTo('#')) // "#" after a whitespace is the beginning of a comment --> not allowed
                     from partOfValue in
-                        NotControlNorWhitespace(
-                            "$\"'") // quotes are not allowed in values, because in a shell they mean something different
+                        NotControlNorWhitespace("$\"'" + exceptChars) // quotes are not allowed in values, because in a shell they mean something different
                     select new ValueActual(string.Concat(inlineWhitespaces, partOfValue)) as IValue).Try())
                 .Many()
                 .Select(vs => new ValueCalculator(vs));
 
         internal static readonly TextParser<ValueCalculator> UnquotedValue =
             from _ in Parse.Not(Character.In(" \t\"'".ToCharArray()))
-            from value in UnquotedValueContents
+            from value in UnquotedValueContents()
             select value;
 
         // double quoted values can have everything: interpolated variables,

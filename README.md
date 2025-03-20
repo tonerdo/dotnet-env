@@ -193,6 +193,32 @@ export KEY="extra $ENVVAR value" # comment
 set KEY2=extra${ENVVAR}value # comment
 ```
 
+Braced interpolation allows for default, required, and alternative values:
+```sh
+# value of ENVVAR if set, otherwise default
+KEY1=${ENVVAR:-default} 
+KEY2=${ENVVAR-default} 
+
+# value of ENVVAR if set and non-empty, otherwise exit with error
+KEY1=${ENVVAR:?error}
+KEY2=${ENVVAR?error}
+
+# value of alternate if ENVVAR is set, otherwise empty ''
+KEY1=${ENVVAR:+alternative}
+KEY2=${ENVVAR+alternative}
+```
+
+Interpolation can also be nested:
+- `${VARIABLE:-${FOO}}`
+- `${VARIABLE?$FOO}`
+- `${VARIABLE:-${FOO:-default}}`
+
+> **Note on colon syntax**
+> Typically, using the colon syntax before a default value, error, or alternative value indicates
+>  that the interpolated variable is allowed to be empty. [`netstandard2.0` does not support this](https://learn.microsoft.com/en-us/dotnet/core/compatibility/core-libraries/9.0/empty-env-variable),
+>  and treats empty environment variables as unset. This library currently does not support the 
+>  "if set and non-empty" behaviour, but the syntax itself is supported.
+
 The options for the export keyword are:
 
     export  # bash
@@ -202,6 +228,18 @@ The options for the export keyword are:
 
 This allows the `.env` file itself to be `source`-d like `. .env`
  to load the env vars into a terminal session directly.
+
+Interpolation (also known as variable expansion) is supported and applied for unquoted
+ and double-quoted values. Both braced (${VAR}) and unbraced ($VAR) expressions are supported.
+
+Direct interpolation
+${VAR} -> value of VAR
+Default value
+${VAR:-default} -> value of VAR if set and non-empty, otherwise default
+${VAR-default} -> value of VAR if set, otherwise default
+Alternative value
+${VAR:-alternate} -> value of alternate if VAR is set and non-empty, otherwise empty ''
+${VAR-alternate} -> value of alternate if VAR is set and non-empty, otherwise empty ''
 
 The options for quoting values are:
 

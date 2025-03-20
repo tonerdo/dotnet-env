@@ -28,6 +28,7 @@ namespace DotNetEnv.Tests
             }
 
             Environment.SetEnvironmentVariable(EV_TEST, "ENV value");
+            Environment.SetEnvironmentVariable("EV_TEST_EMPTY", "");
         }
 
         public void Dispose ()
