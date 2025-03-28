@@ -11,9 +11,19 @@ using Superpower.Parsers;
 
 namespace DotNetEnv
 {
-    class Parsers
+    internal static class Parsers
     {
-        public static ConcurrentDictionary<string, string> ActualValuesSnapshot = new ConcurrentDictionary<string, string>();
+        /// <summary>
+        /// Returns the current value for a given key, while parsing is in progress.<br />
+        /// Clobber-setting is taken into account.
+        /// </summary>
+        public static IValueProvider CurrentValueProvider;
+
+        /// <summary>
+        /// Contains already parsed variables while parsing.
+        /// </summary>
+        private static readonly ConcurrentDictionary<string, string> ParsedValuesDictionary =
+            new ConcurrentDictionary<string, string>();
 
         // helpful blog I discovered only after digging through all the Sprache source myself:
         // https://justinpealing.me.uk/post/2020-03-11-sprache1-chars/
@@ -307,22 +317,30 @@ namespace DotNetEnv
                 from _lt in LineTerminator
                 select new KeyValuePair<string, string>(null, null));
 
+        /// <summary>
+        /// Returns all parsed entries in correct order.<br />
+        /// Duplicates are still contained, but interpolation takes clobber-setting into account.
+        /// </summary>
+        /// <param name="contents"></param>
+        /// <param name="clobberExistingVariables"></param>
+        /// <param name="actualValueProvider"></param>
+        /// <returns></returns>
         public static IEnumerable<KeyValuePair<string, string>> ParseDotenvFile(string contents,
-            bool clobberExistingVariables = true, IDictionary<string, string> actualValues = null)
+            bool clobberExistingVariables = true, IValueProvider actualValueProvider = null)
         {
-            ActualValuesSnapshot = new ConcurrentDictionary<string, string>(actualValues ?? new Dictionary<string, string>());
+            ParsedValuesDictionary.Clear();
+            CurrentValueProvider = new ChainedValueProvider(clobberExistingVariables,
+                actualValueProvider, new DictionaryValueProvider(ParsedValuesDictionary));
 
-            return Assignment.Select(UpdateEnvVarSnapshot).Or(Empty)
+            return Assignment.Select(UpdateMyDictionary).Or(Empty)
                 .Many()
                 .AtEnd()
                 .Parse(contents)
                 .Where(kvp => kvp.Key != null);
 
-            KeyValuePair<string, string> UpdateEnvVarSnapshot(KeyValuePair<string, string> pair)
+            KeyValuePair<string, string> UpdateMyDictionary(KeyValuePair<string, string> pair)
             {
-                if (clobberExistingVariables || !ActualValuesSnapshot.ContainsKey(pair.Key))
-                    ActualValuesSnapshot.AddOrUpdate(pair.Key, pair.Value, (key, oldValue) => pair.Value);
-
+                ParsedValuesDictionary[pair.Key] = pair.Value;
                 return pair;
             }
         }

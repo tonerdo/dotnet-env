@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Concurrent;
 using System.Linq;
 using System.Collections.Generic;
 using System.Globalization;
@@ -25,7 +23,7 @@ namespace DotNetEnv
             => Load(path, options, null);
 
         private static IEnumerable<KeyValuePair<string, string>> Load(string path, LoadOptions options,
-            IEnumerable<KeyValuePair<string, string>> previousValues)
+            IEnumerable<KeyValuePair<string, string>> actualValues)
         {
             if (options == null) options = LoadOptions.DEFAULT;
 
@@ -61,7 +59,7 @@ namespace DotNetEnv
                 return Enumerable.Empty<KeyValuePair<string, string>>();
             }
 
-            return LoadContents(File.ReadAllText(path), options, previousValues);
+            return LoadContents(File.ReadAllText(path), options, actualValues);
         }
 
         public static IEnumerable<KeyValuePair<string, string>> Load(Stream file, LoadOptions options = null)
@@ -77,31 +75,26 @@ namespace DotNetEnv
             => LoadContents(contents, options, null);
 
         private static IEnumerable<KeyValuePair<string, string>> LoadContents(string contents,
-            LoadOptions options, IEnumerable<KeyValuePair<string, string>> previousValues)
+            LoadOptions options, IEnumerable<KeyValuePair<string, string>> actualValues)
         {
-            if (options == null) options = LoadOptions.DEFAULT;
-
-            previousValues = previousValues?.ToArray() ?? Array.Empty<KeyValuePair<string, string>>();
-
-            var envVarSnapshot = Environment.GetEnvironmentVariables().Cast<DictionaryEntry>()
-                .Select(entry => new KeyValuePair<string, string>(entry.Key.ToString(), entry.Value.ToString()))
-                .ToArray();
+            if (options == null)
+                options = LoadOptions.DEFAULT;
 
             var dictionaryOption = options.ClobberExistingVars
                 ? CreateDictionaryOption.TakeLast
                 : CreateDictionaryOption.TakeFirst;
 
-            var actualValues = new ConcurrentDictionary<string, string>(envVarSnapshot.Concat(previousValues)
-                .ToDotEnvDictionary(dictionaryOption));
+            var previousValueDictionary = actualValues?.ToDotEnvDictionary(dictionaryOption);
+            var actualValueProvider = previousValueDictionary == null
+                ? (IValueProvider)new EnvironmentValueProvider()
+                : new ChainedValueProvider(options.ClobberExistingVars,
+                    new EnvironmentValueProvider(), new DictionaryValueProvider(previousValueDictionary));
 
-            var pairs = Parsers.ParseDotenvFile(contents, options.ClobberExistingVars, actualValues);
+            var pairs = Parsers.ParseDotenvFile(contents, options.ClobberExistingVars, actualValueProvider);
 
-            // for NoClobber, remove pairs which are exactly contained in previousValues or present in EnvironmentVariables
             var unClobberedPairs = (options.ClobberExistingVars
                     ? pairs
-                    : pairs.Where(p =>
-                        previousValues.All(pv => pv.Key != p.Key) &&
-                        Environment.GetEnvironmentVariable(p.Key) == null))
+                    : pairs.Where(p => !actualValueProvider.TryGetValue(p.Key, out _)))
                 .ToArray();
 
             if (options.SetEnvVars)

@@ -14,14 +14,14 @@ namespace DotNetEnv.Tests
     public class ParserTests
     {
         private const string EV_TEST = "ENVVAR_TEST";
-        private readonly IDictionary<string, string> _actualValuesDictionary = new Dictionary<string, string>()
+        private readonly IValueProvider _actualValuesDictionary = new DictionaryValueProvider(new Dictionary<string, string>()
         {
             [EV_TEST] = "ENV value"
-        };
+        });
 
         public ParserTests()
         {
-            Parsers.ActualValuesSnapshot = new ConcurrentDictionary<string, string>(_actualValuesDictionary);
+            Parsers.CurrentValueProvider = _actualValuesDictionary;
         }
 
         [Theory]
@@ -510,7 +510,7 @@ ENVVAR_TEST = ' yahooooo '
         [MemberData(nameof(ParseDotEnvTests))]
         public void ParseDotenvFileShouldParseContents(string _, string contents, KeyValuePair<string, string>[] expectedPairs)
         {
-            var outputs = Parsers.ParseDotenvFile(contents, actualValues: _actualValuesDictionary).ToArray();
+            var outputs = Parsers.ParseDotenvFile(contents, actualValueProvider: _actualValuesDictionary).ToArray();
             Assert.Equal(expectedPairs.Length, outputs.Length);
 
             foreach (var (output, expected) in outputs.Zip(expectedPairs))
