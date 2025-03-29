@@ -15,6 +15,7 @@ namespace DotNetEnv.Tests
         private static string[] OldEnvVars = new string[]
         {
             "NAME",
+            "INTERPOLATED_NAME",
             "EMPTY",
             "QUOTE",
             "URL",
@@ -141,10 +142,23 @@ namespace DotNetEnv.Tests
             Assert.Equal("Other", Environment.GetEnvironmentVariable("NAME"));
             Environment.SetEnvironmentVariable("NAME", null);
             DotNetEnv.Env.NoClobber().LoadMulti(new[] { "./.env", "./.env2" });
-            Assert.Equal("Toni", Environment.GetEnvironmentVariable("NAME"));
+            Assert.Equal("ClobberedToni", Environment.GetEnvironmentVariable("NAME"));
             Environment.SetEnvironmentVariable("NAME", "Person");
             DotNetEnv.Env.NoClobber().LoadMulti(new[] { "./.env", "./.env2" });
             Assert.Equal("Person", Environment.GetEnvironmentVariable("NAME"));
+        }
+
+        [Fact]
+        public void LoadMultiTestNoEnvVars()
+        {
+            var pairs = DotNetEnv.Env.NoEnvVars().LoadMulti(new[] { "./.env", "./.env2" });
+            Assert.Equal("Other", pairs.LastOrDefault(x => x.Key == "NAME").Value);
+            Environment.SetEnvironmentVariable("NAME", null);
+            pairs = DotNetEnv.Env.NoEnvVars().NoClobber().LoadMulti(new[] { "./.env", "./.env2" });
+            Assert.Equal("ClobberedToni", pairs.FirstOrDefault(x => x.Key == "NAME").Value);
+            Environment.SetEnvironmentVariable("NAME", "Person");
+            pairs = DotNetEnv.Env.NoEnvVars().NoClobber().LoadMulti(new[] { "./.env", "./.env2" });
+            Assert.Null(pairs.FirstOrDefault(x => x.Key == "NAME").Value); // value from EnvironmentVariables is not contained with NoClobber
         }
 
         [Fact]
@@ -155,13 +169,15 @@ namespace DotNetEnv.Tests
             Environment.SetEnvironmentVariable("URL", expected);
             DotNetEnv.Env.Load(options: new DotNetEnv.LoadOptions(clobberExistingVars: false));
             Assert.Equal(expected, Environment.GetEnvironmentVariable("URL"));
-            Assert.Equal("Toni", Environment.GetEnvironmentVariable("NAME"));
+            Assert.Equal("ClobberedToni", Environment.GetEnvironmentVariable("NAME"));
+            Assert.Equal("ClobberedToni", Environment.GetEnvironmentVariable("INTERPOLATED_NAME"));
 
             Environment.SetEnvironmentVariable("NAME", null);
             Environment.SetEnvironmentVariable("URL", "i'm going to be overwritten");
             DotNetEnv.Env.Load(options: new DotNetEnv.LoadOptions(clobberExistingVars: true));
             Assert.Equal("https://github.com/tonerdo", Environment.GetEnvironmentVariable("URL"));
             Assert.Equal("Toni", Environment.GetEnvironmentVariable("NAME"));
+            Assert.Equal("Toni", Environment.GetEnvironmentVariable("INTERPOLATED_NAME"));
         }
 
         [Fact]
@@ -390,16 +406,11 @@ base64
             Environment.SetEnvironmentVariable("NVAR2", "_nvar2_");
 
             var kvps = DotNetEnv.Env.Load("./.env_other").ToArray();
-            Assert.Equal(35, kvps.Length);
-            var dict = kvps.ToDotEnvDictionary();
+            Assert.Equal(34, kvps.Length);
 
-            // note that env vars get only the final assignment, but all are returned
             Assert.Equal("dupe2", Environment.GetEnvironmentVariable("DUPLICATE"));
-            Assert.Equal("dupe2", dict["DUPLICATE"]);
             Assert.Equal("DUPLICATE", kvps[0].Key);
-            Assert.Equal("DUPLICATE", kvps[1].Key);
-            Assert.Equal("dupe1", kvps[0].Value);
-            Assert.Equal("dupe2", kvps[1].Value);
+            Assert.Equal("dupe2", kvps[0].Value);
 
             Assert.Equal("bar", Environment.GetEnvironmentVariable("TEST_KEYWORD_1"));
             Assert.Equal("12345", Environment.GetEnvironmentVariable("TEST_KEYWORD_2"));

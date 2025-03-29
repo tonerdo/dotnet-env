@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Linq;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using DotNetEnv.Extensions;
 
 namespace DotNetEnv
 {
@@ -11,17 +11,19 @@ namespace DotNetEnv
     {
         public const string DEFAULT_ENVFILENAME = ".env";
 
-        public static ConcurrentDictionary<string, string> FakeEnvVars = new ConcurrentDictionary<string, string>();
-
-        public static IEnumerable<KeyValuePair<string, string>> LoadMulti (string[] paths, LoadOptions options = null)
+        public static IEnumerable<KeyValuePair<string, string>> LoadMulti(string[] paths, LoadOptions options = null)
         {
             return paths.Aggregate(
-                Enumerable.Empty<KeyValuePair<string, string>>(),
-                (kvps, path) => kvps.Concat(Load(path, options))
+                Array.Empty<KeyValuePair<string, string>>(),
+                (kvps, path) => kvps.Concat(Load(path, options, kvps)).ToArray()
             );
         }
 
-        public static IEnumerable<KeyValuePair<string, string>> Load (string path = null, LoadOptions options = null)
+        public static IEnumerable<KeyValuePair<string, string>> Load(string path = null, LoadOptions options = null)
+            => Load(path, options, null);
+
+        private static IEnumerable<KeyValuePair<string, string>> Load(string path, LoadOptions options,
+            IEnumerable<KeyValuePair<string, string>> actualValues)
         {
             if (options == null) options = LoadOptions.DEFAULT;
 
@@ -45,6 +47,7 @@ namespace DotNetEnv
                         path = null;
                         break;
                     }
+
                     dir = parent.FullName;
                     path = Path.Combine(dir, file);
                 }
@@ -55,10 +58,11 @@ namespace DotNetEnv
             {
                 return Enumerable.Empty<KeyValuePair<string, string>>();
             }
-            return LoadContents(File.ReadAllText(path), options);
+
+            return LoadContents(File.ReadAllText(path), options, actualValues);
         }
 
-        public static IEnumerable<KeyValuePair<string, string>> Load (Stream file, LoadOptions options = null)
+        public static IEnumerable<KeyValuePair<string, string>> Load(Stream file, LoadOptions options = null)
         {
             using (var reader = new StreamReader(file))
             {
@@ -66,41 +70,57 @@ namespace DotNetEnv
             }
         }
 
-        public static IEnumerable<KeyValuePair<string, string>> LoadContents (string contents, LoadOptions options = null)
+        public static IEnumerable<KeyValuePair<string, string>> LoadContents(string contents,
+            LoadOptions options = null)
+            => LoadContents(contents, options, null);
+
+        private static IEnumerable<KeyValuePair<string, string>> LoadContents(string contents,
+            LoadOptions options, IEnumerable<KeyValuePair<string, string>> actualValues)
         {
-            if (options == null) options = LoadOptions.DEFAULT;
+            if (options == null)
+                options = LoadOptions.DEFAULT;
+
+            var dictionaryOption = options.ClobberExistingVars
+                ? CreateDictionaryOption.TakeLast
+                : CreateDictionaryOption.TakeFirst;
+
+            var actualValueProvider = actualValues == null
+                ? (IValueProvider)new EnvironmentValueProvider()
+                : new ChainedValueProvider(options.ClobberExistingVars,
+                    new EnvironmentValueProvider(),
+                    new KeyValuePairValueProvider(options.ClobberExistingVars, actualValues.ToList()));
+
+            var parsedValues = Parsers.ParseDotenvFile(contents, options.ClobberExistingVars, actualValueProvider);
+
+            var unClobberedDictionary = (options.ClobberExistingVars
+                    ? parsedValues
+                    : parsedValues.Where(p => !actualValueProvider.TryGetValue(p.Key, out _)))
+                .ToDotEnvDictionary(dictionaryOption);
 
             if (options.SetEnvVars)
-            {
-                if (options.ClobberExistingVars)
-                {
-                    return Parsers.ParseDotenvFile(contents, Parsers.SetEnvVar);
-                }
-                else
-                {
-                    return Parsers.ParseDotenvFile(contents, Parsers.NoClobberSetEnvVar);
-                }
-            }
-            else
-            {
-                return Parsers.ParseDotenvFile(contents, Parsers.DoNotSetEnvVar);
-            }
+                foreach (var pair in unClobberedDictionary)
+                    Environment.SetEnvironmentVariable(pair.Key, pair.Value);
+
+            return unClobberedDictionary;
         }
 
-        public static string GetString (string key, string fallback = default(string)) =>
+        public static string GetString(string key, string fallback = default(string)) =>
             Environment.GetEnvironmentVariable(key) ?? fallback;
 
-        public static bool GetBool (string key, bool fallback = default(bool)) =>
+        public static bool GetBool(string key, bool fallback = default(bool)) =>
             bool.TryParse(Environment.GetEnvironmentVariable(key), out var value) ? value : fallback;
 
-        public static int GetInt (string key, int fallback = default(int)) =>
+        public static int GetInt(string key, int fallback = default(int)) =>
             int.TryParse(Environment.GetEnvironmentVariable(key), out var value) ? value : fallback;
 
-        public static double GetDouble (string key, double fallback = default(double)) =>
-            double.TryParse(Environment.GetEnvironmentVariable(key), NumberStyles.Any, CultureInfo.InvariantCulture, out var value) ? value : fallback;
+        public static double GetDouble(string key, double fallback = default(double)) =>
+            double.TryParse(Environment.GetEnvironmentVariable(key), NumberStyles.Any, CultureInfo.InvariantCulture,
+                out var value)
+                ? value
+                : fallback;
 
-        public static LoadOptions NoEnvVars () => LoadOptions.NoEnvVars();
-        public static LoadOptions NoClobber () => LoadOptions.NoClobber();
-        public static LoadOptions TraversePath () => LoadOptions.TraversePath();
+        public static LoadOptions NoEnvVars() => LoadOptions.NoEnvVars();
+        public static LoadOptions NoClobber() => LoadOptions.NoClobber();
+        public static LoadOptions TraversePath() => LoadOptions.TraversePath();
     }
 }

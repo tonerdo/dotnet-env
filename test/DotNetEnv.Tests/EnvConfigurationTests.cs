@@ -90,8 +90,23 @@ namespace DotNetEnv.Tests
                 .AddDotNetEnvMulti(new[] { "./.env", "./.env2" }, LoadOptions.NoEnvVars().NoClobber())
                 .Build();
 
-            Assert.Equal("Toni", configuration["NAME"]);
-            Assert.Equal("ENV value", configuration["ENVVAR_TEST"]);
+            Assert.Equal("ClobberedToni", configuration["NAME"]);
+            Assert.Null(configuration["ENVVAR_TEST"]); // value from EnvironmentVariables is not contained for NoClobber
+            Assert.Equal("ENV value", configuration["ClobberEnvVarTest"]); // should contain ENVVAR_TEST from EnvironmentVariable
+            Assert.Equal("https://github.com/tonerdo", configuration["UrlFromVariable"]); // should contain Url from .env
+        }
+
+        [Fact]
+        public void AddSourceToBuilderAndLoadMultiWithClobber()
+        {
+            configuration = new ConfigurationBuilder()
+                .AddDotNetEnvMulti(new[] { "./.env", "./.env2" }, LoadOptions.NoEnvVars())
+                .Build();
+
+            Assert.Equal("Other", configuration["NAME"]);
+            Assert.Equal("overridden_2", configuration["ENVVAR_TEST"]);
+            Assert.Equal("overridden_2", configuration["ClobberEnvVarTest"]); // should contain ENVVAR_TEST from .env
+            Assert.Equal("https://github.com/tonerdo", configuration["UrlFromVariable"]); // should contain Url from .env
         }
 
         [Fact]
@@ -117,18 +132,19 @@ namespace DotNetEnv.Tests
             Assert.Equal("value2", section["Key2"]);
         }
 
-        [Fact()]
-        public void AddSourceToBuilderAndParseInterpolatedTest()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void AddSourceToBuilderAndParseInterpolatedTest(bool setEnvVars)
         {
             Environment.SetEnvironmentVariable("EXISTING_ENVIRONMENT_VARIABLE", "value");
             Environment.SetEnvironmentVariable("DNE_VAR", null);
 
             // Have to remove since it's recursive and can be set by the `EnvTests.cs`
             Environment.SetEnvironmentVariable("TEST4", null);
-            Env.FakeEnvVars.Clear();
 
             configuration = new ConfigurationBuilder()
-                .AddDotNetEnv("./.env_embedded")
+                .AddDotNetEnv("./.env_embedded", new LoadOptions(setEnvVars: setEnvVars))
                 .Build();
 
             Assert.Equal("test", configuration["TEST"]);
