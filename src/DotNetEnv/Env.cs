@@ -84,24 +84,24 @@ namespace DotNetEnv
                 ? CreateDictionaryOption.TakeLast
                 : CreateDictionaryOption.TakeFirst;
 
-            var previousValueDictionary = actualValues?.ToDotEnvDictionary(dictionaryOption);
-            var actualValueProvider = previousValueDictionary == null
+            var actualValueProvider = actualValues == null
                 ? (IValueProvider)new EnvironmentValueProvider()
                 : new ChainedValueProvider(options.ClobberExistingVars,
-                    new EnvironmentValueProvider(), new DictionaryValueProvider(previousValueDictionary));
+                    new EnvironmentValueProvider(),
+                    new KeyValuePairValueProvider(options.ClobberExistingVars, actualValues.ToList()));
 
-            var pairs = Parsers.ParseDotenvFile(contents, options.ClobberExistingVars, actualValueProvider);
+            var parsedValues = Parsers.ParseDotenvFile(contents, options.ClobberExistingVars, actualValueProvider);
 
-            var unClobberedPairs = (options.ClobberExistingVars
-                    ? pairs
-                    : pairs.Where(p => !actualValueProvider.TryGetValue(p.Key, out _)))
-                .ToArray();
+            var unClobberedDictionary = (options.ClobberExistingVars
+                    ? parsedValues
+                    : parsedValues.Where(p => !actualValueProvider.TryGetValue(p.Key, out _)))
+                .ToDotEnvDictionary(dictionaryOption);
 
             if (options.SetEnvVars)
-                foreach (var pair in unClobberedPairs)
+                foreach (var pair in unClobberedDictionary)
                     Environment.SetEnvironmentVariable(pair.Key, pair.Value);
 
-            return unClobberedPairs.ToDotEnvDictionary(dictionaryOption);
+            return unClobberedDictionary;
         }
 
         public static string GetString(string key, string fallback = default(string)) =>

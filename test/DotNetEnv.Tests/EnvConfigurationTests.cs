@@ -90,7 +90,7 @@ namespace DotNetEnv.Tests
                 .AddDotNetEnvMulti(new[] { "./.env", "./.env2" }, LoadOptions.NoEnvVars().NoClobber())
                 .Build();
 
-            Assert.Equal("Toni", configuration["NAME"]);
+            Assert.Equal("ClobberedToni", configuration["NAME"]);
             Assert.Null(configuration["ENVVAR_TEST"]); // value from EnvironmentVariables is not contained for NoClobber
             Assert.Equal("ENV value", configuration["ClobberEnvVarTest"]); // should contain ENVVAR_TEST from EnvironmentVariable
             Assert.Equal("https://github.com/tonerdo", configuration["UrlFromVariable"]); // should contain Url from .env

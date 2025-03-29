@@ -17,7 +17,21 @@ namespace DotNetEnv
             : throw new KeyNotFoundException();
 
         public abstract bool TryGetValue(string key, out string value);
+        
+        public static readonly IValueProvider Empty = new EmptyValueProvider();
     }
+
+    internal class EmptyValueProvider : IValueProvider
+    {
+        public string GetValue(string key) => null;
+
+        public bool TryGetValue(string key, out string value)
+        {
+            value = null;
+            return false;
+        }
+    }
+
     internal class EnvironmentValueProvider : ValueProvider
     {
         public override bool TryGetValue(string key, out string value)
@@ -35,6 +49,25 @@ namespace DotNetEnv
             => _keyValuePairs = dictionary;
 
         public override bool TryGetValue(string key, out string value) => _keyValuePairs.TryGetValue(key, out value);
+    }
+
+    internal class KeyValuePairValueProvider : ValueProvider
+    {
+        private readonly bool _clobberExisting;
+        private readonly IList<KeyValuePair<string, string>> _keyValuePairs;
+
+        public KeyValuePairValueProvider(bool clobberExisting, IList<KeyValuePair<string, string>> keyValuePairs)
+        {
+            _clobberExisting = clobberExisting;
+            _keyValuePairs = keyValuePairs;
+        }
+
+        public override bool TryGetValue(string key, out string value)
+        {
+            value = (_clobberExisting ? _keyValuePairs.Reverse() : _keyValuePairs)
+                .FirstOrDefault(pair => pair.Key == key).Value;
+            return value != null;
+        }
     }
 
     internal class ChainedValueProvider : ValueProvider

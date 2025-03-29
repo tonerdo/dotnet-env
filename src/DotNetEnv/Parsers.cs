@@ -22,8 +22,8 @@ namespace DotNetEnv
         /// <summary>
         /// Contains already parsed variables while parsing.
         /// </summary>
-        private static readonly ConcurrentDictionary<string, string> ParsedValuesDictionary =
-            new ConcurrentDictionary<string, string>();
+        private static readonly IList<KeyValuePair<string, string>> ParsedValues =
+            new List<KeyValuePair<string, string>>();
 
         // helpful blog I discovered only after digging through all the Sprache source myself:
         // https://justinpealing.me.uk/post/2020-03-11-sprache1-chars/
@@ -328,19 +328,20 @@ namespace DotNetEnv
         public static IEnumerable<KeyValuePair<string, string>> ParseDotenvFile(string contents,
             bool clobberExistingVariables = true, IValueProvider actualValueProvider = null)
         {
-            ParsedValuesDictionary.Clear();
+            ParsedValues.Clear();
             CurrentValueProvider = new ChainedValueProvider(clobberExistingVariables,
-                actualValueProvider, new DictionaryValueProvider(ParsedValuesDictionary));
+                actualValueProvider ?? ValueProvider.Empty,
+                new KeyValuePairValueProvider(clobberExistingVariables, ParsedValues));
 
-            return Assignment.Select(UpdateMyDictionary).Or(Empty)
+            return Assignment.Select(UpdateParsedValues).Or(Empty)
                 .Many()
                 .AtEnd()
                 .Parse(contents)
                 .Where(kvp => kvp.Key != null);
 
-            KeyValuePair<string, string> UpdateMyDictionary(KeyValuePair<string, string> pair)
+            KeyValuePair<string, string> UpdateParsedValues(KeyValuePair<string, string> pair)
             {
-                ParsedValuesDictionary[pair.Key] = pair.Value;
+                ParsedValues.Add(pair);
                 return pair;
             }
         }
