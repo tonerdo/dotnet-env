@@ -81,10 +81,6 @@ namespace DotNetEnv
             _providers = providers;
         }
 
-        public override string GetValue(string key)
-            => (_clobberExisting ? _providers.Reverse() : _providers)
-                .Aggregate((string)null, (current, valueProvider) => current ?? valueProvider.GetValue(key));
-
         public override bool TryGetValue(string key, out string value)
         {
             foreach (var provider in _clobberExisting ? _providers.Reverse() : _providers)
