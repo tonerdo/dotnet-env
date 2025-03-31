@@ -8,3 +8,5 @@ WHITELEAD='  leading white space followed by comment'  # comment
 UNICODE="\u00ae \U0001F680 日本"
 NAME=Other
 ENVVAR_TEST=overridden_2
+ClobberEnvVarTest=$ENVVAR_TEST
+UrlFromVariable=$URL

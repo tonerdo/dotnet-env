@@ -2,20 +2,6 @@ using System;
 
 namespace DotNetEnv
 {
-    static class LookupHelper
-    {
-        public static string GetEnvironmentVariable(string key)
-        {
-            var val = Environment.GetEnvironmentVariable(key);
-            if (val == null && Env.FakeEnvVars.TryGetValue(key, out var fakeVal))
-            {
-                return fakeVal;
-            }
-
-            return val;
-        }
-    }
-
     public interface IInterpolationHandler
     {
         string Handle(string key);
@@ -25,13 +11,13 @@ namespace DotNetEnv
     {
         public string Handle(string key)
         {
-            return LookupHelper.GetEnvironmentVariable(key) ?? string.Empty;
+            return Parsers.CurrentValueProvider.TryGetValue(key, out var value) ? value : string.Empty;
         }
     }
 
     public class DefaultInterpolationHandler : IInterpolationHandler
     {
-        readonly string _defaultValue;
+        private readonly string _defaultValue;
 
         public DefaultInterpolationHandler(string defaultValue)
         {
@@ -40,8 +26,7 @@ namespace DotNetEnv
 
         public string Handle(string key)
         {
-            var val = LookupHelper.GetEnvironmentVariable(key);
-            return val ?? _defaultValue;
+            return Parsers.CurrentValueProvider.TryGetValue(key, out var value) ? value : _defaultValue;
         }
     }
 
@@ -49,8 +34,9 @@ namespace DotNetEnv
     {
         public string Handle(string key)
         {
-            var val = LookupHelper.GetEnvironmentVariable(key);
-            return val ?? throw new Exception($"Required environment variable '{key}' is not set.");
+            return Parsers.CurrentValueProvider.TryGetValue(key, out var value)
+                ? value
+                : throw new Exception($"Required environment variable '{key}' is not set.");
         }
     }
 
@@ -65,8 +51,7 @@ namespace DotNetEnv
 
         public string Handle(string key)
         {
-            var val = LookupHelper.GetEnvironmentVariable(key);
-            return val != null
+            return Parsers.CurrentValueProvider.TryGetValue(key, out _)
                 ? _replacementValue
                 : string.Empty;
         }

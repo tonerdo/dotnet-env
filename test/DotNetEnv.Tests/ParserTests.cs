@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Collections.Generic;
 using DotNetEnv.Superpower;
@@ -10,33 +11,17 @@ using Superpower.Parsers;
 
 namespace DotNetEnv.Tests
 {
-    public class ParserTests : IDisposable
+    public class ParserTests
     {
         private const string EV_TEST = "ENVVAR_TEST";
-        private const string EV_DNE = "EV_DNE";
-        private const string EV_TEST_1 = "EV_TEST_1";
-        private const string EV_TEST_2 = "EV_TEST_2";
-
-        private readonly Dictionary<string,string> oldEnvvars = new();
-        private static readonly string[] ALL_EVS = { EV_TEST, EV_DNE, EV_TEST_1, EV_TEST_2 };
-
-        public ParserTests ()
+        private readonly IValueProvider _actualValuesDictionary = new DictionaryValueProvider(new Dictionary<string, string>()
         {
-            foreach (var ev in ALL_EVS)
-            {
-                oldEnvvars[ev] = Environment.GetEnvironmentVariable(ev);
-            }
+            [EV_TEST] = "ENV value"
+        });
 
-            Environment.SetEnvironmentVariable(EV_TEST, "ENV value");
-            Environment.SetEnvironmentVariable("EV_TEST_EMPTY", "");
-        }
-
-        public void Dispose ()
+        public ParserTests()
         {
-            foreach (var ev in ALL_EVS)
-            {
-                Environment.SetEnvironmentVariable(ev, oldEnvvars[ev]);
-            }
+            Parsers.CurrentValueProvider = _actualValuesDictionary;
         }
 
         [Theory]
@@ -107,6 +92,7 @@ namespace DotNetEnv.Tests
         public void Utf32CharShouldParseUntilEnd(string expected, string input) =>
             Assert.Equal(expected, Parsers.Utf32Char.AtEnd().Parse(input));
 
+        [Theory]
         [InlineData("\b", "\\b")]
         [InlineData("'", "\\'")]
         [InlineData("\"", "\\\"")]
@@ -524,21 +510,16 @@ ENVVAR_TEST = ' yahooooo '
         [MemberData(nameof(ParseDotEnvTests))]
         public void ParseDotenvFileShouldParseContents(string _, string contents, KeyValuePair<string, string>[] expectedPairs)
         {
-            var outputs = Parsers.ParseDotenvFile(contents, Parsers.SetEnvVar).ToArray();
+            var outputs = Parsers.ParseDotenvFile(contents, actualValueProvider: _actualValuesDictionary).ToArray();
             Assert.Equal(expectedPairs.Length, outputs.Length);
 
             foreach (var (output, expected) in outputs.Zip(expectedPairs))
-            {
                 Assert.Equal(expected, output);
-                Assert.Equal(expected.Value, Environment.GetEnvironmentVariable(output.Key));
-            }
         }
 
         [Theory]
         [InlineData("EV_DNE=0\n1")]
         public void ParseDotenvFileShouldThrowOnContents(string invalidContents) =>
-            Assert.Throws<ParseException>(() => Parsers.ParseDotenvFile(invalidContents, Parsers.SetEnvVar));
-
-        // C# wow that you can't handle 32 bit unicode as chars. wow. strings for 4 byte chars.
+            Assert.Throws<ParseException>(() => Parsers.ParseDotenvFile(invalidContents));
     }
 }
